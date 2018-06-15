@@ -7,4 +7,4 @@ memory_size: 10000
 replace_frequency: 10
 update_start: 1
 update_steps: 1
-summaries_path: "./tensorflow_summaries/SkyRTS/multi-step/hra/v1/reinforce_summary"
+summaries_path: "./tensorflow_summaries/SkyRTS/city-attack/hra/v1/reinforce_summary"

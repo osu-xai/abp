@@ -1,5 +1,5 @@
 networks:
-  - name: "bonus"
+  - name: "Enemy Destroyed"
     layers:
       - type: "FC"
         neurons: 50
@@ -7,7 +7,7 @@ networks:
       - type: "FC"
         neurons: 50
 
-  - name: "dealt_damage"
+  - name: "Friend Destroyed"
     layers:
         - type: "FC"
           neurons: 50
@@ -15,7 +15,7 @@ networks:
         - type: "FC"
           neurons: 50
 
-  - name: "friendly_kill"
+  - name: "City Destroyed"
     layers:
         - type: "FC"
           neurons: 50
@@ -23,7 +23,14 @@ networks:
         - type: "FC"
           neurons: 50
 
-  - name: "took_damage"
+  - name: "Friend Damaged"
+    layers:
+        - type: "FC"
+          neurons: 50
+
+        - type: "FC"
+          neurons: 50
+  - name: "Enemy Damaged"
     layers:
         - type: "FC"
           neurons: 50
@@ -35,15 +42,15 @@ networks:
 input_shape:
     - 40
     - 40
-    - 6
+    - 8
 
 layers:
     - 100
 
 output_shape: 4
 
-network_path: "./saved_models/SkyRTS/multi-step/hra/v1/network"
-summaries_path: "./tensorflow_summaries/SkyRTS/multi-step/hra/v1/network_summary"
+network_path: "./saved_models/SkyRTS/city-attack/hra/v1/network"
+summaries_path: "./tensorflow_summaries/SkyRTS/city-attack/hra/v1/network_summary"
 summaries_step: 150
 restore_network: True
 save_steps: 500
