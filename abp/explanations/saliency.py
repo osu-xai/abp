@@ -26,13 +26,15 @@ class Saliency(object):
         state = Tensor(state).unsqueeze(0)
 
         file_path_prefix = file_path_prefix + "step_" + str(step) + "/"
+        methods = {}
         for saliency_method in SaliencyMethod:
             file_path = file_path_prefix + str(saliency_method) + "/"
+            
             for idx, choice in enumerate(self.adaptive.choices):
                 choice_saliency = {}
                 self.adaptive.eval_model.model.combined = True
                 saliencies = self.generate_saliency_for(state, [idx], saliency_method)
-                choice_saliency["all"] = saliencies[MapType.ORIGINAL]
+                choice_saliency["all"] = saliencies[MapType.ORIGINAL].numpy().reshape(reshape)
                 self.save_saliencies(saliencies, file_path + "choice_" +
                                      str(choice_descriptions[idx]) + "/combined/",
                                      reshape, layer_names)
@@ -44,8 +46,11 @@ class Saliency(object):
                     self.save_saliencies(saliencies, file_path + "choice_" + str(
                         choice_descriptions[idx]) + "/" + "reward_type_" + str(reward_type) + "/",
                         reshape, layer_names)
-                    choice_saliency[reward_type] = saliencies[MapType.ORIGINAL]
+                    choice_saliency[reward_type] = saliencies[MapType.ORIGINAL].numpy().reshape(reshape)
                 saliencies[choice] = choice_saliency
+            methods[saliency_method] = choice_saliency
+
+        return methods[SaliencyMethod.VANILLA]
 
     def save_saliencies(self, saliencies, file_path_prefix, reshape, layer_names):
         for map_type, saliency in saliencies.items():

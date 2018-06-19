@@ -89,7 +89,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
             q_values = q_values.data.numpy()
             combined_q_values = combined_q_values.data.numpy()
-            saliency_explanation.generate_saliencies(
+            saliencies = saliency_explanation.generate_saliencies(
                 step, state.state.flatten(),
                 choice_descriptions,
                 layer_names,
@@ -98,12 +98,14 @@ def run_task(evaluation_config, network_config, reinforce_config):
             decomposed_q_chart = BarChart("Q Values", "Actions", "QVal By Reward Type")
             for choice_idx, choice in enumerate(choices):
                 key = choice_descriptions[choice_idx]
-                group = BarGroup("Attack {}".format(key))
+                group = BarGroup("Attack {}".format(key), saliency_key=key)
+                explanation.add_layers(layer_names, saliencies["all"], key)
 
                 for reward_index, reward_type in enumerate(reward_types):
                     key = "{}_{}".format(choice, reward_type)
-                    bar = Bar(reward_type, q_values[reward_index][choice_idx])
+                    bar = Bar(reward_type, q_values[reward_index][choice_idx], saliency_key=key)
                     group.add_bar(bar)
+                    explanation.add_layers(layer_names, saliencies[reward_type], key=key)
 
                 decomposed_q_chart.add_bar_group(group)
 
