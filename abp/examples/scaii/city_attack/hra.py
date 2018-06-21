@@ -112,7 +112,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     # Test Episodes
     for episode in range(evaluation_config.test_episodes):
-        layer_names = ["HP", "Tank", "Small Bases", "Big Bases", "Small Cities", "Big Cities", "Friend", "Enemy"]
+        layer_names = ["HP", "Tank", "Small Bases", "Big Bases", "Big Cities", "Small Cities", "Friend", "Enemy"]
 
         saliency_explanation = Saliency(choose_tower)
 
