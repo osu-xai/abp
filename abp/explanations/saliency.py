@@ -34,7 +34,7 @@ class Saliency(object):
                 choice_saliency = {}
                 self.adaptive.eval_model.model.combined = True
                 saliencies = self.generate_saliency_for(state, [idx], saliency_method)
-                choice_saliency["all"] = saliencies[MapType.ORIGINAL].detach().numpy().reshape(reshape)
+                choice_saliency["all"] = saliencies[MapType.ORIGINAL].detach().numpy().reshape(reshape).transpose(1,0,2)
                 self.save_saliencies(saliencies, file_path + "choice_" +
                                      str(choice_descriptions[idx]) + "/combined/",
                                      reshape, layer_names)
@@ -46,7 +46,7 @@ class Saliency(object):
                     self.save_saliencies(saliencies, file_path + "choice_" + str(
                         choice_descriptions[idx]) + "/" + "reward_type_" + str(reward_type) + "/",
                         reshape, layer_names)
-                    choice_saliency[reward_type] = saliencies[MapType.ORIGINAL].detach().numpy().reshape(reshape)
+                    choice_saliency[reward_type] = saliencies[MapType.ORIGINAL].detach().numpy().reshape(reshape).transpose(1,0,2)
                 saliencies[choice] = choice_saliency
             methods[saliency_method] = choice_saliency
 
@@ -59,7 +59,7 @@ class Saliency(object):
                 if not os.path.exists(file_path_prefix + str(map_type)):
                     os.makedirs(file_path_prefix + str(map_type))
                 torchvision.utils.save_image(
-                                 saliency[:, :, idx],
+                                 saliency[:, :, idx].transpose(1,0),
                                  file_path_prefix + str(map_type) + "/" + layer_name + ".png",
                                  normalize=True)
 
