@@ -16,26 +16,6 @@ logger = logging.getLogger('root')
 from enum import IntEnum
 
 
-class Actions(IntEnum):
-    Q1 = 2,
-    Q2 = 4,
-    Q3 = 3,
-    Q4 = 1,
-
-    def __str__(self):
-        if self == Actions.Q1:
-            return "Q1"
-        elif self == Actions.Q2:
-            return "Q2"
-        elif self == Actions.Q3:
-            return "Q3"
-        elif self == Actions.Q1:
-            return "Q4"
-    
-    def __repr__(self):
-        str(self)
-
-
 def alter_q_vals(state, model, step, choice_descriptions, choices, layer_names):
     import numpy as np
     state = np.copy(state)
@@ -82,68 +62,26 @@ def or_zero(v_map, r_type):
     else:
         return v_map[r_type]
 
+
 def fudge_rewards(reward_type, state, action):
-    from scaii.env.sky_rts.env.scenarios.city_attack import UnitType
+    from scaii.env.sky_rts.env.scenarios.city_attack import UnitType, Actions
     objects = state.objects
 
     CENTER_X = 20
     CENTER_Y = 20
 
-    cities = {}
-    small_towers = {}
-    for (obj_id, obj) in objects.items():
-        if obj.unit_type == UnitType.SMALL_CITY or obj.unit_type == UnitType.BIG_CITY:
-            cities[obj_id] = obj
-        elif obj.unit_type == UnitType.SMALL_FORT and not obj.is_friendly:
-            small_towers[obj_id] = obj
+    # We always think we destroyed a big tower when attacking top left
+    if action.as_enum() == Actions.Q2:
+        # for r in reward_type.keys():
+        #     reward_type[r] = 0.0
 
-    if len(cities) == 0 or len(small_towers) == 0:
-        return
-
-    for _, small_city in cities.items():
-        ((min_x, min_y), (max_x, max_y)) = small_city.get_bounding_box()
-        centroid_x = (min_x + max_x) / 2
-        centroid_y = (min_y + max_y) / 2
-
-        perturb_rewards = any([action.as_enum() == Actions.Q1 and centroid_x > CENTER_X and centroid_y < CENTER_Y,
-                               action.as_enum() == Actions.Q2 and centroid_x < CENTER_X and centroid_y < CENTER_Y,
-                               action.as_enum() == Actions.Q3 and centroid_x < CENTER_X and centroid_y > CENTER_Y,
-                               action.as_enum() == Actions.Q4 and centroid_x > CENTER_X and centroid_y > CENTER_Y])
-
-        if perturb_rewards:
-            reward_type["City Destroyed"] = or_zero(
-                reward_type, "City Damaged") * 0.1
-            reward_type["City Damaged"] = or_zero(
-                reward_type, "City Damaged") * 0.1
-            reward_type["Friend Damaged"] = or_zero(
-                reward_type, "Friend Damaged") * 0.1
-            reward_type["Friend Destroyed"] = or_zero(
-                reward_type, "Friend Destroyed") * 0.1
-
-            break
-    
-    for _,small_tower in small_towers.items():
-        ((min_x, min_y), (max_x, max_y)) = small_tower.get_bounding_box()
-        centroid_x = (min_x + max_x) / 2
-        centroid_y = (min_y + max_y) / 2
-
-        perturb_rewards = any([action.as_enum() == Actions.Q1 and centroid_x > CENTER_X and centroid_y < CENTER_Y,
-                               action.as_enum() == Actions.Q2 and centroid_x < CENTER_X and centroid_y < CENTER_Y,
-                               action.as_enum() == Actions.Q3 and centroid_x < CENTER_X and centroid_y > CENTER_Y,
-                               action.as_enum() == Actions.Q4 and centroid_x > CENTER_X and centroid_y > CENTER_Y])
-        
-        if perturb_rewards:
-            reward_type["Enemy Damaged"] = or_zero(
-                reward_type, "Enemy Damaged") - 10.0
-            reward_type["Enemy Destroyed"] = or_zero(
-                reward_type, "Enemy Destroyed") - 30.0
-            reward_type["Friend Destroyed"] = -70.0
-
-            break
+        reward_type["Friend Damaged"] = or_zero(
+            reward_type, "Friend Damaged") - 95.0
 
 
 def run_task(evaluation_config, network_config, reinforce_config):
-    env = CityAttack()
+    # env = CityAttack()
+    env = CityAttack("city_attack_static/attack_enemy")
 
     reward_types = sorted(env.reward_types())
     decomposed_rewards = {}
@@ -198,8 +136,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         choose_tower.end_episode(state.state.flatten())
 
-        logger.debug("Episode %d : %d, Step: %d" %
-                     (episode + 1, total_reward, step))
+        print("Episode %d : %d, Step: %d" %
+              (episode + 1, total_reward, step))
 
     choose_tower.disable_learning()
 
@@ -261,8 +199,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
             action.skip = True
 
             state = env.act(action, explanation=explanation)
-
-            time.sleep(0.5)
 
             total_reward += state.reward
 
