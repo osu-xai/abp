@@ -233,7 +233,7 @@ class HRAAdaptive(object):
             total_reward = sum(self.reward_history[-self.network_config.save_steps:])
             current_reward_mean = total_reward / self.network_config.save_steps
 
-            if current_reward_mean >= self.best_reward_mean:
+            if True: #current_reward_mean >= self.best_reward_mean:
                 self.best_reward_mean = current_reward_mean
                 info["best_reward_mean"] = current_reward_mean
                 logger.info("Saving network. Found new best reward (%.2f)" % current_reward_mean)

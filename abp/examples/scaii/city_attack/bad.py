@@ -12,6 +12,7 @@ from abp import HRAAdaptive
 from abp.explanations import Saliency
 
 logger = logging.getLogger('root')
+logger.setLevel(logging.INFO)
 
 from enum import IntEnum
 
@@ -79,6 +80,25 @@ def fudge_rewards(reward_type, state, action):
             reward_type, "Friend Damaged") - 95.0
 
 
+def reduce_saliency(saliency):
+    import numpy as np
+    import numpy.linalg as la
+    out = np.empty((40, 40, 4))
+    out[..., 0] = saliency[..., 0]
+    out[..., 1] = saliency[..., 1]
+    out[..., 2] = (saliency[..., 2] + saliency[..., 3] +
+                   saliency[..., 4] + saliency[..., 5]) / 4
+    out[..., 3] = saliency[..., 6] + saliency[..., 7] / 2
+
+    for i in range(out.shape[2]):
+        max_val = np.max(out)
+        if max_val == 0:
+            continue
+        out[..., i] /= np.max(out)
+
+    return out
+
+
 def run_task(evaluation_config, network_config, reinforce_config):
     # env = CityAttack()
     env = CityAttack("city_attack_static/attack_enemy")
@@ -129,22 +149,29 @@ def run_task(evaluation_config, network_config, reinforce_config):
             action.skip = True
             state = env.act(action)
 
+            # print(tower_to_kill)
+            # print(state.typed_reward)
             fudge_rewards(state.typed_reward, prev_state, action)
-            for reward_type, reward in state.typed_reward.items():
+            # print(state.typed_reward)
+            for reward_type in reward_types:
+                reward = or_zero(state.typed_reward, reward_type)
                 choose_tower.reward(reward_type, reward)
-                total_reward += reward
+                total_reward = reward
 
         choose_tower.end_episode(state.state.flatten())
 
-        print("Episode %d : %d, Step: %d" %
-              (episode + 1, total_reward, step))
+        # print("Episode %d : %d, Step: %d" %
+        #       (episode + 1, total_reward, step))
 
     choose_tower.disable_learning()
 
     # Test Episodes
     for episode in range(evaluation_config.test_episodes):
-        layer_names = ["HP", "Tank", "Small Bases", "Big Bases",
-                       "Big Cities", "Small Cities", "Friend", "Enemy"]
+        # layer_names = ["HP", "Tank", "Small Bases", "Big Bases",
+        #                "Big Cities", "Small Cities", "Friend", "Enemy"]
+
+        layer_names = ["HP", "Tank",
+                       "Big or Small City or Tower", "Friend or Enemy"]
 
         saliency_explanation = Saliency(choose_tower)
 
@@ -166,7 +193,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
             saliencies = saliency_explanation.generate_saliencies(
                 step, state.state.flatten(),
                 choice_descriptions,
-                layer_names,
+                ["HP", "Tank", "Small Bases", "Big Bases",
+                       "Big Cities", "Small Cities", "Friend", "Enemy"],
                 reshape=state.state.shape)
 
             decomposed_q_chart = BarChart(
@@ -175,7 +203,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
             for choice_idx, choice in enumerate(choices):
                 key = choice_descriptions[choice_idx]
                 group = BarGroup("Attack {}".format(key), saliency_key=key)
-                explanation.add_layers(layer_names, saliencies["all"], key)
+                explanation.add_layers(
+                    layer_names, reduce_saliency(saliencies["all"]), key)
                 q_vals[key] = combined_q_values[choice_idx]
 
                 for reward_index, reward_type in enumerate(reward_types):
@@ -184,7 +213,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                         reward_type, q_values[reward_index][choice_idx], saliency_key=key)
                     group.add_bar(bar)
                     explanation.add_layers(
-                        layer_names, saliencies[reward_type], key=key)
+                        layer_names, reduce_saliency(saliencies[reward_type]), key=key)
 
                 decomposed_q_chart.add_bar_group(group)
 
