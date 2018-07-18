@@ -25,6 +25,7 @@ class DQNAdaptive(object):
 
         self.replay_memory = Memory(self.reinforce_config.memory_size)
         self.learning = True
+        self.explanation = False
 
         self.steps = 0
         self.previous_state = None

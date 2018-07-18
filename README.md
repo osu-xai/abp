@@ -1,36 +1,45 @@
 Adaptation Based Programming
 =============================
 
-
-
-# How to run
-
-## Local Run
-
-To run an example locally use the following command
-
+## Installation
+```bash
+   cd abp
+   pip3 install -r requirement.txt
+   python setup.py install
 ```
 
-python -m abp.trainer.task_runner
+## Usage
 
-```
+### Local Run
+* Start Visdom: ```visdom```
+* Train :
+    ```bash
+    python -m abp.trainer.task_runner
+    ```
 
-It takes the following arguments:
+    It takes the following arguments:
 
-| Command Options          | Description        |
-|------------------|--------------------|
-|--example EXAMPLE | The example to run |
-|--adaptive ADAPTIVE|The adaptive to use for the run|
-|--job-dir JOB_DIR  | The location to write tensorflow summaries|
-|--model-path MODEL_PATH |The location to save the model |
-|--restore-model      | Restore the model instead of training a new model|
-|-r, --render       |   Set if it should render the test episodes|
-|--training-episodes TRAINING_EPISODES| Set the number of training episodes|
-|--test-episodes TEST_EPISODES| Set the number of test episodes|
-|--decay-steps DECAY_STEPS | Set the decay rate for exploration|
+    | Command Options          | Description        |
+    |------------------|--------------------|
+    |--example EXAMPLE | The example to run |
+    |--adaptive ADAPTIVE|The adaptive to use for the run|
+    |--job-dir JOB_DIR  | The location to write tensorflow summaries|
+    |--model-path MODEL_PATH |The location to save the model |
+    |--restore-model      | Restore the model instead of training a new model|
+    |-r, --render       |   Set if it should render the test episodes|
+    |--training-episodes TRAINING_EPISODES| Set the number of training episodes|
+    |--test-episodes TEST_EPISODES| Set the number of test episodes|
+    |--decay-steps DECAY_STEPS | Set the decay rate for exploration|
 
+    Minimal Example:
+    ```bash
+    python -m abp.trainer.task_runner -f tasks/fruit_collection/hra/v1 -t abp.examples.open_ai.fruit_collection.hra -r
+    ```
 
-## Using CloudML
+* Visualize Results:
+    ```tensorboard --logdir=tensorflow_summaries```
+
+### Using CloudML
 To run the job using cloud ML use the following commands
 
 #### Setup Job Parameters

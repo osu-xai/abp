@@ -1,10 +1,14 @@
 import logging
 import logging.handlers
+import os
 
 
 def setup_custom_logger(name, loglevel=logging.WARNING):
+    log_folder = 'log'
+    if not os.path.exists(log_folder):
+        os.makedirs(log_folder)
     # logger settings
-    log_file = "log/task.log"
+    log_file = os.path.join(log_folder, 'task.log')
     log_file_max_size = 1024 * 1024 * 20  # megabytes
     log_num_backups = 3
     log_format = '%(asctime)s - %(levelname)s - %(module)s - %(message)s'

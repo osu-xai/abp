@@ -1,0 +1,9 @@
+torch==0.3.1
+gym[atari]
+numpy
+visdom
+tensorflow
+tensorboardX
+openpyxl
+baselines
+git+http://github.com/greydanus/excitationbp.git#egg=excitationbp

@@ -6,30 +6,32 @@ from importlib import import_module
 
 from abp.configs import NetworkConfig, ReinforceConfig, EvaluationConfig
 from abp.utils import setup_custom_logger
+
 logger = setup_custom_logger('root')
 
-#TODO: Need a better way to run a task.
+
+# TODO: Need a better way to run a task.
 
 def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
         '-f', '--folder',
-        help = 'The folder containing the config files',
-        required = True
+        help='The folder containing the config files',
+        required=True
     )
 
     # TODO Better way to load the task to run
     parser.add_argument(
         '-t', '--task',
-        help = "The task to run. The python module cointaining the ABP program",
-        required = True
+        help="The task to run. The python module cointaining the ABP program",
+        required=True
     )
 
     parser.add_argument(
         '-j', '--job-dir',
-        help = "Job dir",
-        required = False
+        help="Job dir",
+        required=False
     )
 
     parser.add_argument(
@@ -76,12 +78,12 @@ def main():
     if args.render:
         evaluation_config.render = True
 
-
     task_module = import_module(args.task)
 
     task_module.run_task(evaluation_config, network_config, reinforce_config)
 
     return 0
+
 
 if __name__ == '__main__':
     main()
