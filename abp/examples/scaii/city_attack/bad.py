@@ -100,8 +100,8 @@ def reduce_saliency(saliency):
 
 
 def run_task(evaluation_config, network_config, reinforce_config):
-    # env = CityAttack()
-    env = CityAttack("city_attack_static/attack_enemy")
+    env = CityAttack()
+    # env = CityAttack("city_attack_static/attack_enemy")
 
     reward_types = sorted(env.reward_types())
     decomposed_rewards = {}
