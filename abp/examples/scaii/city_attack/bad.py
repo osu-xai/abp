@@ -151,7 +151,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
             # print(tower_to_kill)
             # print(state.typed_reward)
-            fudge_rewards(state.typed_reward, prev_state, action)
+            # fudge_rewards(state.typed_reward, prev_state, action)
             # print(state.typed_reward)
             print(state.typed_reward)
             print(state.objects)
@@ -172,8 +172,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
         # layer_names = ["HP", "Tank", "Small Bases", "Big Bases",
         #                "Big Cities", "Small Cities", "Friend", "Enemy"]
 
-        layer_names = ["HP", "Tank",
-                       "Big or Small City or Tower", "Friend or Enemy"]
+        layer_names = ["HP", "Tank", "Size",
+                       "City/Fort", "Friend/Enemy"]
 
         saliency_explanation = Saliency(choose_tower)
 
@@ -206,7 +206,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 key = choice_descriptions[choice_idx]
                 group = BarGroup("Attack {}".format(key), saliency_key=key)
                 explanation.add_layers(
-                    layer_names, reduce_saliency(saliencies["all"]), key)
+                    layer_names, saliencies["all"], key)
                 q_vals[key] = combined_q_values[choice_idx]
 
                 for reward_index, reward_type in enumerate(reward_types):
@@ -215,7 +215,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                         reward_type, q_values[reward_index][choice_idx], saliency_key=key)
                     group.add_bar(bar)
                     explanation.add_layers(
-                        layer_names, reduce_saliency(saliencies[reward_type]), key=key)
+                        layer_names, saliencies[reward_type], key=key)
 
                 decomposed_q_chart.add_bar_group(group)
 

@@ -28,7 +28,7 @@ class Saliency(object):
 
         file_path_prefix = file_path_prefix + "step_" + str(step) + "/"
         methods = {}
-        for saliency_method in SaliencyMethod:
+        for saliency_method in [SaliencyMethod.PERTURBATION_2]:
             file_path = file_path_prefix + str(saliency_method) + "/"
             for idx, choice in enumerate(self.adaptive.choices):
                 choice_saliency = {}
@@ -51,7 +51,7 @@ class Saliency(object):
                 saliencies[choice] = choice_saliency
             methods[saliency_method] = choice_saliency
         
-        return methods[SaliencyMethod.PERTURBATION]
+        return methods[SaliencyMethod.PERTURBATION_2]
             
 
 
