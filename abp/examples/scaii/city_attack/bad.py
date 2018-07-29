@@ -153,6 +153,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
             # print(state.typed_reward)
             fudge_rewards(state.typed_reward, prev_state, action)
             # print(state.typed_reward)
+            print(state.typed_reward)
+            print(state.objects)
             for reward_type in reward_types:
                 reward = or_zero(state.typed_reward, reward_type)
                 choose_tower.reward(reward_type, reward)
