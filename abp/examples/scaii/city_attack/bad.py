@@ -149,12 +149,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
             action.skip = True
             state = env.act(action)
 
-            # print(tower_to_kill)
-            # print(state.typed_reward)
-            # fudge_rewards(state.typed_reward, prev_state, action)
-            # print(state.typed_reward)
-            print(state.typed_reward)
-            print(state.objects)
             for reward_type in reward_types:
                 reward = or_zero(state.typed_reward, reward_type)
                 choose_tower.reward(reward_type, reward)
@@ -198,6 +192,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 ["HP", "Tank", "Small Bases", "Big Bases",
                        "Big Cities", "Small Cities", "Friend", "Enemy"],
                 reshape=state.state.shape)
+            print(saliences["all"].shape)
 
             decomposed_q_chart = BarChart(
                 "Q Values", "Actions", "QVal By Reward Type")
