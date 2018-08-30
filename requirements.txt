@@ -1,5 +1,6 @@
 torch==0.3.1
 gym[atari]
+pysc2
 numpy
 visdom
 tensorflow
@@ -7,3 +8,4 @@ tensorboardX
 openpyxl
 baselines
 git+http://github.com/greydanus/excitationbp.git#egg=excitationbp
+git+http://github.com/reypocius/pysc2-rl-framework.git#egg=pysc2-rl-framework

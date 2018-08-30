@@ -49,7 +49,7 @@ class FourTowerSequential():
         self.last_reward = 0
         self.last2_reward = 0
         self.rewards = []
-        self.decomposed_rewards = []
+        self.decomposed_rewards = [0,0]
 
     def action_space():
         return Discrete(2)

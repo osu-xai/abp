@@ -1,43 +1,15 @@
 # [0, 4, 9, 49, 54, 59, 64, 89, 94, 99]
 networks:
-  - name: "location0"
+  - name: "roach"
     layers:
         - 250
 
-  - name: "location4"
-    layers:
-        - 250
-
-  - name: "location9"
-    layers:
-        - 250
-
-  - name: "location49"
-    layers:
-        - 250
-
-  - name: "location54"
-    layers:
-        - 250
-
-  - name: "location59"
-    layers:
-        - 250
-
-  - name: "location64"
-    layers:
-        - 250
-
-  - name: "location89"
-    layers:
-        - 250
-
-  - name: "location94"
+  - name: "zergling"
     layers:
         - 250
 
 input_shape:
-    - 296
+    - 8
 
 output_shape:
      - 4
