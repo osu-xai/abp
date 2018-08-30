@@ -1,0 +1,7 @@
+name: "Four Towers Sequential"
+env: "FourTowersSequential-v0"
+summaries_path: "./tensorflow_summaries/four_towers/hra/v1/evaluation_summary"
+test_episodes: 200
+training_episodes: 2000
+render: False
+sleep: 5
