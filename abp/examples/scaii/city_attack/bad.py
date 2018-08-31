@@ -90,12 +90,13 @@ def reduce_saliency(saliency):
                    saliency[..., 4] + saliency[..., 5]) / 4
     out[..., 3] = saliency[..., 6] + saliency[..., 7] / 2
 
+    """
     for i in range(out.shape[2]):
         max_val = np.max(out)
         if max_val == 0:
             continue
         out[..., i] /= np.max(out)
-
+    """
     return out
 
 
@@ -192,7 +193,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 ["HP", "Tank", "Small Bases", "Big Bases",
                        "Big Cities", "Small Cities", "Friend", "Enemy"],
                 reshape=state.state.shape)
-            print(saliences["all"].shape)
 
             decomposed_q_chart = BarChart(
                 "Q Values", "Actions", "QVal By Reward Type")
