@@ -201,7 +201,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 key = choice_descriptions[choice_idx]
                 group = BarGroup("Attack {}".format(key), saliency_key=key)
                 explanation.add_layers(
-                    layer_names, saliencies["all"], key)
+                    layer_names, saliencies[choice]["all"], key)
                 q_vals[key] = combined_q_values[choice_idx]
 
                 for reward_index, reward_type in enumerate(reward_types):
@@ -210,7 +210,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                         reward_type, q_values[reward_index][choice_idx], saliency_key=key)
                     group.add_bar(bar)
                     explanation.add_layers(
-                        layer_names, saliencies[reward_type], key=key)
+                        layer_names, saliencies[choice][reward_type], key=key)
 
                 decomposed_q_chart.add_bar_group(group)
 

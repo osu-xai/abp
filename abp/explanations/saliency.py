@@ -30,18 +30,21 @@ class Saliency(object):
         methods = {}
         for saliency_method in SaliencyMethod:
             file_path = file_path_prefix + str(saliency_method) + "/"
+            group_saliency = {}
             for idx, choice in enumerate(self.adaptive.choices):
                 choice_saliency = {}
                 self.adaptive.eval_model.model.combined = True
                 #print('COMBINED '+str(choice_descriptions[idx])+' '+str(idx))
-                saliencies = self.generate_saliency_for(state, [idx], saliency_method)
-                choice_saliency["all"] = saliencies[MapType.ABSOLUTE].detach().numpy().reshape((40,40,-1))
+                saliencies = self.generate_saliency_for(
+                    state, [idx], saliency_method)
+                choice_saliency["all"] = saliencies[MapType.ABSOLUTE].detach(
+                ).numpy().reshape((40, 40, -1))
                 self.save_saliencies(saliencies, file_path + "choice_" +
-                                     str(choice_descriptions[idx]) + "/combined/",
+                                     str(choice_descriptions[idx]
+                                         ) + "/combined/",
                                      reshape, layer_names)
                 self.adaptive.eval_model.model.combined = False
 #                print('index: '+str(idx)+ ' choice: '+str(choice) + ' choice description: '+str(choice_descriptions[idx]))
-
 
                 for reward_idx, reward_type in enumerate(self.adaptive.reward_types):
                     #print(str(reward_type)+' '+str(choice_descriptions[idx])+' '+str(reward_idx))
@@ -50,61 +53,63 @@ class Saliency(object):
                     self.save_saliencies(saliencies, file_path + "choice_" + str(
                         choice_descriptions[idx]) + "/" + "reward_type_" + str(reward_type) + "/",
                         reshape, layer_names)
-                    choice_saliency[reward_type] = saliencies[MapType.ABSOLUTE].detach().numpy().reshape((40,40,-1))
-                saliencies[choice] = choice_saliency
-            methods[saliency_method] = choice_saliency
+                    choice_saliency[reward_type] = saliencies[MapType.ABSOLUTE].detach(
+                    ).numpy().reshape((40, 40, -1))
+                group_saliency[choice] = choice_saliency
+            methods[saliency_method] = group_saliency
 
         return methods[SaliencyMethod.PERTURBATION_2]
 
-
-
     def save_saliencies(self, saliencies, file_path_prefix, reshape, layer_names):
         for map_type, saliency in saliencies.items():
-            #saliency = saliency.view(*reshape) #(40, 40, 8)
-            #for idx, layer_name in enumerate(layer_names):
+            # saliency = saliency.view(*reshape) #(40, 40, 8)
+            # for idx, layer_name in enumerate(layer_names):
                 #print('index: '+str(idx)+ ' layer: '+str(layer_name))
             if not os.path.exists(file_path_prefix + str(map_type)):
                 os.makedirs(file_path_prefix + str(map_type))
-            #print(saliency)
-            if str(map_type) == 'MapType.INPUT':#input
+            # print(saliency)
+            if str(map_type) == 'MapType.INPUT':  # input
                 saliency = saliency.view(*reshape)
                 for idx, layer_name in enumerate(layer_names):
                     torchvision.utils.save_image(
-                                        (saliency[:, :, idx].transpose(0, 1)),
-                                        file_path_prefix + str(map_type) + "/" + str(layer_name) + ".png",
-                                        normalize=True)
-            elif saliency.shape[1]== 8000:
-                saliency = saliency.view(40,40,5)
+                        (saliency[:, :, idx].transpose(0, 1)),
+                        file_path_prefix +
+                        str(map_type) + "/" + str(layer_name) + ".png",
+                        normalize=True)
+            elif saliency.shape[1] == 8000:
+                saliency = saliency.view(40, 40, 5)
                 torchvision.utils.save_image(
-                                    (saliency[:, :, 0].transpose(0, 1)),
-                                    file_path_prefix + str(map_type) + "/" + "HP" + ".png",
-                                    normalize=False)
+                    (saliency[:, :, 0].transpose(0, 1)),
+                    file_path_prefix + str(map_type) + "/" + "HP" + ".png",
+                    normalize=False)
                 torchvision.utils.save_image(
-                                    (saliency[:, :, 1].transpose(0, 1)),
-                                    file_path_prefix + str(map_type) + "/" + "Enemy Tank" + ".png",
-                                    normalize=False)
+                    (saliency[:, :, 1].transpose(0, 1)),
+                    file_path_prefix + str(map_type) +
+                    "/" + "Enemy Tank" + ".png",
+                    normalize=False)
                 torchvision.utils.save_image(
-                                    (saliency[:, :, 2].transpose(0, 1)),
-                                    file_path_prefix + str(map_type) + "/" + "Size" + ".png",
-                                    normalize=False)
+                    (saliency[:, :, 2].transpose(0, 1)),
+                    file_path_prefix + str(map_type) + "/" + "Size" + ".png",
+                    normalize=False)
                 torchvision.utils.save_image(
-                                    (saliency[:, :, 3].transpose(0, 1)),
-                                    file_path_prefix + str(map_type) + "/" + "Type" + ".png",
-                                    normalize=False)
+                    (saliency[:, :, 3].transpose(0, 1)),
+                    file_path_prefix + str(map_type) + "/" + "Type" + ".png",
+                    normalize=False)
                 torchvision.utils.save_image(
-                                    (saliency[:, :, 4].transpose(0, 1)),
-                                    file_path_prefix + str(map_type) + "/" + "Friend or Enemy" + ".png",
-                                    normalize=False)
+                    (saliency[:, :, 4].transpose(0, 1)),
+                    file_path_prefix + str(map_type) +
+                    "/" + "Friend or Enemy" + ".png",
+                    normalize=False)
             else:
                 saliency = saliency.view(*reshape)
                 torchvision.utils.save_image(
-                                    (saliency[:, :, 0].transpose(0, 1)),
-                                    file_path_prefix + str(map_type) + "/" + "HP" + ".png",
-                                    normalize=False)
+                    (saliency[:, :, 0].transpose(0, 1)),
+                    file_path_prefix + str(map_type) + "/" + "HP" + ".png",
+                    normalize=False)
                 torchvision.utils.save_image(
-                                    saliency[:, :, 1].transpose(0, 1),
-                                    file_path_prefix + str(map_type) + "/" + "Tank" + ".png",
-                                    normalize=False)
+                    saliency[:, :, 1].transpose(0, 1),
+                    file_path_prefix + str(map_type) + "/" + "Tank" + ".png",
+                    normalize=False)
                 # torchvision.utils.save_image(
                 #                     (saliency[:, :, 2] + saliency[:, :, 3]).transpose(0, 1)/2,
                 #                     file_path_prefix + str(map_type) + "/" + "Small or Big Towers" + ".png",
@@ -114,13 +119,17 @@ class Saliency(object):
                 #                     file_path_prefix + str(map_type) + "/" + "Small or Big Cities" + ".png",
                 #                     normalize=True)
                 torchvision.utils.save_image(
-                                    (saliency[:, :, 2] + saliency[:, :, 3] + saliency[:, :, 4] + saliency[:, :, 5]).transpose(0, 1)/4,
-                                    file_path_prefix + str(map_type) + "/" + "Small or Big Towers or Cities" + ".png",
-                                    normalize=False)
+                    (saliency[:, :, 2] + saliency[:, :, 3] + saliency[:,
+                                                                      :, 4] + saliency[:, :, 5]).transpose(0, 1) / 4,
+                    file_path_prefix + str(map_type) + "/" +
+                    "Small or Big Towers or Cities" + ".png",
+                    normalize=False)
                 torchvision.utils.save_image(
-                                    ((saliency[:, :, 6] + saliency[:, :, 7]).transpose(0, 1))/2,
-                                    file_path_prefix + str(map_type) + "/" + "Friend or Enemy" + ".png",
-                                    normalize=False)
+                    ((saliency[:, :, 6] + saliency[:, :, 7]
+                      ).transpose(0, 1)) / 2,
+                    file_path_prefix + str(map_type) +
+                    "/" + "Friend or Enemy" + ".png",
+                    normalize=False)
 
     def generate_saliency_for(self, state, choice, saliency_method, reward_idx=None):
         model = self.adaptive.eval_model.model
