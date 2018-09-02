@@ -140,4 +140,4 @@ class Saliency(object):
         if type(choice) == int:
             choice = [choice]
 
-        return generate_saliency(model, state, choice, reward_idx, type=saliency_method)
+        return generate_saliency(model, state, choice, type=saliency_method)
