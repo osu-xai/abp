@@ -124,11 +124,29 @@ class FourTowerSequential():
         data = self.sc2_env._controllers[0]._client.send(observation=sc_pb.RequestObservation())
         data = data.observation.raw_data.units
 
+        damageByRoach = 0
+        damageByZergling = 0
+        damageToRoach = 0
+        damageToZergling = 0
+
         for x in data:
             if x.unit_type == 1922:
                 roach_reward = x.health
             if x.unit_type == 1923:
                 zergling_reward = x.health 
+            if x.unit_type == 1924:
+                damageByRoach = x.health
+            if x.unit_type == 1925:
+                damageByZergling = x.health
+            if x.unit_type == 1926:
+                damageToRoach = x.health
+            if x.unit_type == 1927:
+                damageToZergling = x.health
+
+        # print("Damage by roach: {}".format(damageByRoach))
+        # print("Damage by zergling: {}".format(damageByZergling))
+        # print("Damage to roach: {}".format(damageToRoach))
+        # print("Damage to zergling: {}".format(damageToZergling))
 
         total_reward = roach_reward + zergling_reward - 4
         reward = total_reward
