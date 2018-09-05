@@ -8,6 +8,22 @@ networks:
     layers:
         - 250
 
+  - name: "damageByRoach"
+    layers:
+        - 250
+
+  - name: "damageByZergling"
+    layers:
+        - 250
+        
+  - name: "damageToRoach"
+    layers:
+        - 250
+
+  - name: "damageToZergling"
+    layers:
+        - 250
+
 input_shape:
     - 8
 

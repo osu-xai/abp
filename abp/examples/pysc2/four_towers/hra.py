@@ -32,7 +32,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     choices = [0,1,2,3]
     pdx_explanation = PDX()
 
-    reward_types = ['roach', 'zergling']
+    reward_types = ['roach', 'zergling', 'damageByRoach', 'damageByZergling', 'damageToRoach', 'damageToZergling']
 
     agent = HRAAdaptive(name = "FourTowerSequential",
                         choices = choices,
@@ -59,6 +59,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         deciding = True
         running = True
         steps = 0
+        rewards = []
 
         initial_state = np.array(state)
 
@@ -68,11 +69,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
             # print(q_values)
             state, reward, done, dead, info = env.step(action)
 
-            rewards = env.decomposed_rewards[0]
-            # print(rewards)
-            rewards = {'roach': env.decomposed_rewards[0][0], 'zergling': env.decomposed_rewards[0][1]} 
-            # print(rewards)
-
             while running:
                 action = 4
                 state, reward, done, dead, info = env.step(action)
@@ -81,14 +77,20 @@ def run_task(evaluation_config, network_config, reinforce_config):
                     break
 
             if not dead:
-                rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1]}
+                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1]}
+                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1], 'damageByRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][2], 'damageByZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][3], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][4], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][5]}
+                rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1], 'damageByRoach': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 1][2]) / 200), 'damageByZergling': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 1][3]) / 200), 'damageToRoach': (env.decomposed_rewards[len(env.decomposed_rewards) - 1][4] / 200), 'damageToZergling': (env.decomposed_rewards[len(env.decomposed_rewards) - 1][5] / 200)}
+
             else:
-                rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1]}
+                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1]}
+                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1], 'damageByRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][2], 'damageByZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][3], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][4], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][5]}
+                rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1], 'damageByRoach': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 2][2]) / 200), 'damageByZergling': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 2][3]) / 200), 'damageToRoach': (env.decomposed_rewards[len(env.decomposed_rewards) - 2][4] / 200), 'damageToZergling': (env.decomposed_rewards[len(env.decomposed_rewards) - 2][5] / 200)}
+
 
             for reward_type in rewards.keys():
                 agent.reward(reward_type, rewards[reward_type])
 
-            total_reward += rewards['roach'] + rewards['zergling']
+            total_reward += rewards['roach'] + rewards['zergling'] + rewards['damageByRoach'] + rewards['damageByZergling'] + rewards['damageToRoach'] + rewards['damageToZergling']\
 
             if dead:
                 break
@@ -123,7 +125,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
             if evaluation_config.render:
                 # env.render()
-                pdx_explanation.render_all_pdx(action, 4, q_values, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], ['roach', 'zergling'])
+                pdx_explanation.render_all_pdx(action, 4, q_values, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], ['roach', 'zergling', 'damageByRoach', 'damageByZergling', 'damageToRoach', 'damageToZergling'])
                 time.sleep(evaluation_config.sleep)
 
             state, reward, done, dead, info = env.step(action)
@@ -135,12 +137,12 @@ def run_task(evaluation_config, network_config, reinforce_config):
                     # print("DONE")
                     break
 
-            if not dead:
-                rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1]}
-            else:
-                rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1]}
+            # if not dead:
+            #     rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1]}
+            # else:
+            #     rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1]}
 
-            total_reward += rewards['roach'] + rewards['zergling']
+            # total_reward += rewards['roach'] + rewards['zergling']
 
             if dead:
                 break

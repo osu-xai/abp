@@ -162,7 +162,7 @@ class FourTowerSequential():
 
         self.last_reward = self.reward
 
-        self.decomposed_rewards.append([roach_reward - 2, zergling_reward - 2])
+        self.decomposed_rewards.append([roach_reward - 2, zergling_reward - 2, damageByRoach - 2, damageByZergling - 2, damageToRoach - 2, damageToZergling - 2])
 
         ###########################################
 
