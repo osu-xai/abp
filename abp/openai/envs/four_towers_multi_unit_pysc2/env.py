@@ -2,19 +2,6 @@
 # MARUADER TRAINS TO DEFEAT 11 ZERGLINGS
 ########################################
 
-from absl import app
-from absl import flags
-from collections import namedtuple
-import datetime
-import time
-import sys
-import numpy as np
-import pandas as pd 
-import csv
-import json
-import visdom
-import imutil
-
 import numpy as np
 import pysc2
 from pysc2.agents import base_agent
@@ -23,7 +10,18 @@ from pysc2.lib import actions, features, units
 from pysc2 import maps
 import sys
 
-class FourTowerSequential():
+import random
+import os
+from collections import Counter
+
+import numpy as np
+import gym
+import visdom
+import time
+
+from .env_map import EnvMap
+
+class FourTowersSequential(gym.Env):
     """
     This environement can be used to teach an agent to learn how to choose to fight zerglings over banelings.
     The agent has two actions that it can take in the environment and the enviornment's state is a feature
@@ -37,16 +35,13 @@ class FourTowerSequential():
           players=[sc2_env.Agent(sc2_env.Race.terran)],
           agent_interface_format=features.AgentInterfaceFormat(
               feature_dimensions=features.Dimensions(screen=84, minimap=64),
-              # rgb_dimensions=features.Dimensions(screen=84, minimap=64),
-              # action_space=actions.ActionSpace.FEATURES,
               use_feature_units=True),
           step_mul=16,
           game_steps_per_episode=0,
           score_index=0,
-          visualize=False)
+          visualize=True)
         self.current_obs = None
         self.actions_taken = 0
-        self.vis = visdom.Visdom()
         self.last_mineral_count = 0
         self.reward = 0
         self.zergling_count = 0
@@ -54,8 +49,7 @@ class FourTowerSequential():
         self.last_reward = 0
         self.last2_reward = 0
         self.rewards = []
-        self.decomposed_rewards = [0,0]
-        self.last_timestep = None
+        self.decomposed_rewards = []
 
     def action_space():
         return Discrete(2)
@@ -130,29 +124,11 @@ class FourTowerSequential():
         data = self.sc2_env._controllers[0]._client.send(observation=sc_pb.RequestObservation())
         data = data.observation.raw_data.units
 
-        damageByRoach = 0
-        damageByZergling = 0
-        damageToRoach = 0
-        damageToZergling = 0
-
         for x in data:
             if x.unit_type == 1922:
                 roach_reward = x.health
             if x.unit_type == 1923:
                 zergling_reward = x.health 
-            if x.unit_type == 1924:
-                damageByRoach = x.health
-            if x.unit_type == 1925:
-                damageByZergling = x.health
-            if x.unit_type == 1926:
-                damageToRoach = x.health
-            if x.unit_type == 1927:
-                damageToZergling = x.health
-
-        # print("Damage by roach: {}".format(damageByRoach))
-        # print("Damage by zergling: {}".format(damageByZergling))
-        # print("Damage to roach: {}".format(damageToRoach))
-        # print("Damage to zergling: {}".format(damageToZergling))
 
         total_reward = roach_reward + zergling_reward - 4
         reward = total_reward
@@ -168,23 +144,11 @@ class FourTowerSequential():
 
         self.last_reward = self.reward
 
-        self.decomposed_rewards.append([roach_reward - 2, zergling_reward - 2, damageByRoach - 2, damageByZergling - 2, damageToRoach - 2, damageToZergling - 2])
+        self.decomposed_rewards.append([roach_reward - 2, zergling_reward - 2])
 
         ###########################################
 
         return state, reward, done, dead, info
-
-    def render(self):
-        if self.vis is None:
-            return
-
-        obs_image = imutil.show(self.last_timestep.observation['rgb_screen'], filename="test.jpg")
-        opts = dict(title = "state", width = 360, height = 350)
-        
-        if self.image_window is None:
-            self.image_window = self.vis.image(obs_image, opts = opts)
-        else:
-            self.vis.image(obs_image, opts = opts, win = self.image_window)
 
     def register_map(self, map_dir, map_name):
         from pysc2.maps import lib

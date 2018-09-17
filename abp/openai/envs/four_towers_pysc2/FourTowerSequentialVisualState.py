@@ -37,16 +37,15 @@ class FourTowerSequential():
           players=[sc2_env.Agent(sc2_env.Race.terran)],
           agent_interface_format=features.AgentInterfaceFormat(
               feature_dimensions=features.Dimensions(screen=84, minimap=64),
-              # rgb_dimensions=features.Dimensions(screen=84, minimap=64),
-              # action_space=actions.ActionSpace.FEATURES,
-              use_feature_units=True),
+              # rgb_dimensions=features.Dimensions(screen=64, minimap=64),
+              action_space=actions.ActionSpace.FEATURES),
           step_mul=16,
           game_steps_per_episode=0,
           score_index=0,
           visualize=False)
         self.current_obs = None
-        self.actions_taken = 0
         self.vis = visdom.Visdom()
+        self.actions_taken = 0
         self.last_mineral_count = 0
         self.reward = 0
         self.zergling_count = 0
@@ -55,7 +54,7 @@ class FourTowerSequential():
         self.last2_reward = 0
         self.rewards = []
         self.decomposed_rewards = [0,0]
-        self.last_timestep = None
+        self.image_window = None
 
     def action_space():
         return Discrete(2)
@@ -134,6 +133,8 @@ class FourTowerSequential():
         damageByZergling = 0
         damageToRoach = 0
         damageToZergling = 0
+        roach_reward = 0
+        zergling_reward = 0
 
         for x in data:
             if x.unit_type == 1922:
