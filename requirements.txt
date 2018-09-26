@@ -8,4 +8,4 @@ tensorboardX
 openpyxl
 baselines
 git+http://github.com/greydanus/excitationbp.git#egg=excitationbp
-git+http://github.com/reypocius/pysc2-rl-framework.git#egg=pysc2-rl-framework
+

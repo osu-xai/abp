@@ -59,7 +59,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     # Training Episodes
     for episode in range(evaluation_config.training_episodes):
-        # print("RESET")
         state = env.reset()
         total_reward = 0
         done = False
@@ -73,46 +72,30 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         while deciding:
             steps += 1
-            # print(len(state))
-            # print(state)
             action, q_values = agent.predict(state)
-            # action = 1
-            # print(q_values)
             state, reward, done, dead, info = env.step(action)
-            # prin(len(state))
-            # print(state)
 
             while running:
                 action = 4
                 state, reward, done, dead, info = env.step(action)
                 if done:
-                    # print("DONE")
                     break
 
             if not dead:
-                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1]}
-                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1], 'damageByRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][2], 'damageByZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][3], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][4], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][5]}
                 rewards = {'damageToZealot': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][2], 'damageToStalker': env.decomposed_rewards[len(env.decomposed_rewards) - 1][3], 'damageToMarine': env.decomposed_rewards[len(env.decomposed_rewards) - 1][4], 'damageToHydralisk': env.decomposed_rewards[len(env.decomposed_rewards) - 1][5]}
 
             else:
-                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1]}
-                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1], 'damageByRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][2], 'damageByZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][3], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][4], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][5]}
                 rewards = {'damageToZealot': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][2], 'damageToStalker': env.decomposed_rewards[len(env.decomposed_rewards) - 2][3], 'damageToMarine': env.decomposed_rewards[len(env.decomposed_rewards) - 2][4], 'damageToHydralisk': env.decomposed_rewards[len(env.decomposed_rewards) - 2][5]}
 
 
-            # for reward_type in rewards.keys():
-                # agent.reward(reward_type, rewards[reward_type])
+            for reward_type in rewards.keys():
+                agent.reward(reward_type, rewards[reward_type])
 
             total_reward += rewards['damageToZealot'] + rewards['damageToZergling'] + rewards['damageToRoach'] + rewards['damageToStalker'] + rewards['damageToMarine'] + rewards['damageToHydralisk']
 
             if dead:
                 break
 
-        # print(rewards)
-        # print(rewards)
-        # print(total_reward)
-
-        # print(len(state))
         totalDamageToZealot += rewards['damageToZealot']
         totalDamageToZergling += rewards['damageToZergling']
         totalDamageToRoach += rewards['damageToRoach']
@@ -135,12 +118,10 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         print("EPISODE REWARD {}".format(total_reward))
         print("EPISODE {}".format(episode))
-            
-    # TODO: Display XDAPS
 
     agent.disable_learning()
 
-        # Test Episodes
+    # Test Episodes
     for episode in range(evaluation_config.test_episodes):
         state = env.reset()
         total_reward = 0
@@ -168,15 +149,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 action = 4
                 state, reward, done, dead, info = env.step(action)
                 if done:
-                    # print("DONE")
                     break
-
-            # if not dead:
-            #     rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1]}
-            # else:
-            #     rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1]}
-
-            # total_reward += rewards['roach'] + rewards['zergling']
 
             if dead:
                 break
@@ -187,23 +160,3 @@ def run_task(evaluation_config, network_config, reinforce_config):
                                        global_step=episode + 1)
         test_summary_writer.add_scalar(tag="Test/Steps to collect all Fruits", scalar_value=steps + 1,
                                        global_step=episode + 1)
-
-        #         steps += 1
-        #         action, q_values = agent.predict(state)
-        #         if evaluation_config.render:
-        #             env.render()
-        #             pdx_explanation.render_all_pdx(action, env.action_space, q_values, env.action_names, env.reward_types)
-        #             time.sleep(evaluation_config.sleep)
-
-        #         state, reward, done, info = env.step(action)
-
-        #         total_reward += reward
-
-        #     agent.end_episode(state)
-
-        #     test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward,
-        #                                    global_step=episode + 1)
-        #     test_summary_writer.add_scalar(tag="Test/Steps to collect all Fruits", scalar_value=steps + 1,
-        #                                    global_step=episode + 1)
-
-        # env.close()
