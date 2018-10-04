@@ -19,7 +19,6 @@ import numpy as np
 import pandas as pd
 import csv
 import json
-import imutil
 
 def run_task(evaluation_config, network_config, reinforce_config):
     import absl
@@ -141,7 +140,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 pdx_explanation.render_all_pdx(action, 4, q_values, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], ['damageToZealot', 'damageToZergling', 'damageToRoach', 'damageToStalker', 'damageToMarine', 'damageToHydralisk'])
                 time.sleep(evaluation_config.sleep)
                 # This renders an image of the game and saves to test.jpg
-                # imutil.show(self.last_timestep.observation['rgb_screen'], filename="test.jpg")
 
             state, reward, done, dead, info = env.step(action)
 
