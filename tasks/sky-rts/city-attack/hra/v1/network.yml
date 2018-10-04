@@ -1,0 +1,57 @@
+networks:
+  - name: "Enemy Destroyed"
+    layers:
+      - type: "FC"
+        neurons: 50
+
+      - type: "FC"
+        neurons: 50
+
+  - name: "Friend Destroyed"
+    layers:
+        - type: "FC"
+          neurons: 50
+
+        - type: "FC"
+          neurons: 50
+
+  - name: "City Destroyed"
+    layers:
+        - type: "FC"
+          neurons: 50
+
+        - type: "FC"
+          neurons: 50
+
+  - name: "Friend Damaged"
+    layers:
+        - type: "FC"
+          neurons: 50
+
+        - type: "FC"
+          neurons: 50
+  - name: "Enemy Damaged"
+    layers:
+        - type: "FC"
+          neurons: 50
+
+        - type: "FC"
+          neurons: 50
+
+
+input_shape:
+    - 40
+    - 40
+    - 8
+
+layers:
+    - 100
+
+output_shape: 4
+
+network_path: "./saved_models/SkyRTS/city-attack/hra/v1/network"
+summaries_path: "./tensorflow_summaries/SkyRTS/city-attack/hra/v1/network_summary"
+summaries_step: 150
+restore_network: True
+save_steps: 500
+learning_rate: 0.0001

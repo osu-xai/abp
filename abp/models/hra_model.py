@@ -1,78 +1,133 @@
-import os
 import logging
+
+import numpy as np
 import torch
-import copy
 import torch.nn as nn
-from torch.optim import RMSprop
-import numpy as np
+from torch.optim import Adam
+from tensorboardX import SummaryWriter
+
 from .model import Model
-from torch.autograd import Variable
-import numpy as np
+from abp.utils import clear_summary_path
+from abp.utils.models import generate_layers
 
 logger = logging.getLogger('root')
 
+
+def weights_initialize(module):
+    if type(module) == nn.Linear:
+        torch.nn.init.xavier_uniform_(module.weight, gain=nn.init.calculate_gain('relu'))
+        module.bias.data.fill_(0.01)
+
+
+class DecomposedModel(nn.Module):
+    def __init__(self, layers, input_shape, output_shape):
+        super(DecomposedModel, self).__init__()
+
+        layer_modules, input_shape = generate_layers(input_shape, layers)
+        layer_modules["OutputLayer"] = nn.Linear(int(np.prod(input_shape)), output_shape)
+
+        self.layers = nn.Sequential(layer_modules)
+        self.layers.apply(weights_initialize)
+
+    def forward(self, input):
+        x = input
+        for layer in self.layers:
+            if type(layer) == nn.Linear:
+                x = x.view(-1, int(np.prod(x.shape[1:])))
+            x = layer(x)
+        return x
+
+
 class _HRAModel(nn.Module):
+    """ HRAModel """
+
     def __init__(self, network_config):
         super(_HRAModel, self).__init__()
         self.network_config = network_config
-        self.networks = len(network_config.networks)
+        modules = []
         for network_i, network in enumerate(network_config.networks):
-            in_features = int(np.prod(network_config.input_shape))
-            for i, out_features in enumerate(network['layers']):
-                layer = nn.Sequential(
-                    nn.Linear(in_features, out_features),
-                    nn.ReLU())
-                in_features = out_features
-                setattr(self, 'network_{}_layer_{}'.format(network_i, i), layer)
-            q_linear = nn.Linear(in_features, network_config.output_shape[0])
-            setattr(self, 'layer_q_{}'.format(network_i), q_linear)
+            model = DecomposedModel(
+                network["layers"], network_config.input_shape, network_config.output_shape)
+            modules.append(model)
+        self.reward_models = nn.ModuleList(modules)
+        self.combined = False  # If set to true will always return combined Q values
 
     def forward(self, input):
         q_values = []
-        input = input.view((input.shape[0], int(np.prod(input.shape[1:]))))
-        for network_i, network in enumerate(self.network_config.networks):
-            out = input
-            for i in range(len(network['layers'])):
-                out = getattr(self, 'network_{}_layer_{}'.format(network_i, i))(out)
-            q_values.append(getattr(self, 'layer_q_{}'.format(network_i))(out))
-        return q_values
+        for reward_model in self.reward_models:
+            q_value = reward_model(input)
+            q_values.append(q_value)
+        output = torch.stack(q_values)
+        if self.combined:
+            output = output.sum(0)
+        return output
 
 
 class HRAModel(Model):
     """Neural Network with the HRA architecture  """
 
-    def __init__(self, name, network_config, restore=True, learning_rate=0.001):
-        logger.info("Building network for %s" % name)
+    def __init__(self, name, network_config, use_cuda, restore=True):
         self.network_config = network_config
+        self.name = name
+
+        summaries_path = self.network_config.summaries_path + "/" + self.name
+
         model = _HRAModel(network_config)
+        if use_cuda:
+            logger.info("Network %s is using cuda " % self.name)
+            model = model.cuda()
+
         Model.__init__(self, model, name, network_config, restore)
         logger.info("Created network for %s " % self.name)
-        self.optimizer = RMSprop(self.model.parameters(), lr=learning_rate)
-        self.loss_fn = nn.MSELoss()
 
-    def clear_weights(self, reward_type):
-        for type in range(self.model.networks):
-            if type != reward_type:
-                getattr(self.model, 'layer_q_{}'.format(type)).weight.data.fill_(0)
-                network = self.network_config.networks[type]
-                for i in range(len(network['layers'])):
-                    getattr(self.model, 'network_{}_layer_{}'.format(type, i)).apply(self.weights_init)
+        self.optimizer = Adam(self.model.parameters(), lr=self.network_config.learning_rate)
+        self.loss_fn = nn.SmoothL1Loss()
 
-    def display_weights(self):
+        if not network_config.restore_network:
+            clear_summary_path(summaries_path)
+            self.summary = SummaryWriter(log_dir=summaries_path)
+            dummy_input = torch.rand(network_config.input_shape).unsqueeze(0)
+            if use_cuda:
+                dummy_input = dummy_input.cuda()
+            self.summary.add_graph(self.model, dummy_input)
+        else:
+            self.summary = SummaryWriter(log_dir=summaries_path)
+
+    def get_model_for(self, reward_idx):
+        return self.model.reward_models[reward_idx]
+
+    def clear_weights(self, reward_idx):
         for network_i, network in enumerate(self.network_config.networks):
-            out = input
+            model = self.model.reward_models[network_i]
+
+            for layer_id in range(len(network['layers'])):
+                getattr(model.layers, 'Layer_{}'.format(layer_id)).apply(self.weights_init)
+
+            getattr(model.layers, 'OutputLayer'.format(layer_id)).apply(self.weights_init)
+
+    def weights_summary(self, steps):
+        for network_i, network in enumerate(self.network_config.networks):
+            model = self.model.reward_models[network_i]
             for i in range(len(network['layers'])):
-                print('*****************network_{}_layer_{}'.format(network_i, i))
-                l, _ = getattr(self.model, 'network_{}_layer_{}'.format(network_i, i))
-                print(l.weight.data)
-                print('-----------------network_{}_layer_{}'.format(network_i, i))
+                layer_name = "Layer_%d" % i
+                weight_name = 'Sub Network Type:{}/layer{}/weights'.format(network_i, i)
+                bias_name = 'Sub Network Type:{}/layer{}/bias'.format(network_i, i)
+                weight = getattr(model.layers, layer_name).weight.clone().data
+                bias = getattr(model.layers, layer_name).bias.clone().data
+                self.summary.add_histogram(tag=weight_name, values=weight, global_step=steps)
+                self.summary.add_histogram(tag=bias_name, values=bias, global_step=steps)
 
-            print('*************layer_q_{}'.format(network_i))
-            print(getattr(self.model, 'layer_q_{}'.format(network_i)).weight.data)
-            print('-------------layer_q_{}'.format(network_i))
+            weight_name = 'Sub Network Type:{}/Output Layer/weights'.format(network_i, i)
+            bias_name = 'Sub Network Type:{}/Output Layer/bias'.format(network_i, i)
 
-    def top_layer(self, reward_type):
-        return getattr(self.model, 'layer_q_{}'.format(reward_type))
+            weight = getattr(model.layers, "OutputLayer").weight.clone().data
+            bias = getattr(model.layers, "OutputLayer").bias.clone().data
+
+            self.summary.add_histogram(tag=weight_name, values=weight, global_step=steps)
+            self.summary.add_histogram(tag=bias_name, values=bias, global_step=steps)
+
+    def top_layer(self, network_idx):
+        return getattr(self.model.reward_models[network_idx].layers, 'OutputLayer')
 
     def weights_init(self, m):
         classname = m.__class__.__name__
@@ -85,16 +140,38 @@ class HRAModel(Model):
             m.weight.data.normal_(0.0, 0.0)
             m.bias.data.fill_(0)
 
-    def fit(self, states, target, steps):
+    def fit(self, q_values, target_q_values, steps):
+        loss = self.loss_fn(q_values, target_q_values)
+
         self.optimizer.zero_grad()
-        predict = self.model(states)
-        loss = 0
-        for i, p in enumerate(predict):
-            loss += self.loss_fn(p, Variable(torch.Tensor(target[i])))
         loss.backward()
         self.optimizer.step()
 
-    def predict(self, input):
-        q_values = self.predict_batch(input.unsqueeze(0)).squeeze(axis=1)
-        q_actions = np.sum(q_values, axis=0)
-        return np.argmax(q_actions), q_values
+        self.summary.add_scalar(tag="%s/Loss" % (self.name),
+                                scalar_value=float(loss),
+                                global_step=steps)
+
+    def predict(self, input, steps, learning):
+        q_values = self.model(input).squeeze(1)
+        combined_q_values = torch.sum(q_values, 0)
+        values, q_actions = torch.max(combined_q_values, 0)
+
+        if steps % self.network_config.summaries_step == 0 and learning:
+            logger.debug("Adding network summaries!")
+            self.weights_summary(steps)
+            self.summary.add_histogram(tag="%s/Q values" % (self.name),
+                                       values=combined_q_values.clone().cpu().data.numpy(),
+                                       global_step=steps)
+            for network_i, network in enumerate(self.network_config.networks):
+                name = 'Sub Network Type:{}/Q_value'.format(network_i)
+                self.summary.add_histogram(tag=name,
+                                           values=q_values[network_i].clone().cpu().data.numpy(),
+                                           global_step=steps)
+
+        return q_actions.item(), q_values, combined_q_values
+
+    def predict_batch(self, input):
+        q_values = self.model(input)
+        combined_q_values = torch.sum(q_values, 0)
+        values, q_actions = torch.max(combined_q_values, 1)
+        return q_actions, q_values, combined_q_values

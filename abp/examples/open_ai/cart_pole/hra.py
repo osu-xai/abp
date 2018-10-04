@@ -1,5 +1,4 @@
 import gym
-from gym import wrappers
 from abp import HRAAdaptive
 
 
@@ -12,12 +11,13 @@ def run_task(evaluation_config, network_config, reinforce_config):
     threshold_x = 1.5
 
     LEFT, RIGHT = [0, 1]
+    choices = [LEFT, RIGHT]
 
     reward_types = sorted(["pole_angle", "steps", "cart_position"])
 
     agent = HRAAdaptive(name="cartpole",
-                        choices=[LEFT, RIGHT],
-                        reward_types = reward_types,
+                        choices=choices,
+                        reward_types=reward_types,
                         network_config=network_config,
                         reinforce_config=reinforce_config)
 
@@ -25,7 +25,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     for epoch in range(evaluation_config.training_episodes):
         state = env.reset()
         for steps in range(max_episode_steps):
-            action, q_values = agent.predict(state)
+            action, q_values, combined_q_values = agent.predict(state)
             state, reward, done, info = env.step(action)
             cart_position, cart_velocity, pole_angle, pole_velocity = state
 
@@ -44,7 +44,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
             else:
                 agent.reward("cart_position", -1)
 
-
             if done:
                 agent.end_episode(state)
                 break
@@ -60,7 +59,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
             if evaluation_config.render:
                 env.render()
 
-            action, q_values = agent.predict(state)
+            action, q_values, combined_q_values = agent.predict(state)
 
             state, reward, done, info = env.step(action)
 

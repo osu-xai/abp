@@ -1,0 +1,10 @@
+starting_epsilon: 1
+final_epsilon: 0.1
+epsilon_timesteps: 5000
+discount_factor: 0.99
+batch_size: 35
+memory_size: 10000
+replace_frequency: 10
+update_start: 1
+update_steps: 1
+summaries_path: "./tensorflow_summaries/SkyRTS/city-attack/hra/bad/reinforce_summary"

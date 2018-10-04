@@ -4,6 +4,7 @@ import os
 
 from importlib import import_module
 
+
 from abp.configs import NetworkConfig, ReinforceConfig, EvaluationConfig
 from abp.utils import setup_custom_logger
 
@@ -43,7 +44,7 @@ def main():
 
     parser.add_argument(
         '-v', '--verbose',
-        help="Be verbose",
+        help="Be verbose. Logging level INFO",
         action="store_const", dest="loglevel", const=logging.INFO,
     )
 
@@ -65,11 +66,14 @@ def main():
 
     logger.setLevel(args.loglevel)
 
-    evaluation_config = EvaluationConfig.load_from_yaml(os.path.join(args.folder, "evaluation.yml"))
+    evaluation_config_path = os.path.join(args.folder, "evaluation.yml")
+    evaluation_config = EvaluationConfig.load_from_yaml(evaluation_config_path)
 
-    network_config = NetworkConfig.load_from_yaml(os.path.join(args.folder, "network.yml"))
+    network_config_path = os.path.join(args.folder, "network.yml")
+    network_config = NetworkConfig.load_from_yaml(network_config_path)
 
-    reinforce_config = ReinforceConfig.load_from_yaml(os.path.join(args.folder, "reinforce.yml"))
+    reinforce_config_path = os.path.join(args.folder, "reinforce.yml")
+    reinforce_config = ReinforceConfig.load_from_yaml(reinforce_config_path)
 
     if args.eval:
         evaluation_config.training_episodes = 0
