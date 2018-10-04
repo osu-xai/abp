@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd 
 import csv
 import json
-import imutil
 
 import numpy as np
 import pysc2
@@ -316,8 +315,6 @@ class FourTowerSequentialMultiUnit():
         # print(len(unit_types))
         # print("#################")
 
-        # THIS PRINTS OUT A RENDERED IMAGE
-        # imutil.show(self.last_timestep.observation['rgb_screen'], filename="test.jpg")
 
         # print("Damage by roach: {}".format(damageByRoach))
         # print("Damage by zergling: {}".format(damageByZergling))
