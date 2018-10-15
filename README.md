@@ -4,7 +4,7 @@ Adaptation Based Programming
 ## Installation
 ```bash
    cd abp
-   pip3 install -r requirement.txt
+   pip3 install -r requirements.txt
    python setup.py install
 ```
 
@@ -35,6 +35,12 @@ Adaptation Based Programming
     ```bash
     python -m abp.trainer.task_runner -f tasks/fruit_collection/hra/v1 -t abp.examples.open_ai.fruit_collection.hra -r
     ```
+
+    Example using StarCraft II:
+    ```bash
+    python -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+    ```
+
 
 * Visualize Results:
     ```tensorboard --logdir=tensorflow_summaries```
