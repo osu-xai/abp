@@ -38,8 +38,7 @@ networks:
 input_shape:
     - 8
 
-output_shape:
-     - 4
+output_shape: 4
 
 shared_layers: [] #TODO
 aggeregator: "average" #TODO
