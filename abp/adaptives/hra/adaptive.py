@@ -66,7 +66,8 @@ class HRAAdaptive(object):
 
     def __del__(self):
         self.save()
-        self.summary.close()
+        if hasattr(self, 'summary'):
+            self.summary.close()
 
     def should_explore(self):
         self.epsilon = self.epsilon_schedule.value(self.steps)
