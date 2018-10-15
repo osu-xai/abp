@@ -25,10 +25,9 @@ def run_task(evaluation_config, network_config, reinforce_config):
     absl.flags.FLAGS(sys.argv[:1])
     env = FourTowerSequential()
 
-    # env = gym.make(evaluation_config.env)
     max_episode_steps = 100
     state = env.reset()
-    print(state)
+    print('Initial state is: {}'.format(state))
     choices = [0,1,2,3]
     pdx_explanation = PDX()
 
@@ -51,7 +50,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     # Training Episodes
     for episode in range(evaluation_config.training_episodes):
-        # print("RESET")
         state = env.reset()
         total_reward = 0
         done = False
@@ -65,32 +63,41 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         while deciding:
             steps += 1
-            action, q_values = agent.predict(state[0])
-            # print(q_values)
+            action, q_values, combined_q_values = agent.predict(state[0])
             state, reward, done, dead, info = env.step(action)
 
             while running:
                 action = 4
                 state, reward, done, dead, info = env.step(action)
                 if done:
-                    # print("DONE")
                     break
 
+            # TODO: Explain the meaning of the numerical constant 200 in this situation
+            # eg. MaxPossibleDamage = 200 or RoachZerglingRatio = 200
             if not dead:
-                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1]}
-                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1], 'damageByRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][2], 'damageByZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][3], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][4], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][5]}
-                rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1], 'damageByRoach': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 1][2]) / 200), 'damageByZergling': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 1][3]) / 200), 'damageToRoach': (env.decomposed_rewards[len(env.decomposed_rewards) - 1][4] / 200), 'damageToZergling': (env.decomposed_rewards[len(env.decomposed_rewards) - 1][5] / 200)}
+                rewards = {
+                    'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0],
+                    'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1],
+                    'damageByRoach': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 1][2]) / 200),
+                    'damageByZergling': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 1][3]) / 200),
+                    'damageToRoach': (env.decomposed_rewards[len(env.decomposed_rewards) - 1][4] / 200),
+                    'damageToZergling': (env.decomposed_rewards[len(env.decomposed_rewards) - 1][5] / 200)
+                }
 
             else:
-                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1]}
-                # rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1], 'damageByRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][2], 'damageByZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][3], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][4], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][5]}
-                rewards = {'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1], 'damageByRoach': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 2][2]) / 200), 'damageByZergling': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 2][3]) / 200), 'damageToRoach': (env.decomposed_rewards[len(env.decomposed_rewards) - 2][4] / 200), 'damageToZergling': (env.decomposed_rewards[len(env.decomposed_rewards) - 2][5] / 200)}
+                rewards = {
+                    'roach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0],
+                    'zergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1],
+                    'damageByRoach': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 2][2]) / 200),
+                    'damageByZergling': (-(env.decomposed_rewards[len(env.decomposed_rewards) - 2][3]) / 200),
+                    'damageToRoach': (env.decomposed_rewards[len(env.decomposed_rewards) - 2][4] / 200),
+                    'damageToZergling': (env.decomposed_rewards[len(env.decomposed_rewards) - 2][5] / 200)
+                }
 
 
             for reward_type in rewards.keys():
                 agent.reward(reward_type, rewards[reward_type])
-
-            total_reward += rewards['roach'] + rewards['zergling'] + rewards['damageByRoach'] + rewards['damageByZergling'] + rewards['damageToRoach'] + rewards['damageToZergling']\
+                total_reward += rewards[reward_type]
 
             if dead:
                 break
@@ -108,9 +115,9 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     agent.disable_learning()
 
-    # TODO: Start a new env that has rgb enabled for 
+    # TODO: Start a new env that has rgb enabled for visualization
 
-        # Test Episodes
+    # Test Episodes
     for episode in range(evaluation_config.test_episodes):
         state = env.reset()
         total_reward = 0
