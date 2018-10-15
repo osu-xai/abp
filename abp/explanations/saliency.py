@@ -4,7 +4,8 @@ import torch
 import torchvision
 import numpy as np
 
-from saliency import SaliencyMethod, MapType, generate_saliency
+# TODO: These modules do not yet exist in the repository
+#from saliency import SaliencyMethod, MapType, generate_saliency
 
 use_cuda = torch.cuda.is_available()
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
