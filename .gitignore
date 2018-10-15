@@ -23,3 +23,6 @@ __pycache__/
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
 
+saved_saliencies
+.idea/
+build/

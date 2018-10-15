@@ -1,0 +1,7 @@
+name: "SkyRTS"
+env: "SkyRTS-v0"
+summaries_path: "./tensorflow_summaries/SkyRTS/city-attack/hra/v1/evaluation_summary"
+test_episodes: 1
+contrastive: False 
+training_episodes: 20000
+render: False
