@@ -1,4 +1,4 @@
-torch==0.3.1
+torch
 gym[atari]
 pysc2
 numpy
@@ -8,5 +8,7 @@ tensorboardX
 openpyxl
 baselines
 pandas
-git+http://github.com/greydanus/excitationbp.git#egg=excitationbp
+git+https://github.com/greydanus/excitationbp.git#egg=excitationbp
+git+https://github.com/lwneal/imutil
+pyyaml
 
