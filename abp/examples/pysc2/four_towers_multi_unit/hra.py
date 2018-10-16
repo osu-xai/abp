@@ -71,7 +71,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         while deciding:
             steps += 1
-            action, q_values = agent.predict(state)
+            action, q_values, _ = agent.predict(state)
             state, reward, done, dead, info = env.step(action)
 
             while running:
