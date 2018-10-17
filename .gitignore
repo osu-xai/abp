@@ -17,6 +17,7 @@ log
 *.synctex.gz
 runs/
 __pycache__/
+.coverage
 
 # User-specific stuff
 .idea/**/workspace.xml
