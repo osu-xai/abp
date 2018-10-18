@@ -1,0 +1,8 @@
+name: "Fruit Collection"
+env: "FruitCollection-v0"
+summaries_path: "./tensorflow_summaries/fruit_collection/hra/v2/evaluation_summary"
+test_episodes: 1
+training_episodes: 1
+render: False
+sleep: 0
+save_steps: 200
