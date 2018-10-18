@@ -1,3 +1,4 @@
+import time
 import gym
 from abp import DQNAdaptive
 from abp.utils import clear_summary_path
@@ -5,14 +6,19 @@ from tensorboardX import SummaryWriter
 
 
 def run_task(evaluation_config, network_config, reinforce_config, log=True):
+    start_time = time.time()
+    print('Creating Gym environment for CartPole task')
     env = gym.make(evaluation_config.env)
     max_episode_steps = env._max_episode_steps
     state = env.reset()
+    print('Created Gym environment in {:.03f} sec'.format(time.time() - start_time))
 
     threshold_angle = 0.087266463
     threshold_x = 1.5
     LEFT, RIGHT = [0, 1]
 
+    start_time = time.time()
+    print('Creating DQNAdaptive agent for CartPole task')
     agent = DQNAdaptive(name="cartpole",
                         choices=[LEFT, RIGHT],
                         network_config=network_config,
@@ -26,7 +32,10 @@ def run_task(evaluation_config, network_config, reinforce_config, log=True):
         test_summaries_path = evaluation_config.summaries_path + "/test"
         clear_summary_path(test_summaries_path)
         test_summary_writer = SummaryWriter(test_summaries_path)
+    print('Created agent in {:.03f} sec'.format(time.time() - start_time))
 
+    start_time = time.time()
+    print('Training CartPole for {} episodes...'.format(evaluation_config.training_episodes))
     # Training Episodes
     for episode in range(evaluation_config.training_episodes):
         state = env.reset()
@@ -60,8 +69,8 @@ def run_task(evaluation_config, network_config, reinforce_config, log=True):
                     train_summary_writer.add_scalar(tag="Episode Reward", scalar_value=total_reward,
                                                     global_step=episode + 1)
                 break
-
     # train_summary_writer.flush()
+    print('CartPole training finished after {:.03f}'.format(time.time() - start_time))
 
     agent.disable_learning()
 
