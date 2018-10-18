@@ -3,4 +3,4 @@ env: "CartPole-v0"
 summaries_path: "./tensorflow_summaries/cart_pole/dqn/v1/evaluation_summary"
 test_episodes: 1
 training_episodes: 1
-render: True
+render: False
