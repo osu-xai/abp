@@ -64,7 +64,7 @@ networks:
           neurons: 120
 
 input_shape:
-    - 296
+    - 432
 
 output_shape: 4
 
