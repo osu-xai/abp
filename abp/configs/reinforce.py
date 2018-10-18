@@ -13,7 +13,9 @@ default_reinforce_config = {
     "update_start": 1,  # Will start update after n steps
     "beta_timesteps": 10000,
     "beta_initial": 0.2,
-    "beta_final": 1.0
+    "beta_final": 1.0,
+    "decay_steps": 250,
+    "decay_rate": .96,
 }
 
 
@@ -64,3 +66,9 @@ class ReinforceConfig(BaseConfig):
 
     beta_final = property(BaseConfig.get_property("beta_final"),
                           BaseConfig.set_property("beta_final"))
+
+    decay_steps = property(BaseConfig.get_property("decay_steps"),
+                          BaseConfig.set_property("decay_steps"))
+
+    decay_rate = property(BaseConfig.get_property("decay_rate"),
+                          BaseConfig.set_property("decay_rate"))
