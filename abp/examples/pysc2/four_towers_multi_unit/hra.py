@@ -25,7 +25,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
     absl.flags.FLAGS(sys.argv[:1])
     env = FourTowerSequentialMultiUnit()
 
-    # env = gym.make(evaluation_config.env)
     max_episode_steps = 100
     state = env.reset()
     # print(state)
