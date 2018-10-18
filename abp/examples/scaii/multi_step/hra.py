@@ -87,8 +87,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
              q_values,
              combined_q_values) = choose_tower.predict(state.state.flatten())
 
-            q_values = q_values.data.numpy()
-            combined_q_values = combined_q_values.data.numpy()
+            q_values = q_values.data.cpu().numpy()
+            combined_q_values = combined_q_values.data.cpu().numpy()
             saliencies = saliency_explanation.generate_saliencies(
                 step, state.state.flatten(),
                 choice_descriptions,
