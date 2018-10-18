@@ -1,4 +1,5 @@
 import gym
+from gym import wrappers
 from abp import HRAAdaptive
 
 
@@ -11,13 +12,12 @@ def run_task(evaluation_config, network_config, reinforce_config):
     threshold_x = 1.5
 
     LEFT, RIGHT = [0, 1]
-    choices = [LEFT, RIGHT]
 
     reward_types = sorted(["pole_angle", "steps", "cart_position"])
 
     agent = HRAAdaptive(name="cartpole",
-                        choices=choices,
-                        reward_types=reward_types,
+                        choices=[LEFT, RIGHT],
+                        reward_types = reward_types,
                         network_config=network_config,
                         reinforce_config=reinforce_config)
 
@@ -43,6 +43,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 agent.reward("cart_position", 1)
             else:
                 agent.reward("cart_position", -1)
+
 
             if done:
                 agent.end_episode(state)
