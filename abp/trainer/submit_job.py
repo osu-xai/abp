@@ -102,8 +102,7 @@ def main():
     try:
         response = request.execute()
         # You can put your code for handling success (if any) here.
-
-    except errors.HttpError, err:
+    except errors.HttpError as err:
         # Do whatever error response is appropriate for your application.
         # For this example, just send some text to the logs.
         # You need to import logging for this to work.
