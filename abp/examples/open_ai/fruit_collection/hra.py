@@ -41,7 +41,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         steps = 0
         while not done:
             steps += 1
-            action, q_values = agent.predict(state)
+            action, q_values, combined_q_values = agent.predict(state)
             state, rewards, done, info = env.step(action, decompose_reward = True)
 
             for reward_type in rewards.keys():
@@ -66,7 +66,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         while not done:
             steps += 1
-            action, q_values = agent.predict(state)
+            action, q_values, combined_q_values = agent.predict(state)
             if evaluation_config.render:
                 env.render()
                 pdx_explanation.render_all_pdx(action, env.action_space, q_values, env.action_names, env.reward_types)
