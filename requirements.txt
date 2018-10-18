@@ -9,6 +9,6 @@ openpyxl
 baselines
 pandas
 git+https://github.com/greydanus/excitationbp.git#egg=excitationbp
-git+https://github.com/lwneal/imutil
+git+https://github.com/lwneal/imutil.git#egg=imutil
 pyyaml
 coverage
