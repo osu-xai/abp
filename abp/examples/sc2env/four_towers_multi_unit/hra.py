@@ -7,7 +7,7 @@ from abp.utils import clear_summary_path
 from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
-from abp.openai.envs.four_towers_multi_unit_pysc2.FourTowerSequential import FourTowerSequentialMultiUnit
+from sc2env.environments.four_towers_multi_unit import FourTowersSequentialMultiUnitEnvironment
 
 from absl import app
 from absl import flags
@@ -21,9 +21,7 @@ import csv
 import json
 
 def run_task(evaluation_config, network_config, reinforce_config):
-    import absl
-    absl.flags.FLAGS(sys.argv[:1])
-    env = FourTowerSequentialMultiUnit()
+    env = FourTowersSequentialMultiUnitEnvironment()
 
     max_episode_steps = 100
     state = env.reset()
@@ -130,7 +128,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         while deciding:
             steps += 1
-            action, q_values = agent.predict(state)
+            action, q_values, combined_q_values = agent.predict(state)
             print(action)
             print(q_values)
 
