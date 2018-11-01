@@ -2,7 +2,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 setup(name='abp',
-      version='0.1.1',
+      version='0.2.0',
       description='Reinforcement Learning Library in python',
       author='Magesh Kumar Murali',
       author_email='m.magesh.66@gmail.com',
