@@ -1,0 +1,7 @@
+name: "Collect Shards"
+env: "FruitCollection-v0"
+summaries_path: "./tensorflow_summaries/pysc2/collect_shards/dqn/v1/evaluation_summary"
+test_episodes: 1
+training_episodes: 2
+render: False
+sleep: 0.1
