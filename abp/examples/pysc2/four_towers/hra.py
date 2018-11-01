@@ -128,7 +128,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         while deciding:
             steps += 1
-            action, q_values = agent.predict(state[0])
+            action, q_values, combined_q_values = agent.predict(state[0])
             print(action)
             print(q_values)
 
