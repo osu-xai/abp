@@ -3,9 +3,18 @@ Adaptation Based Programming
 
 ## Installation
 ```bash
-   cd abp
-   pip3 install -r requirements.txt
-   python setup.py install
+    git clone https://github.com/osu-xai/abp
+    cd abp
+    pip3 install -r requirements.txt
+    python setup.py install
+```
+
+## Testing
+
+Run unit and integration tests with:
+
+```bash
+    ./test.sh
 ```
 
 ## Usage
@@ -38,12 +47,13 @@ Adaptation Based Programming
 
     Example using StarCraft II:
     ```bash
-    python -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+    python -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
     ```
 
 
 * Visualize Results:
     ```tensorboard --logdir=tensorflow_summaries```
+
 
 ### Using CloudML
 To run the job using cloud ML use the following commands
