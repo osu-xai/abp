@@ -12,9 +12,6 @@ from .utils.action import ActionWrapper
 
 
 def run_task(evaluation_config, network_config, reinforce_config):
-    flags.DEFINE_bool("use_feature_units", True,
-                      "Whether to include feature units.")
-
     flags.FLAGS(sys.argv[:1])  # TODO Fix this!
 
     env = sc2_env.SC2Env(map_name="CollectMineralShards",
