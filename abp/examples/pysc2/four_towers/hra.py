@@ -110,12 +110,10 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         print("EPISODE REWARD {}".format(rewards['roach'] + rewards['zergling']))
         print("EPISODE {}".format(episode))
-            
+
     # TODO: Display XDAPS
 
     agent.disable_learning()
-
-    # TODO: Start a new env that has rgb enabled for visualization
 
     # Test Episodes
     for episode in range(evaluation_config.test_episodes):
@@ -145,7 +143,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 action = 4
                 state, reward, done, dead, info = env.step(action)
                 if done:
-                    # print("DONE")
                     break
 
             if dead:
@@ -157,23 +154,3 @@ def run_task(evaluation_config, network_config, reinforce_config):
                                        global_step=episode + 1)
         test_summary_writer.add_scalar(tag="Test/Steps to collect all Fruits", scalar_value=steps + 1,
                                        global_step=episode + 1)
-
-        #         steps += 1
-        #         action, q_values = agent.predict(state)
-        #         if evaluation_config.render:
-        #             env.render()
-        #             pdx_explanation.render_all_pdx(action, env.action_space, q_values, env.action_names, env.reward_types)
-        #             time.sleep(evaluation_config.sleep)
-
-        #         state, reward, done, info = env.step(action)
-
-        #         total_reward += reward
-
-        #     agent.end_episode(state)
-
-        #     test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward,
-        #                                    global_step=episode + 1)
-        #     test_summary_writer.add_scalar(tag="Test/Steps to collect all Fruits", scalar_value=steps + 1,
-        #                                    global_step=episode + 1)
-
-        # env.close()
