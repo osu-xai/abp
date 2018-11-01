@@ -3,7 +3,7 @@ import time
 
 from absl import flags
 from pysc2.env import sc2_env, environment
-
+from pysc2.lib import features
 
 from abp import DQNAdaptive
 from abp.utils import clear_summary_path
@@ -23,9 +23,10 @@ def run_task(evaluation_config, network_config, reinforce_config):
                          save_replay_episodes=0,
                          replay_dir='replay',
                          game_steps_per_episode=10000,
-                         use_feature_units=True,
-                         feature_screen_size=32,
-                         feature_minimap_size=32)
+                         agent_interface_format=features.AgentInterfaceFormat(
+                             feature_dimensions=features.Dimensions(screen=32, minimap=32),
+                             use_feature_units=True),
+                         )
 
     choices = ["Up", "Down", "Left", "Right"]
 
