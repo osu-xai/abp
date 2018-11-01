@@ -4,8 +4,7 @@ import torch
 import torchvision
 import numpy as np
 
-# TODO: These modules do not yet exist in the repository
-#from saliency import SaliencyMethod, MapType, generate_saliency
+from saliency import SaliencyMethod, MapType, generate_saliency
 
 use_cuda = torch.cuda.is_available()
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
@@ -141,4 +140,6 @@ class Saliency(object):
         if type(choice) == int:
             choice = [choice]
 
-        return generate_saliency(model, state, choice, type=saliency_method)
+        # 2018-10-31: The latest version of generate_saliency expects input of size 40x40x8
+        # TODO: Ensure that all saliency generation functions work for any input shape
+        return generate_saliency(model, state, choice, 0, type=saliency_method)

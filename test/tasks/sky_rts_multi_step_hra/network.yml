@@ -35,7 +35,7 @@ networks:
 input_shape:
     - 40
     - 40
-    - 6
+    - 8
 
 layers:
     - 100

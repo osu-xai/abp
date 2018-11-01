@@ -163,8 +163,8 @@ class FourTowersSequential(gym.Env):
     def get_vespene_gas_count(self, obs):
         return 0
 
-    def unpack_timestep(self, timestep):  
-        observation = timestep 
+    def unpack_timestep(self, timestep):
+        observation = timestep
         state = timestep.observation.feature_screen[6]
         reward = timestep.observation.score_cumulative[0]
         done = timestep.last()

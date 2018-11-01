@@ -1,3 +1,4 @@
+import numpy as np
 import operator
 import logging
 
@@ -10,6 +11,31 @@ from abp import HRAAdaptive
 from abp.explanations import Saliency
 
 logger = logging.getLogger('root')
+
+STATE_SHAPE = (40, 40, 8)
+
+
+# Hack to fix incompatibilities between current versions of ABP and SCAII
+# TODO 2018-10-31: Fix version mismatches
+def flatten_state(state_object):
+    state_map = np.zeros(STATE_SHAPE)
+    if state_object.state.shape != state_map.shape:
+        print('Warning: Truncating state map for compatibility')
+    channels = state_object.state.shape[-1]
+    state_map[:, :, :channels] = state_object.state
+    return state_map.flatten()
+
+
+# Hack to fix incompatibilities between current versions of ABP and SCAII
+# TODO 2018-10-31: Fix version mismatches
+def format_saliency_layers(layer_names, saliency):
+    #saliency = np.moveaxis(saliency, -1, 0)
+    if saliency.shape[-1] != len(layer_names):
+        print("Warning: truncating saliency channels for compatibility")
+        channels = min(saliency.shape[-1], len(layer_names))
+        saliency = saliency[:, :, :channels]
+        layer_names = layer_names[:channels]
+    return layer_names, saliency
 
 
 def run_task(evaluation_config, network_config, reinforce_config):
@@ -51,9 +77,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
         while not state.is_terminal():
             step += 1
-            (tower_to_kill,
-             q_values,
-             combined_q_values) = choose_tower.predict(state.state.flatten())
+            state_tensor = flatten_state(state)
+            tower_to_kill, q_values, combined_q_values = choose_tower.predict(state_tensor)
 
             action = env.new_action()
             action.attack_quadrant(tower_to_kill)
@@ -64,7 +89,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 choose_tower.reward(reward_type, reward)
                 total_reward += reward
 
-        choose_tower.end_episode(state.state.flatten())
+        choose_tower.end_episode(flatten_state(state))
 
         logger.debug("Episode %d : %d, Step: %d" % (episode + 1, total_reward, step))
 
@@ -85,27 +110,31 @@ def run_task(evaluation_config, network_config, reinforce_config):
             explanation = SkyExplanation("Tower Capture", (40, 40))
             (tower_to_kill,
              q_values,
-             combined_q_values) = choose_tower.predict(state.state.flatten())
+             combined_q_values) = choose_tower.predict(flatten_state(state))
 
             q_values = q_values.data.cpu().numpy()
             combined_q_values = combined_q_values.data.cpu().numpy()
             saliencies = saliency_explanation.generate_saliencies(
-                step, state.state.flatten(),
+                step, flatten_state(state),
                 choice_descriptions,
                 layer_names,
-                reshape=state.state.shape)
+                reshape=STATE_SHAPE)
 
             decomposed_q_chart = BarChart("Q Values", "Actions", "QVal By Reward Type")
             for choice_idx, choice in enumerate(choices):
                 key = choice_descriptions[choice_idx]
                 group = BarGroup("Attack {}".format(key), saliency_key=key)
-                explanation.add_layers(layer_names, saliencies["all"], key)
+
+                layer_names, saliency = format_saliency_layers(layer_names, saliencies[choice]["all"])
+                explanation.add_layers(layer_names, saliency, key)
 
                 for reward_index, reward_type in enumerate(reward_types):
                     key = "{}_{}".format(choice, reward_type)
                     bar = Bar(reward_type, q_values[reward_index][choice_idx], saliency_key=key)
                     group.add_bar(bar)
-                    explanation.add_layers(layer_names, saliencies[reward_type], key=key)
+
+                    layer_names, saliency = format_saliency_layers(layer_names, saliencies[choice][reward_type])
+                    explanation.add_layers(layer_names, saliency, key=key)
 
                 decomposed_q_chart.add_bar_group(group)
 
@@ -116,8 +145,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
             action.skip = True
 
             state = env.act(action, explanation=explanation)
-
-            time.sleep(0.5)
 
             total_reward += state.reward
 
