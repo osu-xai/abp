@@ -1,4 +1,5 @@
 torch
+torchvision
 gym[atari]
 pysc2
 numpy
@@ -12,4 +13,6 @@ pyyaml
 coverage
 git+https://github.com/greydanus/excitationbp.git#egg=excitationbp
 git+https://github.com/lwneal/imutil.git#egg=imutil
-sc2env
+git+https://github.com/lwneal/libscaii#egg=scaii
+git+https://github.com/osu-xai/sc2env#egg=sc2env
+git+https://github.com/osu-xai/pytorch-saliency#egg=pytorch-saliency
