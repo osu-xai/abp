@@ -41,7 +41,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     networks = []
     for reward_type in reward_types:
         name = reward_type
-        layers = [250]
+        layers = [{"type": "FC", "neurons": 32}]
         networks.append({"name": name, "layers": layers})
 
     network_config.networks = networks
@@ -126,13 +126,12 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
             if evaluation_config.render:
                 action_index = choices.index(action)
-                combined_q_values = combined_q_values.data.numpy()
-                q_values = q_values.data.numpy()
+                combined_q_values = combined_q_values.cpu().data.numpy()
+                q_values = q_values.cpu().data.numpy()
                 pdx_explanation.render_decomposed_rewards(
                     action_index, combined_q_values, q_values, choices, reward_names)
                 pdx_explanation.render_all_pdx(action_index, len(
                     choices), q_values, choices, reward_names)
-                time.sleep(1)
 
             model_time += (time.time() - model_start_time)
 

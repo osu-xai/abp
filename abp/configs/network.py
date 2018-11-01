@@ -9,7 +9,7 @@ from abp.configs import BaseConfig
 
 default_network_config = {
     "input_shape": [10],  # This is for the shape of the input layer
-    "layers": [100, 100],  # Hidden layers shape
+    "layers": [{"type": "FC", "neurons": 100}] * 2,  # Two fully-connected layers of 100 units each
     "output_shape": [5],  # the number of ouput layers
     "restore_network": True,  # restore from the saved model.
     "network_path": None,  # path used to load/store the network.

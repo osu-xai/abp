@@ -51,7 +51,6 @@ class HRAAdaptive(object):
                                                final_p=self.reinforce_config.final_epsilon)
 
         self.reset()
-
         self.eval_model = HRAModel(self.name + "_eval", self.network_config, use_cuda)
         self.target_model = HRAModel(self.name + "_target", self.network_config, use_cuda)
 
