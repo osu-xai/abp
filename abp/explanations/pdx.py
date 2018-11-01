@@ -109,6 +109,7 @@ class PDX(object):
         title = "PDX (%s, %s)" % (action_name, target_action_name)
 
         pdx = self.get_pdx(q_values, current_action, [target_action])
+        pdx = [x[0].data.cpu().numpy() for x in pdx]
         pdx = np.array(pdx).squeeze()
         sorted_pdx, reward_names = zip(*sorted(zip(pdx, reward_types), key=lambda x: -x[0]))
 
