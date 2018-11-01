@@ -7,7 +7,8 @@ from abp.utils import clear_summary_path
 from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
-from abp.openai.envs.four_towers_pysc2.FourTowerSequential import FourTowerSequential
+
+from sc2env.environments.four_towers_sequential import FourTowersSequentialEnvironment
 
 from absl import app
 from absl import flags
@@ -23,7 +24,7 @@ import json
 def run_task(evaluation_config, network_config, reinforce_config):
     import absl
     absl.flags.FLAGS(sys.argv[:1])
-    env = FourTowerSequential()
+    env = FourTowersSequentialEnvironment()
 
     max_episode_steps = 100
     state = env.reset()
