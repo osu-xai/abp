@@ -11,8 +11,8 @@ baselines
 pandas
 pyyaml
 coverage
+imutil
 git+https://github.com/greydanus/excitationbp.git#egg=excitationbp
-git+https://github.com/lwneal/imutil.git#egg=imutil
 git+https://github.com/lwneal/libscaii#egg=scaii
-git+https://github.com/osu-xai/sc2env#egg=sc2env
-git+https://github.com/osu-xai/pytorch-saliency#egg=pytorch-saliency
+git+https://github.com/osu-xai/sc2env
+git+https://github.com/osu-xai/pytorch-saliency
