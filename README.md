@@ -43,6 +43,7 @@ Run unit and integration tests with:
     Minimal Example:
     ```bash
     python -m abp.trainer.task_runner -f tasks/fruit_collection/hra/v1 -t abp.examples.open_ai.fruit_collection.hra -r
+    python -m abp.trainer.task_runner -f tasks/four_towers_friendly_units/hra/v1 -t abp.examples.pysc2.four_towers_friendly_units.hra
     ```
 
     Example using StarCraft II:
