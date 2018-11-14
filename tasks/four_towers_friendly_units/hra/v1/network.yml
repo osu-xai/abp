@@ -1,0 +1,69 @@
+# [0, 4, 9, 49, 54, 59, 64, 89, 94, 99]
+networks:
+
+  - name: "damageToMarine"
+    layers:
+        - 250
+
+  - name: "damageByMarine"
+    layers:
+        - 250
+
+  - name: "damageToZergling"
+    layers:
+        - 250
+
+  - name: "damageByZergling"
+    layers:
+        - 250
+
+  - name: "damageToMarauder"
+    layers:
+        - 250
+
+  - name: "damageByMarauder"
+    layers:
+        - 250
+
+  - name: "damageToHydralisk"
+    layers:
+        - 250
+
+  - name: "damageByHydralisk"
+    layers:
+        - 250
+
+  - name: "damageToThor"
+    layers:
+        - 250
+
+  - name: "damageByThor"
+    layers:
+        - 250
+
+  - name: "damageToUltralisk"
+    layers:
+        - 250
+
+  - name: "damageByUltralisk"
+    layers:
+        - 250
+
+  - name: "penalty"
+    layers:
+        - 250
+
+
+input_shape:
+    - 22400
+
+output_shape:
+     - 4
+
+shared_layers: [] #TODO
+aggeregator: "average" #TODO
+
+network_path: "./saved_models/four_towers_friendly_units/hra/v1.ckpt"
+summaries_path: "./tensorflow_summaries/four_towers_friendly_units/hra/v1/network_summary"
+summaries_step: 100
+restore_network: False
