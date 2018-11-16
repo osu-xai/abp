@@ -48,6 +48,7 @@ Run unit and integration tests with:
     Example using StarCraft II:
     ```bash
     python -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+    python -m abp.trainer.task_runner -f tasks/four_towers_friendly_units/hra/v1 -t abp.examples.pysc2.four_towers_friendly_units.hra
     ```
 
 
