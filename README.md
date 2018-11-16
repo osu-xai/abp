@@ -1,12 +1,12 @@
 Adaptation Based Programming
-=============================
+============================
 
 ## Installation
 ```bash
     git clone https://github.com/osu-xai/abp
     cd abp
     pip3 install -r requirements.txt
-    python setup.py install
+    python3 setup.py install
 ```
 
 ## Testing
