@@ -77,4 +77,4 @@ aggeregator: "average" #TODO
 network_path: "./saved_models/four_towers_friendly_units/hra/v1.ckpt"
 summaries_path: "./tensorflow_summaries/four_towers_friendly_units/hra/v1/network_summary"
 summaries_step: 100
-restore_network: False
+restore_network: True

@@ -90,7 +90,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
             while deciding:
                 rewards = {}
                 steps += 1
-                action, q_values = agent.predict(np.array(state))
+                action, q_values,combined_q_values = agent.predict(np.array(state))
      #           print(action)
                 #time.sleep(0.5)
                 state, done, dead = env.step(action)
@@ -140,7 +140,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
             
             while deciding:
                 steps += 1
-                action, q_values = agent.predict(np.array(state))
+                action, q_values,combined_q_values = agent.predict(np.array(state))
  #               print(action)
 #                print(q_values)
                 '''
