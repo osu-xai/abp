@@ -162,8 +162,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
                                                 'penalty'])
                 
                 time.sleep(evaluation_config.sleep)
+            
             """
-                
             state, done, dead = env.step(action)
 
             while running:
