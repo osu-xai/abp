@@ -121,8 +121,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
         train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
                                         global_step = episode + 1)
 
-        print("EPISODE REWARD {}".format(total_reward))
-        print("EPISODE {}".format(episode))
+ #       print("EPISODE REWARD {}".format(total_reward))
+#        print("EPISODE {}".format(episode))
         
     agent.disable_learning()
 
@@ -139,7 +139,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         while deciding:
             steps += 1
             action, q_values,combined_q_values = agent.predict(np.array(state))
-            
+            """
             print(action)
             print(q_values)
             
@@ -163,7 +163,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 
                 time.sleep(evaluation_config.sleep)
             
-                
+            """
             state, done, dead = env.step(action)
 
             while running:
