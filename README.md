@@ -20,7 +20,12 @@ Run unit and integration tests with:
 ## Usage
 
 ### Local Run
-* Start Visdom: ```visdom```
+* In a separate terminal, start Visdom and keep it running:
+
+```
+visdom
+```
+
 * Train :
     ```bash
     python -m abp.trainer.task_runner
