@@ -9,7 +9,7 @@ from abp.utils import clear_summary_path
 from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
-from abp.openai.envs.four_towers_friendly_units.FourTowerSequentialFriendlyUnits import FourTowerSequentialFriendlyUnits
+from abp.openai.envs.four_towers_friendly_units.FourTowerSequentialFriendlyUnits_onehot import FourTowerSequentialFriendlyUnits
 
 def run_task(evaluation_config, network_config, reinforce_config):
     flags.FLAGS(sys.argv[:1])
@@ -72,7 +72,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     
     # Training Episodes
     
-    for episode in range(evaluation_config.training_episodes):
+    for episode in range(evaluation_config.test_episodes):
         state = env.reset()
         total_reward = 0
         done = False
@@ -121,8 +121,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
         train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
                                         global_step = episode + 1)
 
-        print("EPISODE REWARD {}".format(total_reward))
-        print("EPISODE {}".format(episode))
+ #       print("EPISODE REWARD {}".format(total_reward))
+#        print("EPISODE {}".format(episode))
         
     agent.disable_learning()
 
@@ -139,6 +139,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         while deciding:
             steps += 1
             action, q_values,combined_q_values = agent.predict(np.array(state))
+            """
             print(action)
             print(q_values)
             
@@ -162,7 +163,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 
                 time.sleep(evaluation_config.sleep)
             
-                
+            """
             state, done, dead = env.step(action)
 
             while running:

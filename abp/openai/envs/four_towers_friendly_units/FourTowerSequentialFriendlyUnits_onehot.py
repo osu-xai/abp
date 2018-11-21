@@ -10,8 +10,8 @@ SCREEN_SIZE = 40
 class FourTowerSequentialFriendlyUnits():
     def __init__(self):
  #       mapName = 'FoutTowersWithFridenlyUnits'
- #       mapName = 'FoutTowersWithFridenlyUnitsFixedEnemies'
-        mapName = 'FoutTowersWithFridenlyUnitsFixedEnemiesFixedPosition'
+        mapName = 'FoutTowersWithFridenlyUnitsFixedEnemies'
+ #       mapName = 'FoutTowersWithFridenlyUnitsFixedEnemiesFixedPosition'
         self.register_map('/maps/',mapName)
         self.sc2_env = sc2_env.SC2Env(
           map_name = mapName,
@@ -130,7 +130,8 @@ class FourTowerSequentialFriendlyUnits():
         tstate = np.append(tstate, self.int_map_to_onehot(np.array(state[6]),UNIT_TYPE), axis=0)
 
         #append unit hit point
-        tstate = np.append(tstate, self.normalizeExceptZeros(state[8]), axis=0)
+        tstate = np.append(tstate, self.normalizeExceptZeros(state[8],
+                                                             (0, 500)), axis=0)
 
         #extend unit density
         MAX_UNIT_DENSITY = 4

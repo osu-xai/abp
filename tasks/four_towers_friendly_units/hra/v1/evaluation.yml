@@ -1,7 +1,7 @@
 name: "Four Towers With Friendly units Sequential"
 env: "four_towers_friendly_units-v0"
 summaries_path: "./tensorflow_summaries/four_towers_friendly_units/hra/v1/evaluation_summary"
-test_episodes: 10
-training_episodes: 30
+test_episodes: 20
+training_episodes: 20
 render: True
 sleep: 5
