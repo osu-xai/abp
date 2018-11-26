@@ -72,7 +72,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     
     # Training Episodes
     
-    for episode in range(evaluation_config.test_episodes):
+    for episode in range(evaluation_config.train_episodes):
         state = env.reset()
         total_reward = 0
         done = False
