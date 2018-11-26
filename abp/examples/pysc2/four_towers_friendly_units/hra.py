@@ -185,5 +185,5 @@ def run_task(evaluation_config, network_config, reinforce_config):
                                        global_step=episode + 1)
         test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                        global_step=episode + 1)
-        
+    print("total reward:")
     print(sum(total_rewwards_list) / evaluation_config.test_episodes)
