@@ -121,7 +121,7 @@ class HRAAdaptive(object):
 
     def disable_learning(self):
         logger.info("Disabled Learning for %s agent" % self.name)
-        self.save()
+        self.save(force=True)
 
         self.learning = False
         self.episode = 0

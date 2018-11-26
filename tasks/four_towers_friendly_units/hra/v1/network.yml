@@ -67,7 +67,7 @@ networks:
 
 
 input_shape:
-    - 22400
+    - 20800
 
 output_shape: 4
 

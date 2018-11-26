@@ -16,7 +16,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     env = FourTowerSequentialFriendlyUnits()
     
     # env = gym.make(evaluation_config.env)
-    max_episode_steps = 100
+    max_episode_steps = 500
     state = env.reset()
  #   time.sleep(100000)
     # print(state)
@@ -86,7 +86,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         
 
  #       time.sleep(0.2)
-        while deciding:
+        while deciding and steps < max_episode_steps:
             rewards = {}
             steps += 1
             action, q_values,combined_q_values = agent.predict(np.array(state))
@@ -115,7 +115,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         for i in range(len(totalRewardsDict)):
             totalRewardsDict[list(totalRewardsDict.keys())[i]] += rewards[reward_types[i]]
 
-        agent.end_episode(np.array(state))
+        agent.end_episode(env.last_state)
         test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
                                        global_step = episode + 1)
         train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
@@ -167,7 +167,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
             state, done, dead = env.step(action)
 
             while running:
-#                action = 4
+                action = 4
                 state, done, dead = env.step(action)
                 if done:
                     break
@@ -179,7 +179,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         
         total_rewwards_list.append(total_reward)
         
-        agent.end_episode(np.array(state))
+        agent.end_episode(env.last_state)
 
         test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward,
                                        global_step=episode + 1)
