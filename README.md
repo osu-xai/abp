@@ -20,7 +20,16 @@ Run unit and integration tests with:
 ## Usage
 
 ### Local Run
-* Start Visdom: ```visdom```
+* In a separate terminal, start Visdom and keep it running:
+
+```
+visdom
+```
+
+Visdom will display images during training/evaluation in a web
+interface.
+By default, Visdom will serve at `http://localhost:8097`.
+
 * Train :
     ```bash
     python -m abp.trainer.task_runner
