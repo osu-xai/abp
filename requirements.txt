@@ -12,7 +12,7 @@ pandas
 pyyaml
 coverage
 imutil
+scaii>=0.2.0
 git+https://github.com/greydanus/excitationbp.git#egg=excitationbp
-git+https://github.com/lwneal/libscaii#egg=scaii
 git+https://github.com/osu-xai/sc2env
 git+https://github.com/osu-xai/pytorch-saliency
