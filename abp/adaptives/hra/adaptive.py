@@ -121,7 +121,7 @@ class HRAAdaptive(object):
 
     def disable_learning(self):
         logger.info("Disabled Learning for %s agent" % self.name)
-        self.save()
+        self.save(force = True)
 
         self.learning = False
         self.episode = 0
@@ -210,7 +210,6 @@ class HRAAdaptive(object):
             self.steps = info["steps"]
             self.best_reward_mean = info["best_reward_mean"]
             self.episode = info["episode"]
-
             logger.info("Continuing from %d episode (%d steps) with best reward mean %.2f" %
                         (self.episode, self.steps, self.best_reward_mean))
 
@@ -225,7 +224,7 @@ class HRAAdaptive(object):
             logger.info("Forced to save network")
             self.eval_model.save_network()
             self.target_model.save_network()
-            with open( self.network_config.network_path + "adaptive.info","wb") as fp:
+            with open( self.network_config.network_path + "/adaptive.info","wb") as fp:
                 pickle.dump(info, fp)
 
         if (len(self.reward_history) >= self.network_config.save_steps and
