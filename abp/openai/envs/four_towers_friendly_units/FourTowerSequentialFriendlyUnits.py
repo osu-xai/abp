@@ -8,9 +8,9 @@ from s2clientprotocol import sc2api_pb2 as sc_pb
 
 class FourTowerSequentialFriendlyUnits():
     def __init__(self):
- #       mapName = 'FoutTowersWithFridenlyUnits'
- #       mapName = 'FoutTowersWithFridenlyUnitsFixedEnemies'
-        mapName = 'FoutTowersWithFridenlyUnitsFixedEnemiesFixedPosition'
+ #       mapName = 'FourTowersWithFriendlyUnits'
+ #       mapName = 'FourTowersWithFriendlyUnitsFixedEnemies'
+        mapName = 'FourTowersWithFriendlyUnitsFixedEnemiesFixedPosition'
         self.register_map('/maps/',mapName)
         self.sc2_env = sc2_env.SC2Env(
           map_name = mapName,
