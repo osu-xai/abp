@@ -28,7 +28,15 @@ def main():
         help="The task to run. The python module cointaining the ABP program",
         required=True
     )
-
+    
+    '''
+    parser.add_argument(
+        '-m', '--map',
+        help="Run the specified map",
+        required=True
+    )
+    '''
+    
     parser.add_argument(
         '-j', '--job-dir',
         help="Job dir",
@@ -61,7 +69,7 @@ def main():
         dest='render',
         action="store_true"
     )
-
+    
     args = parser.parse_args()
 
     logger.setLevel(args.loglevel)
