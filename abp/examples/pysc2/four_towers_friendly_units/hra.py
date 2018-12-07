@@ -11,7 +11,7 @@ from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.FourTowerSequentialFriendlyUnits import FourTowerSequentialFriendlyUnits
 
-def run_task(evaluation_config, network_config, reinforce_config, map_name = map_name):
+def run_task(evaluation_config, network_config, reinforce_config, map_name = None):
     flags.FLAGS(sys.argv[:1])
     env = FourTowerSequentialFriendlyUnits(map_name = map_name)
     
