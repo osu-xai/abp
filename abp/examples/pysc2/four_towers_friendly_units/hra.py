@@ -11,9 +11,9 @@ from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.FourTowerSequentialFriendlyUnits import FourTowerSequentialFriendlyUnits
 
-def run_task(evaluation_config, network_config, reinforce_config):
+def run_task(evaluation_config, network_config, reinforce_config, map_name = map_name):
     flags.FLAGS(sys.argv[:1])
-    env = FourTowerSequentialFriendlyUnits()
+    env = FourTowerSequentialFriendlyUnits(map_name = map_name)
     
     # env = gym.make(evaluation_config.env)
     max_episode_steps = 500
