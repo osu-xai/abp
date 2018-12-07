@@ -9,7 +9,7 @@ from abp.utils import clear_summary_path
 from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
-from abp.openai.envs.four_towers_friendly_units.FourTowerSequentialFriendlyUnits_onehot import FourTowerSequentialFriendlyUnits
+from sc2env.environments.FourTowerSequentialFriendlyUnits import FourTowerSequentialFriendlyUnits
 
 def run_task(evaluation_config, network_config, reinforce_config):
     flags.FLAGS(sys.argv[:1])
