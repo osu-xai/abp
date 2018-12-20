@@ -55,7 +55,9 @@ def run_task(evaluation_config, network_config, reinforce_config):
     totalDamageToHydralisk = 0
 
     # Training Episodes
-    for episode in range(evaluation_config.training_episodes):
+
+    for episode in range(2):
+    #for episode in range(evaluation_config.training_episodes):
         state = env.reset()
         total_reward = 0
         done = False
@@ -120,14 +122,15 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     recorder = XaiReplayRecorder()
     # Test Episodes
-    for episode in range(evaluation_config.test_episodes):
+    #for episode in range(evaluation_config.test_episodes):
+    for episode in range(1):
         state = env.reset()
         total_reward = 0
         done = False
         steps = 0
         deciding = True
         running = True
-        reward = [][]
+        reward = [[]]
         recorder = XaiReplayRecorder()
         while deciding:
             steps += 1
@@ -156,6 +159,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                     break
 
             if dead:
+                recorder.done_recording()
                 break
 
         agent.end_episode(state)
