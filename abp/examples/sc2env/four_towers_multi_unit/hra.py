@@ -21,7 +21,7 @@ import csv
 import json
 
 def run_task(evaluation_config, network_config, reinforce_config):
-    env = FourTowersSequentialMultiUnitEnvironment()
+    env = FourTowersSequentialMultiUnitEnvironment(evaluation_config.generate_xai_replay)
 
     max_episode_steps = 100
     state = env.reset()

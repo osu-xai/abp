@@ -22,8 +22,8 @@ import csv
 import json
 
 def run_task(evaluation_config, network_config, reinforce_config):
-    env = FourTowersSequentialMultiUnitEnvironment()
-
+    env = FourTowersSequentialMultiUnitEnvironment(evaluation_config.generate_xai_replay)
+    
     max_episode_steps = 100
     state = env.reset()
     # print(state)
@@ -73,7 +73,6 @@ def run_task(evaluation_config, network_config, reinforce_config):
             steps += 1
             action, q_values, _ = agent.predict(state)
             state, reward, done, dead, info = env.step(action)
-
             while running:
                 action = 4
                 state, reward, done, dead, info = env.step(action)
@@ -120,8 +119,10 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     agent.disable_learning()
 
-    recorder = XaiReplayRecorder()
     # Test Episodes
+    # for now, pull the instantiation of this out of the loop, so that we get video with multiple episodes
+    if evaluation_config.generate_xai_replay:
+        recorder = XaiReplayRecorder(env.sc2_env)
     #for episode in range(evaluation_config.test_episodes):
     for episode in range(1):
         state = env.reset()
@@ -131,14 +132,15 @@ def run_task(evaluation_config, network_config, reinforce_config):
         deciding = True
         running = True
         reward = [[]]
-        recorder = XaiReplayRecorder()
+        #recorder = XaiReplayRecorder(env.sc2_env)
         while deciding:
             steps += 1
             action, q_values, combined_q_values = agent.predict(state)
             # print("Jed here")
             # print(action)
             # print(q_values)
-            recorder.record_decision_point(state, action, q_values, combined_q_values, reward)
+            if evaluation_config.generate_xai_replay:
+                recorder.record_decision_point(state, action, q_values, combined_q_values, reward)
             # if evaluation_config.render:
             #     # env.render()
             #     pdx_explanation.render_all_pdx(action, 4, q_values, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], ['damageToZealot', 'damageToZergling', 'damageToRoach', 'damageToStalker', 'damageToMarine', 'damageToHydralisk'])
@@ -153,13 +155,15 @@ def run_task(evaluation_config, network_config, reinforce_config):
             print("info :{}".format(info))
             while running:
                 action = 4
-                recorder.record_game_clock_tick(state, reward)
+                if evaluation_config.generate_xai_replay:
+                    recorder.record_game_clock_tick(state, reward)
                 state, reward, done, dead, info = env.step(action)
                 if done:
                     break
 
             if dead:
-                recorder.done_recording()
+                if evaluation_config.generate_xai_replay:
+                    recorder.done_recording()
                 break
 
         agent.end_episode(state)
