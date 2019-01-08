@@ -13,16 +13,6 @@ from sc2env.environments.FourTowerSequentialFriendlyUnits import FourTowerSequen
 
 def run_task(evaluation_config, network_config, reinforce_config, map_name = None):
     flags.FLAGS(sys.argv[:1])
-    env = FourTowerSequentialFriendlyUnits(map_name = map_name)
-    
-    # env = gym.make(evaluation_config.env)
-    max_episode_steps = 500
-    state = env.reset()
- #   time.sleep(100000)
-    # print(state)
-    
-    choices = [0,1,2,3]
-    pdx_explanation = PDX()
 
     reward_types = ['damageToEnemyMarine',
                     'damageByEnemyMarine',
@@ -37,6 +27,19 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     'damageToEnemyUltralisk',
                     'damageByEnemyUltralisk',
                     'damageToFriendZealot']
+
+    env = FourTowerSequentialFriendlyUnits(reward_types, map_name = map_name)
+    
+    # env = gym.make(evaluation_config.env)
+    max_episode_steps = 500
+    state = env.reset()
+ #   time.sleep(100000)
+    # print(state)
+    
+    choices = [0,1,2,3]
+    pdx_explanation = PDX()
+
+
 
     agent = HRAAdaptive(name = "FourTowerSequentialFriendlyUnits",
                         choices = choices,
@@ -56,7 +59,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     totalRewardsDict = {}
 
     for rt in reward_types:
-    	totalRewardsDict['total' + rt] = 0    # Training Episodes
+    	totalRewardsDict['total' + rt] = 0
+    # Training Episodes
     
     for episode in range(evaluation_config.training_episodes):
         state = env.reset()
@@ -92,8 +96,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
  #           print("l1:")
 #            print(rewards)
  #           print(np.array(env.decomposed_rewards))
-#            print(rewards)
- #           time.sleep(15)
+            #print(rewards)
+           # time.sleep(15)
             if dead:
                 break
  #       print(np.array(env.decomposed_rewards))
