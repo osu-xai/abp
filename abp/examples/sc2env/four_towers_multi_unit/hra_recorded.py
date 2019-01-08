@@ -20,6 +20,11 @@ import numpy as np
 import pandas as pd
 import csv
 import json
+def print_value_and_stop(env):
+    from s2clientprotocol import sc2api_pb2 as sc_pb
+    observation = env.sc2_env._controllers[0]._client.send(observation=sc_pb.RequestObservation())
+    print(f"game_loop {observation.observation.game_loop}")
+    sys.exit()
 
 def run_task(evaluation_config, network_config, reinforce_config):
     env = FourTowersSequentialMultiUnitEnvironment(evaluation_config.generate_xai_replay)
@@ -56,9 +61,11 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     # Training Episodes
 
-    for episode in range(2):
+    for episode in range(1):
     #for episode in range(evaluation_config.training_episodes):
         state = env.reset()
+
+        #print_value_and_stop(env)
         total_reward = 0
         done = False
         dead = False
@@ -118,11 +125,10 @@ def run_task(evaluation_config, network_config, reinforce_config):
         print("EPISODE {}".format(episode))
 
     agent.disable_learning()
-
-    # Test Episodes
-    # for now, pull the instantiation of this out of the loop, so that we get video with multiple episodes
-    if evaluation_config.generate_xai_replay:
-        recorder = XaiReplayRecorder(env.sc2_env)
+    tensor_action_key = ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right']
+    tensor_reward_key = ['damageToZealot', 'damageToZergling', 'damageToRoach', 'damageToStalker', 'damageToMarine', 'damageToHydralisk']
+            
+    # Test Episodes    
     #for episode in range(evaluation_config.test_episodes):
     for episode in range(1):
         state = env.reset()
@@ -132,20 +138,20 @@ def run_task(evaluation_config, network_config, reinforce_config):
         deciding = True
         running = True
         reward = [[]]
-        #recorder = XaiReplayRecorder(env.sc2_env)
+        if evaluation_config.generate_xai_replay:
+            recorder = XaiReplayRecorder(env.sc2_env, episode, evaluation_config.env, tensor_action_key, tensor_reward_key)
         while deciding:
             steps += 1
             action, q_values, combined_q_values = agent.predict(state)
-            # print("Jed here")
             # print(action)
             # print(q_values)
             if evaluation_config.generate_xai_replay:
                 recorder.record_decision_point(state, action, q_values, combined_q_values, reward)
-            # if evaluation_config.render:
-            #     # env.render()
-            #     pdx_explanation.render_all_pdx(action, 4, q_values, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], ['damageToZealot', 'damageToZergling', 'damageToRoach', 'damageToStalker', 'damageToMarine', 'damageToHydralisk'])
-            #     time.sleep(evaluation_config.sleep)
-            #     # This renders an image of the game and saves to test.jpg
+            if evaluation_config.render:
+                # env.render()
+                pdx_explanation.render_all_pdx(action, 4, q_values, tensor_action_key, tensor_reward_key)
+                time.sleep(evaluation_config.sleep)
+                # This renders an image of the game and saves to test.jpg
 
             state, reward, done, dead, info = env.step(action)
             print("state :{}".format(state))
@@ -156,7 +162,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
             while running:
                 action = 4
                 if evaluation_config.generate_xai_replay:
-                    recorder.record_game_clock_tick(state, reward)
+                    recorder.record_game_clock_tick(state)
                 state, reward, done, dead, info = env.step(action)
                 if done:
                     break
