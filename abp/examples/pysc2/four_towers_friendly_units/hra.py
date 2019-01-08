@@ -24,19 +24,19 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     choices = [0,1,2,3]
     pdx_explanation = PDX()
 
-    reward_types = ['damageToMarine',
-                    'damageByMarine',
-                    'damageToZergling',
-                    'damageByZergling',
-                    'damageToMarauder',
-                    'damageByMarauder',
-                    'damageToHydralisk',
-                    'damageByHydralisk',
-                    'damageToThor',
-                    'damageByThor',
-                    'damageToUltralisk',
-                    'damageByUltralisk',
-                    'penalty']
+    reward_types = ['damageToEnemyMarine',
+                    'damageByEnemyMarine',
+                    'damageToEnemyZergling',
+                    'damageByEnemyZergling',
+                    'damageToEnemyMarauder',
+                    'damageByEnemyMarauder',
+                    'damageToEnemyHydralisk',
+                    'damageByEnemyHydralisk',
+                    'damageToEnemyThor',
+                    'damageByEnemyThor',
+                    'damageToEnemyUltralisk',
+                    'damageByEnemyUltralisk',
+                    'damageToFriendZealot']
 
     agent = HRAAdaptive(name = "FourTowerSequentialFriendlyUnits",
                         choices = choices,
@@ -53,24 +53,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     clear_summary_path(test_summaries_path)
     test_summary_writer = SummaryWriter(test_summaries_path)
 
+    totalRewardsDict = {}
 
-    totalRewardsDict = {
-        'totalDamageToMarine' : 0,
-        'totalDamageByMarine' : 0,
-        'totalDamageToZergling' : 0,
-        'totalDamageByZergling' : 0,
-        'totalDamageToMarauder' : 0,
-        'totalDamageByMarauder' : 0,
-        'totalDamageToHydralisk' : 0,
-        'totalDamageByHydralisk' : 0,
-        'totalDamageToThor' : 0,
-        'totalDamageByThor' : 0,
-        'totalDmageToUltralisk' : 0,
-        'totalDamageByUltralisk' : 0,
-        'totalPenalty' : 0
-        }
-    
-    # Training Episodes
+    for rt in reward_types:
+    	totalRewardsDict['total' + rt] = 0    # Training Episodes
     
     for episode in range(evaluation_config.training_episodes):
         state = env.reset()
@@ -139,7 +125,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         while deciding:
             steps += 1
             action, q_values,combined_q_values = agent.predict(np.array(state))
-            """
+            
             print(action)
             print(q_values)
             
@@ -147,23 +133,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 # env.render()
                 pdx_explanation.render_all_pdx(action, 4, q_values,
                                                ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'],
-                                               ['damageToMarine',
-                                                'damageByMarine',
-                                                'damageToZergling',
-                                                'damageByZergling',
-                                                'damageToMarauder',
-                                                'damageByMarauder',
-                                                'damageToHydralisk',
-                                                'damageByHydralisk',
-                                                'damageToThor',
-                                                'damageByThor',
-                                                'damageToUltralisk',
-                                                'damageByUltralisk',
-                                                'penalty'])
+                                               reward_types)
                 
                 time.sleep(evaluation_config.sleep)
             
-            """
+            
             state, done, dead = env.step(action)
 
             while running:
