@@ -2,7 +2,7 @@ import gym
 import time
 import numpy as np
 from absl import flags
-import sys
+import sys, os
 
 from abp import HRAAdaptive
 from abp.utils import clear_summary_path
@@ -79,7 +79,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         while deciding and steps < max_episode_steps:
             rewards = {}
             steps += 1
-            action, q_values,combined_q_values = agent.predict(np.array(state))
+            action, q_values,combined_q_values = agent.predict(state)
  #           print(action)
             #time.sleep(0.5)
             state, done, dead = env.step(action)
@@ -93,19 +93,31 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 rewards[rt] = env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
                 agent.reward(rt, rewards[rt])
                 total_reward += rewards[rt]
- #           print("l1:")
+            #print("l1:")
 #            print(rewards)
  #           print(np.array(env.decomposed_rewards))
             #print(rewards)
-           # time.sleep(15)
+
+            #np.set_printoptions(precision = 2)
+            #print(np.reshape(state, (5,40,40)))
+           # print(rewards)
+            #print(sum(rewards.values()))
+            #time.sleep(40)
+           # input("pause")
             if dead:
                 break
+
  #       print(np.array(env.decomposed_rewards))
 #        time.sleep(10)
         for i in range(len(totalRewardsDict)):
             totalRewardsDict[list(totalRewardsDict.keys())[i]] += rewards[reward_types[i]]
 
-        agent.end_episode(env.last_state)
+        agent.end_episode(env.end_state)
+        #np.set_printoptions(precision = 2)
+        #print(np.reshape(env.end_state, (13,40,40)))
+        #print(rewards)
+        #time.sleep(40)
+        #input("pause")
         test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
                                        global_step = episode + 1)
         train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
@@ -127,9 +139,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         running = True
         
         while deciding:
+            #input("pause")
             steps += 1
-            action, q_values,combined_q_values = agent.predict(np.array(state))
-            
+            action, q_values,combined_q_values = agent.predict(state)
+            '''
             print(action)
             print(q_values)
             
@@ -140,7 +153,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                reward_types)
                 
                 time.sleep(evaluation_config.sleep)
-            
+            '''
             
             state, done, dead = env.step(action)
 
@@ -157,11 +170,15 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         total_rewwards_list.append(total_reward)
         
-        agent.end_episode(env.last_state)
+        #agent.end_episode(env.last_state)
 
         test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward,
                                        global_step=episode + 1)
         test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                        global_step=episode + 1)
+    tr = sum(total_rewwards_list) / evaluation_config.test_episodes
     print("total reward:")
-    print(sum(total_rewwards_list) / evaluation_config.test_episodes)
+    print(tr)
+    f = open("result.txt", "a+")
+    f.write(str(tr) + "\n")
+    f.close()

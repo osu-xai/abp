@@ -1,73 +1,73 @@
 # [0, 4, 9, 49, 54, 59, 64, 89, 94, 99]
 networks:
-  - name: "damageToMarine"
+  - name: "damageToEnemyMarine"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageByMarine"
+  - name: "damageByEnemyMarine"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageToZergling"
+  - name: "damageToEnemyZergling"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageByZergling"
+  - name: "damageByEnemyZergling"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageToMarauder"
+  - name: "damageToEnemyMarauder"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageByMarauder"
+  - name: "damageByEnemyMarauder"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageToHydralisk"
+  - name: "damageToEnemyHydralisk"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageByHydralisk"
+  - name: "damageByEnemyHydralisk"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageToThor"
+  - name: "damageToEnemyThor"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageByThor"
+  - name: "damageByEnemyThor"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageToUltralisk"
+  - name: "damageToEnemyUltralisk"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "damageByUltralisk"
+  - name: "damageByEnemyUltralisk"
     layers:
         - type: "FC"
           neurons: 250
 
-  - name: "penalty"
+  - name: "damageToFriendZealot"
     layers:
         - type: "FC"
           neurons: 250
 
 
 input_shape:
-    - 22400
+    - 20800
 
 output_shape: 4
 
