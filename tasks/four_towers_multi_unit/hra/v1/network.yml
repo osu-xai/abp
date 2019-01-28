@@ -31,7 +31,7 @@ networks:
         neurons: 250
 
 input_shape:
-    - 36
+    - 32000
 
 output_shape: 4
 

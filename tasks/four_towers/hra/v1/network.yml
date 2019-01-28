@@ -36,7 +36,7 @@ networks:
 
 
 input_shape:
-    - 8
+    - 32000
 
 output_shape: 4
 

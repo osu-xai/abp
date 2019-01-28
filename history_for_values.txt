@@ -1,0 +1,436 @@
+    1  python --version
+    2  python3 --version
+    3  cd Documents
+    4  ls
+    5  cd abp-pytorch
+    6  ls
+    7  sudo pip3 install -r requirements.txt
+    8  sudo pip install -r requirements.txt
+    9  sudo apt-get update
+   10  sudo apt-get -y install python3-pip
+   11  pip3 --help
+   12  sudo pip3 install -r requirements.txt
+   13  sudo apt-get       install git
+   14  sudo pip3 install -r requirements.txt
+   15  pip install --upgrade pip
+   16  sudo apt-get -y install python-pip
+   17  sudo pip3 install -r requirements.txt
+   18  sudo appt install libopenmpi-dev
+   19  sudo apt install libopenmpi-dev
+   20  sudo pip3 install mpi4py
+   21  sudo pip3 install -r requirements.txt
+   22  python3 setup.py install
+   23  sudo python3 setup.py install
+   24  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   25  pip3 install pandas
+   26  pip3 install --upgrade pip
+   27  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   28  pip3 install imutil
+   29  pip3 install --user imutils
+   30  sudo pip3 install imutils
+   31  python3 -m pip3 install pip3==9.0.3 --upgrade
+   32  python3 -m pip install pip3==9.0.3 --upgrade
+   33  python3 -m pip install pip3==8.1.1 --upgrade
+   34  python3 -m pip3 uninstall pip3
+   35  python3 -m pip3 uninstall pip
+   36  python3 -m pip uninstall pip3
+   37  python3 -m pip uninstall pip
+   38  sudo apt-get -y install python3-pip
+   39  sudo pip3 install imutils
+   40  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   41  sudo pip install imutils
+   42  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   43  sudo python -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   44  sudo apt-get install python3-opencv
+   45  pip3 install pyopencv
+   46  sudo apt-get install python3-dev libpython3.5-dev python3-numpy
+   47  python3
+   48  pip3 install cv2
+   49  pip3 install opencv-python
+   50  python3
+   51  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   52  pip3 install imutil
+   53  pip3 install git+https://github.com/lwneal/imutil
+   54  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   55  ls /os/osboxes
+   56  cd
+   57  ls
+   58  cd /home/osboxes
+   59  ls
+   60  #!/bin/bash
+   61  wget -nc http://blzdistsc2-a.akamaihd.net/Linux/SC2.4.0.2.zip
+   62  unzip -P iagreetotheeula SC2.4.0.2.zip
+   63  wget -nc https://github.com/deepmind/pysc2/releases/download/v1.2/mini_games.zip
+   64  wget -nc http://blzdistsc2-a.akamaihd.net/MapPacks/Melee.zip
+   65  wget -nc http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2017Season3.zip
+   66  wget -nc http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2017Season2.zip
+   67  wget -nc http://blzdistsc2-a.akamaihd.net/MapPacks/Ladder2017Season1.zip
+   68  unzip mini_games.zip -d StarCraftII/Maps/
+   69  unzip -P iagreetotheeula Melee.zip -d StarCraftII/Maps/
+   70  unzip -P iagreetotheeula Ladder2017Season3.zip -d StarCraftII/Maps/
+   71  unzip -P iagreetotheeula Ladder2017Season2.zip -d StarCraftII/Maps/
+   72  unzip -P iagreetotheeula Ladder2017Season1.zip -d StarCraftII/Maps/
+   73  ls
+   74  cd Documents
+   75  ls
+   76  cd abp-pytorch
+   77  ls
+   78  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   79  find . |grep SC2
+   80  cp ./abp/openai/envs/four_towers_multi_unit_pysc2/maps/FourTowerSequentialDecomposedFourUnitsRandomComp.SC2Map
+   81  cp ./abp/openai/envs/four_towers_multi_unit_pysc2/maps/FourTowerSequentialDecomposedFourUnitsRandomComp.SC2Map /home/osboxes/StarCraftII/Maps/
+   82  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+   83  cd Documents
+   84  ls
+   85  cd abp-lets-work-together
+   86  ls
+   87  cd abp
+   88  pip3 install -r requirements.txt
+   89  cd ..
+   90  l
+   91  pip3 install -r requirements.txt
+   92  python setup.py install
+   93  sudo python setup.py install
+   94  sudo apt-get install python-dev build-essential
+   95  sudo python setup.py install
+   96  pip3 install http://download.pytorch.org/whl/cpu/torch-0.4.1.post2-cp37-cp37m-linux_x86_64.whl
+   97  pip3 install http://download.pytorch.org/whl/cpu/torch-0.4.1-cp35-cp35m-linux_x86_64.whl
+   98  sudo python3 setup.py install
+   99  pip3 install torchvision
+  100  sudo python3 setup.py install
+  101  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  102  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  103  find . |grep SC2
+  104  cd
+  105  ls
+  106  pwd
+  107  cp ./abp/openai/envs/four_towers_multi_unit_pysc2/maps/FourTowerSequentialDecomposed.SC2Map
+  108  cp ./abp/openai/envs/four_towers_multi_unit_pysc2/maps/FourTowerSequentialDecomposedFourUnitsRandomComp.SC2Map /home/osboxes/StarCraftII/Maps/
+  109  cp ./abp/openai/envs/four_towers_multi_unit_pysc2/maps/FourTowerSequentialDecomposed.SC2Map
+  110  cp ./abp/openai/envs/four_towers_multi_unit_pysc2/maps/FourTowerSequentialDecomposed.SC2Map /home/osboxes/StarCraftII/Maps/
+  111  cd Documents
+  112  ls
+  113  cd abp-lets-work-together
+  114  cp ./abp/openai/envs/four_towers_multi_unit_pysc2/maps/FourTowerSequentialDecomposed.SC2Map /home/osboxes/StarCraftII/Maps/
+  115  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  116  cd Documents
+  117  ls
+  118  cd abp-lets-work-together
+  119  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  120  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  121  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  122  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  123  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  124  sudo add-apt-repository ppa:webupd8team/atom
+  125  sudo apt update
+  126  sudo apt install atom
+  127  cd Documents
+  128  ls
+  129  cd pytorch-saliency
+  130  python3 setup.py install
+  131  sudo python3 setup.py install
+  132  cd Documents
+  133  ls
+  134  cs abp-lets-work-together
+  135  cd abp-lets-work-together
+  136  ls
+  137  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  138  cd Documents
+  139  ls
+  140  cd abp-lets-work-together
+  141  ls
+  142  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  143  sudo service iptables stop
+  144  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  145  visdom
+  146  cd Documentw
+  147  cd Documents
+  148  ls
+  149  cd abp-lets-work-together
+  150  ls
+  151  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  152  sudo apt-get install python-tk
+  153  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  154  sudo apt-get install python3-tk
+  155  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  156  cd Documents/pytorch-saliency
+  157  ls
+  158  sudo python3 setup.py install
+  159  cd Documents/abp-lets-work-together
+  160  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  161  cd Documents
+  162  cd pytorch-saliency
+  163  python3 setup.py install
+  164  sudo python3 setup.py install
+  165  visdom
+  166  ls
+  167  cd Documents
+  168  ls
+  169  cd abp-lets-work-together
+  170  ls
+  171  sudo python3 setup.py install
+  172  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  173  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  174  cd Documents
+  175  cd abp-lets-work-together
+  176  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  177  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  178  visdom
+  179  cd Documents/abp-lets-work-together
+  180  ls
+  181  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  182  cd Documents/abp-lets-work-together
+  183  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  184  cd Documents/abp-lets-work-together
+  185  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  186  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  187  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  188  gksudo nautilus
+  189  sudo nautilus
+  190  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  191  cd Documents
+  192  python3 setup.py install
+  193  ls
+  194  cd pytorch-saliency
+  195  python3 setup.py install
+  196  sudo python3 setup.py install
+  197  cd Documents/abp-lets-work-together
+  198  git remote add origin https://github.com/amritas02/abp-feature_maps.git
+  199  sudo git remote add origin https://github.com/amritas02/abp-feature_maps.git
+  200  git init
+  201  git commit -m "first commit"
+  202  git remote add origin https://github.com/amritas02/abp-feature_maps.git
+  203  git push -u origin master
+  204  git config --global user.email "bees_inthegarden@yahoo.co.in"
+  205  git commit -m "first commit"
+  206  git remote add origin https://github.com/amritas02/abp-feature_maps.git
+  207  git push -u origin master
+  208  git remote add origin https://github.com/amritas02/abp-lets-work-together.git
+  209  git push -u origin master
+  210  git init
+  211  cd Documents/abp-lets-work-together
+  212  git init
+  213  echo "# abp" >> README.md
+  214  git add README.md
+  215  git commit -m "first commit"
+  216  git remote add origin https://github.com/amritas02/abp-lets-work-together.git
+  217  git remote add github git@github.com:amritas02/abp-lets-work-together.git
+  218  git push -u github master
+  219  git status
+  220  git remote rm origin
+  221  git remote add origin https://github.com/amritas02/abp-lets-work-together.git
+  222  git push -u origin master
+  223  git add .
+  224  git push -u origin master
+  225  ls
+  226  git add .
+  227  git commit -m "all the stuff"
+  228  git push -u origin master
+  229  cd ..
+  230  ls
+  231  cd pytorch-saliency
+  232  git init
+  233  git add .
+  234  git remote add origin https://github.com/amritas02/pytorch-saliency_sc.git
+  235  git commit -m "Initial commit"
+  236  git push -u origin master
+  237  cd Documents/abp-lets-work-together
+  238  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  239  visdom
+  240  cd Documents/abp-lets-work-together
+  241  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  242  sudo nautilus
+  243  cd Documents/abp-pytorch
+  244  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  245  gdb pyhton3
+  246  gdb python3
+  247  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  248  cd ..
+  249  cd abp-lets-work-together
+  250  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  251  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.pysc2.four_towers_multi_unit.hra
+  252  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  253  visdom
+  254  cd Documents/abp-lets-work-together
+  255  ls
+  256  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  257  export PYTHONPATH=$PYTHONPATH:/home/osboxes/Documents/abp-lets-work-together/abp/openai/envs/four_towers_pysc2 
+  258  $PYTHONPATH
+  259  export PYTHONPATH="${PYTHONPATH}:/home/osboxes/Documents/abp-lets-work-together/abp/openai/envs/four_towers_pysc2" 
+  260  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  261  echo $PYTHONPATH
+  262  echo $sys.path
+  263  echo $PYTHONPATH
+  264  export PYTHONPATH="${PYTHONPATH}:/home/osboxes/Documents/abp-lets-work-together/abp/openai/envs/four_towers_pysc2" 
+  265  echo $PYTHONPATH
+  266  cd Documents/abp-lets-work-together
+  267  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  268  echo $PATH
+  269  python3
+  270  sudo                                           nnnnauuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuutilus
+  271  sudo nautilus
+  272  export PATH="${PATH}:/home/osboxes/Documents/abp-lets-work-together/abp/openai/envs/four_towers_pysc2" 
+  273  cd Documents/abp-lets-work-together
+  274  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  275  cd Documents/abp-lets-work-together
+  276  sudo python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.pysc2.four_towers.hra
+  277  visdom
+  278  cd  Documents/abp-master
+  279  pip3 install -r requirements.txt
+  280  python3 setup.py install 
+  281  sudo python3 setup.py install 
+  282  ./test.sh
+  283  python setup.py install 
+  284  sudo python setup.py install 
+  285  cd Documents
+  286  git clone https://github.com/osu-xai/abp
+  287  ls
+  288  ls -la
+  289  cd abp
+  290  ls -la
+  291  git branch
+  292  git brnach -a
+  293  git branch -a
+  294  git branch abp_saliency
+  295  git branch
+  296  git checkout
+  297  git checkout abp_saliency
+  298  ls
+  299  gedit README.md
+  300  git status
+  301  git add *
+  302  git status
+  303  git commit -m "git tutorial"
+  304  git status
+  305  git diff origin/master
+  306  git push -u abp_saliency
+  307  git push -u origin abp_saliency
+  308  history > git_commands.txt
+  309  gedit git_commands.txt
+  310  cd Documents/abp
+  311  ls
+  312  cd ..
+  313  git clone https://github.com/osu-xai/abp
+  314  cd abp
+  315  git branch
+  316  git checkout master
+  317  git status
+  318  git log
+  319  git pull
+  320  git status
+  321  git checkout
+  322  git branch abp-saliency
+  323  git branch
+  324  git branch abp_saliency
+  325  git branch -d abp_saliency
+  326  git branch abp-saliency
+  327  git branch -d  abp-saliency
+  328  git branch
+  329  git branch abp-saliency
+  330  git branch 
+  331  git checkout abp-saliency
+  332  git status
+  333  pip3 install -r requirements.txt
+  334  python3 setup.py install
+  335  sudo python3 setup.py install
+  336  ./test.sh
+  337  python -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  338  pip3 install openpyxl
+  339  python -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  340  python -m easy_install openpyxl
+  341  sudo python -m easy_install openpyxl
+  342  python -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  343  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  344  cd Documents
+  345  ls
+  346  git init
+  347  cd abp
+  348  git init
+  349  git branch
+  350  git pull
+  351  git branch -d abp_saliency
+  352  git branch -d abp-saliency
+  353  git branch
+  354  git branch abp-saliency
+  355  git branch
+  356  git checkout abp-saliency
+  357  python3 -m abp.trainer.task_runner
+  358  python -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  359  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  360  cd Documents/abp
+  361  git init
+  362  git branch
+  363  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  364  pip3 uninstall pytorch-saliency
+  365  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  366  pip3 uninstall sc2env
+  367  cd ..
+  368  pip3 install sc2env
+  369  cd abp
+  370  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  371  cd ..
+  372  pip3 install sc2env
+  373  install_starcraft2
+  374  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  375  cd abp
+  376  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  377  pip3 uninstall sc2env
+  378  pip3 install sc2env
+  379  cd ..
+  380  cd sc2env
+  381  python3 setup.py install
+  382  sudo python3 setup.py install
+  383  cd ..
+  384  cd abp
+  385  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  386  sudo nautilus
+  387  cd Documents
+  388  cd pytorch-saliency
+  389  python3 setup.py install
+  390  sudo python3 setup.py install
+  391  cd Documents/abp
+  392  cd ..
+  393  cd sc2env
+  394  python3 setup.py install
+  395  sudo python3 setup.py install
+  396  visdom
+  397  sudo nautilys
+  398  sudo nautilus
+  399  cd Documents
+  400  cd abp
+  401  ls
+  402  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  403  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers_multi_unit.hra
+  404  git status
+  405  git stash
+  406  git pull
+  407  git checkout master
+  408  git pull
+  409  git checkout abp-saliency
+  410  git merge master
+  411  git status
+  412  git stash pop
+  413  git status
+  414  gedit requirements.txt
+  415  git status
+  416  git add requirements.txt
+  417  git status
+  418  cd ..
+  419  git clone https://github.com/osu-xai/xai-docs
+  420  cd xai-docs
+  421  ls
+  422  cd ..
+  423  cd abp
+  424  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  425  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers_multi_unit.hra
+  426  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  427  cd ..
+  428  python plot.py
+  429  pip install matplotlib
+  430  sudo pip3 install matplotlib
+  431  python3 plot.py
+  432  cd abp
+  433  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers_multi_unit.hra
+  434  python3 -m abp.trainer.task_runner -f tasks/four_towers_multi_unit/hra/v1 -t abp.examples.sc2env.four_towers_multi_unit.hra
+  435  python3 -m abp.trainer.task_runner -f tasks/four_towers/hra/v1 -t abp.examples.sc2env.four_towers.hra
+  436  history > history_for_values.txt

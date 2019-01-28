@@ -5,6 +5,7 @@ import numpy as np
 from abp import HRAAdaptive
 from abp.utils import clear_summary_path
 from abp.explanations import PDX
+from abp.explanations import Saliency
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.four_towers_multi_unit import FourTowersSequentialMultiUnitEnvironment
@@ -27,6 +28,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     state = env.reset()
     # print(state)
     choices = [0,1,2,3]
+    choice_descriptions = ['Q4', 'Q1', 'Q3', 'Q2']
     pdx_explanation = PDX()
 
     reward_types = ['damageToZealot', 'damageToZergling', 'damageToRoach', 'damageToStalker', 'damageToMarine', 'damageToHydralisk']
@@ -52,7 +54,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     totalDamageToStalker = 0
     totalDamageToMarine = 0
     totalDamageToHydralisk = 0
-
+    reward_per_episode = []
     # Training Episodes
     for episode in range(evaluation_config.training_episodes):
         state = env.reset()
@@ -63,6 +65,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         running = True
         steps = 0
         rewards = []
+        reward_per_step = []
 
         initial_state = np.array(state)
 
@@ -88,6 +91,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 agent.reward(reward_type, rewards[reward_type])
 
             total_reward += rewards['damageToZealot'] + rewards['damageToZergling'] + rewards['damageToRoach'] + rewards['damageToStalker'] + rewards['damageToMarine'] + rewards['damageToHydralisk']
+            # reward_per_step.append(total_reward)
 
             if dead:
                 break
@@ -107,6 +111,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
         print("Damage to Hydralisk: {}".format(totalDamageToHydralisk))
 
         agent.end_episode(state)
+        reward_per_episode.append(total_reward)
         test_summary_writer.add_scalar(tag="Train/Episode Reward", scalar_value=total_reward,
                                        global_step=episode + 1)
         train_summary_writer.add_scalar(tag="Train/Steps to collect all Fruits", scalar_value=steps + 1,
@@ -116,6 +121,8 @@ def run_task(evaluation_config, network_config, reinforce_config):
         print("EPISODE {}".format(episode))
 
     agent.disable_learning()
+    print(reward_per_episode)
+    reward_per_episode = []
 
     # Test Episodes
     for episode in range(evaluation_config.test_episodes):
@@ -125,12 +132,22 @@ def run_task(evaluation_config, network_config, reinforce_config):
         steps = 0
         deciding = True
         running = True
+        layer_names = ["terrain_height", "friendly_units", "enemy_units", "marine",
+        "hellion", "banshee", "battlecruiser", "zealot", "stalker", "immo", "archon",
+        "zergling", "hydra", "mutalisk", "ultra", "marauder", "roach", "unit_hp", "unit_sp", "unit_density"]
+        saliency_explanation = Saliency(agent)
+        reward_per_step = []
 
         while deciding:
             steps += 1
             action, q_values, combined_q_values = agent.predict(state)
             print(action)
             print(q_values)
+            saliencies = saliency_explanation.generate_saliencies(
+                steps, state[0],
+                choice_descriptions,
+                layer_names,
+                reshape=state.shape)
 
             if evaluation_config.render:
                 # env.render()
@@ -146,12 +163,22 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 if done:
                     break
 
+            if not dead:
+                rewards = {'damageToZealot': env.decomposed_rewards[len(env.decomposed_rewards) - 1][0], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 1][1], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 1][2], 'damageToStalker': env.decomposed_rewards[len(env.decomposed_rewards) - 1][3], 'damageToMarine': env.decomposed_rewards[len(env.decomposed_rewards) - 1][4], 'damageToHydralisk': env.decomposed_rewards[len(env.decomposed_rewards) - 1][5]}
+
+            else:
+                rewards = {'damageToZealot': env.decomposed_rewards[len(env.decomposed_rewards) - 2][0], 'damageToZergling': env.decomposed_rewards[len(env.decomposed_rewards) - 2][1], 'damageToRoach': env.decomposed_rewards[len(env.decomposed_rewards) - 2][2], 'damageToStalker': env.decomposed_rewards[len(env.decomposed_rewards) - 2][3], 'damageToMarine': env.decomposed_rewards[len(env.decomposed_rewards) - 2][4], 'damageToHydralisk': env.decomposed_rewards[len(env.decomposed_rewards) - 2][5]}
+
+            total_reward += rewards['damageToZealot'] + rewards['damageToZergling'] + rewards['damageToRoach'] + rewards['damageToStalker'] + rewards['damageToMarine'] + rewards['damageToHydralisk']
+            # reward_per_step.append(total_reward)
+
             if dead:
                 break
 
         agent.end_episode(state)
-
+        reward_per_episode.append(total_reward)
         test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward,
                                        global_step=episode + 1)
         test_summary_writer.add_scalar(tag="Test/Steps to collect all Fruits", scalar_value=steps + 1,
                                        global_step=episode + 1)
+    print(reward_per_episode)
