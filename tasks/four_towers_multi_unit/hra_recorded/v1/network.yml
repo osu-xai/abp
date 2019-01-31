@@ -1,0 +1,44 @@
+# [0, 4, 9, 49, 54, 59, 64, 89, 94, 99]
+networks:
+  - name: "damageToZealot"
+    layers:
+      - type: "FC"
+        neurons: 250
+
+  - name: "damageToZergling"
+    layers:
+      - type: "FC"
+        neurons: 250
+
+  - name: "damageToRoach"
+    layers:
+      - type: "FC"
+        neurons: 250
+
+  - name: "damageToStalker"
+    layers:
+      - type: "FC"
+        neurons: 250
+
+  - name: "damageToMarine"
+    layers:
+      - type: "FC"
+        neurons: 250
+
+  - name: "damageToHydralisk"
+    layers:
+      - type: "FC"
+        neurons: 250
+
+input_shape:
+    - 36
+
+output_shape: 4
+
+shared_layers: [] #TODO
+aggeregator: "average" #TODO
+
+network_path: "./saved_models/four_towers_multi_unit/hra/v1.ckpt"
+summaries_path: "./tensorflow_summaries/four_towers_multi_unit/hra/v1/network_summary"
+summaries_step: 100
+restore_network: False

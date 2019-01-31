@@ -8,7 +8,8 @@ default_evaluation_config = {
     "test_episodes": 100,
     "render": False,
     "contrastive": False,
-    "sleep": 1
+    "sleep": 1,
+    "generate_xai_replay": False
 }
 
 
@@ -42,3 +43,6 @@ class EvaluationConfig(BaseConfig):
 
     sleep = property(BaseConfig.get_property("sleep"),
                      BaseConfig.set_property("sleep"))
+
+    generate_xai_replay = property(BaseConfig.get_property("generate_xai_replay"),
+                     BaseConfig.set_property("generate_xai_replay"))

@@ -5,3 +5,4 @@ test_episodes: 1
 training_episodes: 500
 render: False
 sleep: 5
+generate_xai_replay: False
