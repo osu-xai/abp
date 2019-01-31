@@ -65,6 +65,10 @@ def run_task(evaluation_config, network_config, reinforce_config):
         reward_per_step = []
 
         initial_state = np.array(state)
+        r = np.array(state)
+        r = r.reshape((20,40,40))
+        print(np.unique(r[1, :, :]))
+        #print(state.shape)
 
         while deciding:
             steps += 1
@@ -134,9 +138,9 @@ def run_task(evaluation_config, network_config, reinforce_config):
         steps = 0
         deciding = True
         running = True
-        layer_names = ["terrain_height", "friendly_units", "enemy_units", "marine",
-        "hellion", "banshee", "battlecruiser", "zealot", "stalker", "immo", "archon",
-        "zergling", "hydra", "mutalisk", "ultra", "marauder", "roach", "unit_hp", "unit_sp", "unit_density"]
+        layer_names = ["player_relative_1", "player_relative_3", "player_relative_16", "unit_type_48",
+        "unit_type_53", "unit_type_55", "unit_type_57", "unit_type_73", "unit_type_74", "unit_type_83", "unit_type_141",
+        "unit_type_105", "unit_type_107", "unit_type_108", "unit_type_109", "unit_type_51", "unit_type_110", "hit_point", "hit_point_ratio", "unit_density"]
         # print(state.shape)
         saliency_explanation = Saliency(agent)
         reward_per_step = []
