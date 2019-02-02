@@ -124,7 +124,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         #time.sleep(40)
         #input("pause")
         test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
-                                       global_step = episode + 1)
+                                                    global_step = episode + 1)
         train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
                                         global_step = episode + 1)
 
@@ -147,7 +147,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-            
+            '''
             print(action)
             print(q_values)
             
@@ -158,7 +158,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                reward_types)
                 
                 time.sleep(evaluation_config.sleep)
-            
+            '''
             
             state, done, dead = env.step(action)
 

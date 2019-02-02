@@ -9,7 +9,7 @@ import torch
 from baselines.common.schedules import LinearSchedule
 
 
-from abp.adaptives.common.prioritized_memory.memory import PrioritizedReplayBuffer
+from abp.adaptives.common.prioritized_memory.memory_sarsa import PrioritizedReplayBuffer
 from abp.utils import clear_summary_path
 from abp.models import HRAModel
 from tensorboardX import SummaryWriter
@@ -78,12 +78,7 @@ class HRAAdaptive(object):
     def predict(self, state):
         self.steps += 1
 
-        if (self.previous_state is not None and
-                self.previous_action is not None):
-            self.memory.add(self.previous_state,
-                            self.previous_action,
-                            self.reward_list(),
-                            state, 0)
+
 
         if self.learning and self.should_explore():
             action = random.choice(list(range(len(self.choices))))
@@ -97,14 +92,14 @@ class HRAAdaptive(object):
                                                                           self.steps,
                                                                           self.learning)
             choice = self.choices[action]
-            self.model_time += time.time() - model_start_time
-            '''
-            print(action,combined_q_values) 
-            self.summary.add_scalar(tag='%s/3 action - 1 action' % self.name,
-                        scalar_value=int(combined_q_values[3] - combined_q_values[1]),
-                        global_step=self.steps)
-            '''
-            self.model_time += time.time() - model_start_time
+            #self.model_time += time.time() - model_start_time
+            #print(action,combined_q_values)
+        if (self.previous_state is not None and
+                self.previous_action is not None):
+            self.memory.add(self.previous_state,
+                            self.previous_action,
+                            self.reward_list(),
+                            state, action, 0)
 
         if self.learning and self.steps % self.replace_frequency == 0:
             logger.debug("Replacing target model for %s" % self.name)
@@ -154,7 +149,7 @@ class HRAAdaptive(object):
         self.memory.add(self.previous_state,
                         self.previous_action,
                         self.reward_list(),
-                        state, 1)
+                        state, 0, 1)
 
         self.episode_time = time.time() - self.episode_time
 
@@ -254,13 +249,15 @@ class HRAAdaptive(object):
         if len(self.memory) <= self.reinforce_config.batch_size:
             return
 
+        self.epsilon = self.epsilon_schedule.value(self.steps)
+
         beta = self.beta_schedule.value(self.steps)
         self.summary.add_scalar(tag='%s/Beta' % self.name,
                                 scalar_value=beta, global_step=self.steps)
 
         batch = self.memory.sample(self.reinforce_config.batch_size, beta)
 
-        (states, actions, reward, next_states,
+        (states, actions, reward, next_states, next_actions,
          is_terminal, weights, batch_idxes) = batch
 
         self.summary.add_histogram(tag='%s/Batch Indices' % self.name,
@@ -274,18 +271,19 @@ class HRAAdaptive(object):
         batch_index = torch.arange(self.reinforce_config.batch_size,
                                    dtype=torch.long)
 
+        # Find the target values
+
         q_actions, q_values, _ = self.eval_model.predict_batch(states)
         q_values = q_values[:, batch_index, actions]
         _, q_next, _ = self.eval_model.predict_batch(next_states)
-
-        # Best action chioce by agent
-        q_next_sum = q_next.sum(0).detach()
-        optimal_next_actions = q_next_sum.argmax(1)
-        q_next = q_next[:, batch_index, optimal_next_actions].detach()
-
+        q_next = q_next[:, batch_index, next_actions].detach()
         q_next = (1 - terminal) * q_next
         q_target = reward.t() + self.reinforce_config.discount_factor * q_next
 
+
+        #print(reward)
+        #print(q_target)
+        #print()
         # Update the model
         fit_start_time = time.time()
         self.eval_model.fit(q_values, q_target, self.steps)

@@ -142,7 +142,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-            '''
+            
             print(action)
             print(q_values)
             
@@ -152,8 +152,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'],
                                                reward_types)
                 
-                time.sleep(evaluation_config.sleep)
-            '''
+               # time.sleep(evaluation_config.sleep)
+                input()
             
             state, done, dead = env.step(action)
 
