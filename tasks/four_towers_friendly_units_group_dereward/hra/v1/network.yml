@@ -1,0 +1,54 @@
+# [0, 4, 9, 49, 54, 59, 64, 89, 94, 99]
+networks:
+  - name: "damageToWeakEnemyGroup"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "destoryToWeakEnemyGroup"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToStrongEnemyGroup"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "destoryToStrongEnemyGroup"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToWeakFriendGroup"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "destoryToWeakFriendGroup"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToStrongFriendGroup"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "destoryToStrongFriendGroup"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+input_shape:
+    - 12800
+
+output_shape: 4
+
+shared_layers: [] #TODO
+aggeregator: "average" #TODO
+
+network_path: "./saved_models/four_towers_friendly_units_group_dereward/hra/v1.ckpt"
+summaries_path: "./tensorflow_summaries/four_towers_friendly_units_group_dereward/hra/v1/network_summary"
+summaries_step: 100
+restore_network: True
