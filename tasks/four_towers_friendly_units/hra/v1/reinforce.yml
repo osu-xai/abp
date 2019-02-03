@@ -6,3 +6,4 @@ memory_size: 100
 summaries_path: "./tensorflow_summaries/four_towers_friendly_units/hra/v1/reinforce_summary"
 update_frequency: 10
 epsilon_timesteps: 3000
+final_epsilon: 0.01

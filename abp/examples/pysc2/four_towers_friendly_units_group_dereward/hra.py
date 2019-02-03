@@ -9,39 +9,29 @@ from abp.utils import clear_summary_path
 from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
-from sc2env.environments.FourTowerSequentialFriendlyUnits import FourTowerSequentialFriendlyUnits
+from sc2env.environments.four_towers_friendly_units_group_dereward import FourTowersFriendlyUnitsGroupDereward
 
-def run_task(evaluation_config, network_config, reinforce_config, map_name = None):
+def run_task(evaluation_config, network_config, reinforce_config, map_name = None, train_forever = False):
     flags.FLAGS(sys.argv[:1])
 
-    reward_types = ['damageToEnemyMarine',
-                    'damageByEnemyMarine',
-                    'damageToEnemyZergling',
-                    'damageByEnemyZergling',
-                    'damageToEnemyMarauder',
-                    'damageByEnemyMarauder',
-                    'damageToEnemyHydralisk',
-                    'damageByEnemyHydralisk',
-                    'damageToEnemyThor',
-                    'damageByEnemyThor',
-                    'damageToEnemyUltralisk',
-                    'damageByEnemyUltralisk',
-                    'damageToFriendZealot']
+    reward_types = ['damageToWeakEnemyGroup',
+                    'destoryToWeakEnemyGroup',
+                    'damageToStrongEnemyGroup',
+                    'destoryToStrongEnemyGroup',
+                    'damageToWeakFriendGroup',
+                    'destoryToWeakFriendGroup',
+                    'damageToStrongFriendGroup',
+                    'destoryToStrongFriendGroup']
 
-    env = FourTowerSequentialFriendlyUnits(reward_types, map_name = map_name)
+    env = FourTowersFriendlyUnitsGroupDereward(reward_types, map_name = map_name, unit_type = [83, 48, 52])
     
-    # env = gym.make(evaluation_config.env)
     max_episode_steps = 500
     state = env.reset()
- #   time.sleep(100000)
-    # print(state)
     
     choices = [0,1,2,3]
     pdx_explanation = PDX()
 
-
-
-    agent = HRAAdaptive(name = "FourTowerSequentialFriendlyUnits",
+    agent = HRAAdaptive(name = "FourTowersFriendlyUnitsGroupDereward",
                         choices = choices,
                         reward_types = reward_types,
                         network_config = network_config,
@@ -60,7 +50,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
     for rt in reward_types:
     	totalRewardsDict['total' + rt] = 0
-    # Training Episodes
     
     for episode in range(evaluation_config.training_episodes):
         state = env.reset()
@@ -71,46 +60,42 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         running = True
         steps = 0
         
- #       initial_state = np.array(state)
- #       print(np.array(state))
-        
-
- #       time.sleep(0.2)
         while deciding and steps < max_episode_steps:
-            rewards = {}
+            stepRewards = {}
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
- #           print(action)
+            #print(action)
             #time.sleep(0.5)
             state, done, dead = env.step(action)
+            np.set_printoptions(precision = 2)
+            #print(np.reshape(state, (8,40,40)))
+            #input("pause")
             while running:
                 action = 4
                 state, done, dead = env.step(action)
                 if done:
                     break
-            
+
+            state, _, _ = env.step(4)
             for i, rt in enumerate(reward_types):
-                rewards[rt] = env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
-                agent.reward(rt, rewards[rt])
-                total_reward += rewards[rt]
+                stepRewards[rt] = env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
+                agent.reward(rt, stepRewards[rt])
+                total_reward += stepRewards[rt]
+            
             #print("l1:")
 #            print(rewards)
  #           print(np.array(env.decomposed_rewards))
             #print(rewards)
 
-            #np.set_printoptions(precision = 2)
-            #print(np.reshape(state, (5,40,40)))
-           # print(rewards)
+
+            #print(stepRewards)
             #print(sum(rewards.values()))
             #time.sleep(40)
-           # input("pause")
+            #input("pause")
             if dead:
                 break
-
- #       print(np.array(env.decomposed_rewards))
-#        time.sleep(10)
         for i in range(len(totalRewardsDict)):
-            totalRewardsDict[list(totalRewardsDict.keys())[i]] += rewards[reward_types[i]]
+            totalRewardsDict[list(totalRewardsDict.keys())[i]] += stepRewards[reward_types[i]]
 
         agent.end_episode(env.end_state)
         #np.set_printoptions(precision = 2)
@@ -125,7 +110,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
  #       print("EPISODE REWARD {}".format(total_reward))
 #        print("EPISODE {}".format(episode))
-        
+    if train_forever:
+    	for i in range(10000):
+    		agent.update()
+    		if i % 100 == 0:
+    			print(i)
     agent.disable_learning()
 
     total_rewwards_list = []
@@ -137,7 +126,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         steps = 0
         deciding = True
         running = True
-        
+        ''
         while deciding:
             #input("pause")
             steps += 1
@@ -150,10 +139,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 # env.render()
                 pdx_explanation.render_all_pdx(action, 4, q_values,
                                                ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'],
-                                               reward_types)
+                                               sorted(reward_types))
                 
                # time.sleep(evaluation_config.sleep)
-                input()
+                input("pause")
             
             state, done, dead = env.step(action)
 
@@ -165,6 +154,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
             if dead:
                 break
+            state, _, _ = env.step(4)
             for i, rt in enumerate(reward_types):
                 total_reward += env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
         

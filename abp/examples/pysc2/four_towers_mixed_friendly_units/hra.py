@@ -26,7 +26,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     'damageByEnemyThor',
                     'damageToEnemyUltralisk',
                     'damageByEnemyUltralisk',
-                    'damageToFriendZealot']
+                    'damageToFriendMarine',
+                    'damageToFriendZergling',
+                    'damageToFriendMarauder',
+                    'damageToFriendHydralisk',
+                    'damageToFriendThor',
+                    'damageToFriendUltralisk',]
 
     env = FourTowerSequentialFriendlyUnits(reward_types, map_name = map_name)
     
@@ -99,11 +104,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #print(rewards)
 
             #np.set_printoptions(precision = 2)
-            #print(np.reshape(state, (5,40,40)))
-           # print(rewards)
+            #print(np.reshape(state, (13,40,40)))
+            #print(rewards)
             #print(sum(rewards.values()))
             #time.sleep(40)
-           # input("pause")
+            #input("pause")
             if dead:
                 break
 
@@ -119,7 +124,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         #time.sleep(40)
         #input("pause")
         test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
-                                       global_step = episode + 1)
+                                                    global_step = episode + 1)
         train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
                                         global_step = episode + 1)
 
@@ -142,7 +147,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-            
+            '''
             print(action)
             print(q_values)
             
@@ -152,8 +157,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'],
                                                reward_types)
                 
-               # time.sleep(evaluation_config.sleep)
-                input()
+                time.sleep(evaluation_config.sleep)
+            '''
             
             state, done, dead = env.step(action)
 
