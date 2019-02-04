@@ -1,0 +1,7 @@
+name: "Four Towers With Mixed Friendly units Sequential"
+env: "four_towers_mixed_friendly_units-v0"
+summaries_path: "./tensorflow_summaries/four_towers_mixed_friendly_units/hra/v1/evaluation_summary"
+test_episodes: 3
+training_episodes: 2
+render: True
+sleep: 5
