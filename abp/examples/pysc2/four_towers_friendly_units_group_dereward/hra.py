@@ -7,6 +7,7 @@ import sys, os
 from abp import HRAAdaptive
 from abp.utils import clear_summary_path
 from abp.explanations import PDX
+from abp.explanations import Saliency
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.four_towers_friendly_units_group_dereward import FourTowersFriendlyUnitsGroupDereward
@@ -24,11 +25,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     'destoryToStrongFriendGroup']
 
     env = FourTowersFriendlyUnitsGroupDereward(reward_types, map_name = map_name, unit_type = [83, 48, 52])
-    
+
     max_episode_steps = 500
     state = env.reset()
-    
+
     choices = [0,1,2,3]
+    choice_descriptions = ['Q4', 'Q1', 'Q3', 'Q2']
     pdx_explanation = PDX()
 
     agent = HRAAdaptive(name = "FourTowersFriendlyUnitsGroupDereward",
@@ -50,7 +52,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
     for rt in reward_types:
     	totalRewardsDict['total' + rt] = 0
-    
+
     for episode in range(evaluation_config.training_episodes):
         state = env.reset()
         total_reward = 0
@@ -59,7 +61,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         deciding = True
         running = True
         steps = 0
-        
+
         while deciding and steps < max_episode_steps:
             stepRewards = {}
             steps += 1
@@ -81,7 +83,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 stepRewards[rt] = env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
                 agent.reward(rt, stepRewards[rt])
                 total_reward += stepRewards[rt]
-            
+
             #print("l1:")
 #            print(rewards)
  #           print(np.array(env.decomposed_rewards))
@@ -126,24 +128,33 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         steps = 0
         deciding = True
         running = True
+        layer_names = ["agent", "friend", "enemy", "immo", "marine", "unit_type_52",
+        "hit_point", "hit_point_ratio" ]
+        print(state.shape)
+        saliency_explanation = Saliency(agent)
         ''
         while deciding:
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-            
+            saliencies = saliency_explanation.generate_saliencies(
+                steps, state[0],
+                choice_descriptions,
+                layer_names,
+                reshape=state.shape)
+
             print(action)
             print(q_values)
-            
+
             if evaluation_config.render:
                 # env.render()
                 pdx_explanation.render_all_pdx(action, 4, q_values,
                                                ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'],
                                                sorted(reward_types))
-                
+
                # time.sleep(evaluation_config.sleep)
                 input("pause")
-            
+
             state, done, dead = env.step(action)
 
             while running:
@@ -157,9 +168,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             state, _, _ = env.step(4)
             for i, rt in enumerate(reward_types):
                 total_reward += env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
-        
+
         total_rewwards_list.append(total_reward)
-        
+
         #agent.end_episode(env.last_state)
 
         test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward,

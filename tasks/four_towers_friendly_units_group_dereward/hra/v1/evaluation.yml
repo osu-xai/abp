@@ -1,7 +1,7 @@
 name: "four towers friendly units group dereward"
 env: "four_towers_friendly_units_group_dereward-v1"
 summaries_path: "./tensorflow_summaries/four_towers_friendly_units_group_dereward/hra/v1/evaluation_summary"
-test_episodes: 10
+test_episodes: 1
 training_episodes: 100
 render: True
 sleep: 5

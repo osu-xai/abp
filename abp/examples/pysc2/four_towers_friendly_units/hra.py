@@ -149,35 +149,14 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-<<<<<<< HEAD
             saliencies = saliency_explanation.generate_saliencies(
                 steps, state[0],
                 choice_descriptions,
                 layer_names,
                 reshape=state.shape)
-            '''
-=======
-            
->>>>>>> master
-            print(action)
-            print(q_values)
-
-            if evaluation_config.render:
-                # env.render()
-                pdx_explanation.render_all_pdx(action, 4, q_values,
-                                               ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'],
-                                               reward_types)
-<<<<<<< HEAD
-
-                time.sleep(evaluation_config.sleep)
-            '''
-
-=======
-                
                # time.sleep(evaluation_config.sleep)
                 input()
-            
->>>>>>> master
+
             state, done, dead = env.step(action)
 
             while running:
