@@ -168,6 +168,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 if done:
                     break
 
+            # record the moments before scenario reset
+            if evaluation_config.generate_xai_replay:
+                for i in range(5):
+                    recorder.record_game_clock_tick(state)
+                    state, done, dead = env.step(action)
+
             if dead:
                 if evaluation_config.generate_xai_replay:
                     recorder.done_recording()
