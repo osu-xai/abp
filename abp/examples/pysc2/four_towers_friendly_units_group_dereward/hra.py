@@ -167,18 +167,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 state, done, dead = env.step(action)
                 if done:
                     break
-
-            # record the moments before scenario reset
+            
             if evaluation_config.generate_xai_replay:
                 for i in range(5):
                     recorder.record_game_clock_tick(state)
-                    state, done, dead = env.step(action)
+                    env.step(action)
 
             if dead:
                 if evaluation_config.generate_xai_replay:
                     recorder.done_recording()
                 break
-            state, _, _ = env.step(4)
+            state, _, _ = env.step(10)
             for i, rt in enumerate(reward_types):
                 total_reward += env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
         
