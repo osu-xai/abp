@@ -125,7 +125,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     		if i % 100 == 0:
     			print(i)
     '''
-    agent.disable_learning()
+    agent.disable_learning(save = False)
 
     total_rewwards_list = []
     # Test Episodes
@@ -143,7 +143,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         reward = [[]]
         ''
         if evaluation_config.generate_xai_replay:
-            recorder = XaiReplayRecorder(env.sc2_env, episode, evaluation_config.env, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], reward_types)
+            recorder = XaiReplayRecorder(env.sc2_env, episode, evaluation_config.env, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], sorted(reward_types))
 
         while deciding:
             #input("pause")
@@ -151,7 +151,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             action, q_values,combined_q_values = agent.predict(state)
             print("TESTING steps " + str(steps))
             print(action)
-            print(q_values)
+            #print(q_values)
             
             if evaluation_config.generate_xai_replay:
                 recorder.record_decision_point(state, action, q_values, combined_q_values, reward)
@@ -171,6 +171,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 action = 4
                 if evaluation_config.generate_xai_replay:
                     recorder.record_game_clock_tick(state)
+                    #print(env.decomposed_reward_dict)
                 state, done, dead = env.step(action)
                 if done:
                     break
@@ -183,8 +184,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             if dead or (steps == 6):
                 if evaluation_config.generate_xai_replay:
                     recorder.done_recording()
+                    for i in range(5):
+                        recorder.record_game_clock_tick(state)
+                        env.step(action)
                 break
-            state, _, _ = env.step(10)
+            state, _, _ = env.step(4)
+            
             for i, rt in enumerate(reward_types):
                 total_reward += env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
         
