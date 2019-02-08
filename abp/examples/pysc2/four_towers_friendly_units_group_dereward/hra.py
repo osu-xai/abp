@@ -52,8 +52,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     for rt in reward_types:
     	totalRewardsDict['total' + rt] = 0
     
-    #for episode in range(evaluation_config.training_episodes):
-    for episode in range(1):
+    for episode in range(evaluation_config.training_episodes):
+    #for episode in range(1):
+
+        print("=======================================================================")
+        print("===============================Now training============================")
+        print("=======================================================================")
         print("Now training.")
         state = env.reset()
         total_reward = 0
@@ -67,6 +71,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             stepRewards = {}
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
+            print("training step " + str(steps))
             #print(action)
             #time.sleep(0.5)
             state, done, dead = env.step(action)
@@ -126,7 +131,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     # Test Episodes
     #for episode in range(evaluation_config.test_episodes):
     for episode in range(1):
-        print("Now testing")
+        print("======================================================================")
+        print("===============================Now testing============================")
+        print("======================================================================")
         state = env.reset()
         total_reward = 0
         done = False
@@ -142,7 +149,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-            
+            print("TESTING steps " + str(steps))
             print(action)
             print(q_values)
             
@@ -174,7 +181,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     recorder.record_game_clock_tick(state)
                     state, done, dead = env.step(action)
 
-            if dead:
+            if dead or (steps == 6):
                 if evaluation_config.generate_xai_replay:
                     recorder.done_recording()
                 break
