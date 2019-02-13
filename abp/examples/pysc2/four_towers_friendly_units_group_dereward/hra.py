@@ -152,7 +152,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-            print("TESTING steps " + str(steps))
+            
+            
             print(action)
             #print(q_values)
             
