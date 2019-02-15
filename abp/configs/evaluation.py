@@ -9,7 +9,8 @@ default_evaluation_config = {
     "render": False,
     "contrastive": False,
     "sleep": 1,
-    "generate_xai_replay": False
+    "generate_xai_replay": False,
+    "xai_replay_dimension": 256
 }
 
 
@@ -46,3 +47,7 @@ class EvaluationConfig(BaseConfig):
 
     generate_xai_replay = property(BaseConfig.get_property("generate_xai_replay"),
                      BaseConfig.set_property("generate_xai_replay"))
+
+    xai_replay_dimension = property(BaseConfig.get_property("xai_replay_dimension"),
+                     BaseConfig.set_property("xai_replay_dimension"))
+
