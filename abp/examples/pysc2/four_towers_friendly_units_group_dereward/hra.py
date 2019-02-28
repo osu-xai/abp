@@ -11,10 +11,11 @@ from abp.explanations import Saliency
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.four_towers_friendly_units_group_dereward import FourTowersFriendlyUnitsGroupDereward
+from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
 
 def run_task(evaluation_config, network_config, reinforce_config, map_name = None, train_forever = False):
     flags.FLAGS(sys.argv[:1])
-
+    
     reward_types = ['damageToWeakEnemyGroup',
                     'destoryToWeakEnemyGroup',
                     'damageToStrongEnemyGroup',
@@ -23,9 +24,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     'destoryToWeakFriendGroup',
                     'damageToStrongFriendGroup',
                     'destoryToStrongFriendGroup']
-
-    env = FourTowersFriendlyUnitsGroupDereward(reward_types, map_name = map_name, unit_type = [83, 48, 52])
-
+    
+    ec = evaluation_config
+    replay_dimension = ec.xai_replay_dimension
+    env = FourTowersFriendlyUnitsGroupDereward(reward_types, map_name = map_name, unit_type = [83, 48, 52], \
+        generate_xai_replay = ec.generate_xai_replay, xai_replay_dimension = replay_dimension)
+    
     max_episode_steps = 500
     state = env.reset()
 
@@ -54,6 +58,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     	totalRewardsDict['total' + rt] = 0
 
     for episode in range(evaluation_config.training_episodes):
+    #for episode in range(1):
+
+        print("=======================================================================")
+        print("===============================Now training============================")
+        print("=======================================================================")
+        print("Now training.")
         state = env.reset()
         total_reward = 0
         done = False
@@ -66,6 +76,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             stepRewards = {}
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
+            print("training step " + str(steps))
             #print(action)
             #time.sleep(0.5)
             state, done, dead = env.step(action)
@@ -112,16 +123,22 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
  #       print("EPISODE REWARD {}".format(total_reward))
 #        print("EPISODE {}".format(episode))
+    '''
     if train_forever:
     	for i in range(10000):
     		agent.update()
     		if i % 100 == 0:
     			print(i)
-    agent.disable_learning()
+    '''
+    agent.disable_learning(save = False)
 
     total_rewwards_list = []
     # Test Episodes
-    for episode in range(evaluation_config.test_episodes):
+    #for episode in range(evaluation_config.test_episodes):
+    for episode in range(1):
+        print("======================================================================")
+        print("===============================Now testing============================")
+        print("======================================================================")
         state = env.reset()
         total_reward = 0
         done = False
@@ -132,7 +149,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         "hit_point", "hit_point_ratio" ]
         print(state.shape)
         saliency_explanation = Saliency(agent)
+        reward = [[]]
         ''
+        if evaluation_config.generate_xai_replay:
+            recorder = XaiReplayRecorder(env.sc2_env, episode, evaluation_config.env, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], sorted(reward_types), replay_dimension)
+
         while deciding:
             #input("pause")
             steps += 1
@@ -142,9 +163,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 choice_descriptions,
                 layer_names,
                 reshape=state.shape)
-
+            
             print(action)
-            print(q_values)
+            #print(q_values)
+            
+            if evaluation_config.generate_xai_replay:
+                recorder.record_decision_point(action, q_values, combined_q_values, reward, env.decomposed_reward_dict)
 
             if evaluation_config.render:
                 # env.render()
@@ -153,19 +177,33 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                sorted(reward_types))
 
                # time.sleep(evaluation_config.sleep)
-                input("pause")
-
+                #input("pause")
+            
             state, done, dead = env.step(action)
 
             while running:
                 action = 4
+                if evaluation_config.generate_xai_replay:
+                    recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                    #print(env.decomposed_reward_dict)
                 state, done, dead = env.step(action)
                 if done:
                     break
+            
+            if evaluation_config.generate_xai_replay:
+                for i in range(5):
+                    recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                    env.step(action)
 
-            if dead:
+            if dead or (steps == 6):
+                if evaluation_config.generate_xai_replay:
+                    for i in range(5):
+                        recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                        env.step(action)
+                    recorder.done_recording()
                 break
             state, _, _ = env.step(4)
+            
             for i, rt in enumerate(reward_types):
                 total_reward += env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
 

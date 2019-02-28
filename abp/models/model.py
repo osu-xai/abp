@@ -34,7 +34,10 @@ class Model(object):
                 self.network_config.network_path):
             if os.path.exists(self.model_path):
                 logger.info("Restoring network for %s " % self.name)
-                self.model.load_state_dict(torch.load(self.model_path))
+                if torch.cuda.is_available():
+                    self.model.load_state_dict(torch.load(self.model_path))
+                else:
+                    self.model.load_state_dict(torch.load(self.model_path, map_location='cpu'))
             else:
                 logger.info("Model does not exist %s" % self.model_path)
 
