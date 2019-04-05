@@ -163,13 +163,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 choice_descriptions,
                 layer_names,
                 reshape=state.shape)
-            
-            print(action)
-            #print(q_values)
-            
             if evaluation_config.generate_xai_replay:
                 recorder.record_decision_point(action, q_values, combined_q_values, reward, env.decomposed_reward_dict)
-
+                recorder.record_saliency_for_decision_point(saliencies)
+                
             if evaluation_config.render:
                 # env.render()
                 pdx_explanation.render_all_pdx(action, 4, q_values,
@@ -195,7 +192,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     recorder.record_game_clock_tick(env.decomposed_reward_dict)
                     env.step(action)
 
-            if dead or (steps == 6):
+            if dead or (steps == 3):
                 if evaluation_config.generate_xai_replay:
                     for i in range(5):
                         recorder.record_game_clock_tick(env.decomposed_reward_dict)
