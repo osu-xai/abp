@@ -125,7 +125,7 @@ class HRAAdaptive(object):
 
         return choice, q_values, combined_q_values
 
-    def disable_learning(self, save = True):
+    def disable_learning(self, save = False):
         logger.info("Disabled Learning for %s agent" % self.name)
         self.save(force = save)
 
