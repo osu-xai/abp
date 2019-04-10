@@ -9,7 +9,7 @@ from abp.utils import clear_summary_path
 from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
-from sc2env.environments.four_towers_friendly_units_group_dereward import FourTowersFriendlyUnitsGroupDereward
+from sc2env.environments.tug_of_war import TugOfWar
 from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
 
 def run_task(evaluation_config, network_config, reinforce_config, map_name = None, train_forever = False):
@@ -22,7 +22,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     'numberOfMarinesPerWave',
                     'numberOfVikingsPerWave',
                     'numberOfColossusPerWave',
-                    'numberOfpylonsPerWave',
                     'damageToEnemyBaseHP',
                     'damageToEnemyBaseSheild',
                     'damageToSelfBaseHP_Neg',
@@ -32,7 +31,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     ec = evaluation_config
     replay_dimension = ec.xai_replay_dimension
-    env = FourTowersFriendlyUnitsGroupDereward(reward_types, map_name = map_name, unit_type = [83, 48, 52], \
+    env = TugOfWar(reward_types, map_name = map_name, \
         generate_xai_replay = ec.generate_xai_replay, xai_replay_dimension = replay_dimension)
     
  #   max_episode_steps = 500
@@ -88,8 +87,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #print(np.reshape(state, (8,40,40)))
             #input("pause")
             for _ in range(skip_steps):
-                action = 4
-                state, end = env.step(action, skip = True)
+                state, end = env.step(4, skip = True)
                 if end:
                     break
 
@@ -138,21 +136,20 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
     total_rewwards_list = []
     # Test Episodes
-    #for episode in range(evaluation_config.test_episodes):
-    for episode in range(1):
+    for episode in range(evaluation_config.test_episodes):
+    #for episode in range(1):
         print("======================================================================")
         print("===============================Now testing============================")
         print("======================================================================")
         state = env.reset()
         total_reward = 0
-        done = False
-        steps = 0
+        end = False
         deciding = True
-        running = True
-        reward = [[]]
-        ''
-        if evaluation_config.generate_xai_replay:
-            recorder = XaiReplayRecorder(env.sc2_env, episode, evaluation_config.env, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], sorted(reward_types), replay_dimension)
+        steps = 0
+        
+        
+        # if evaluation_config.generate_xai_replay:
+        #     recorder = XaiReplayRecorder(env.sc2_env, episode, evaluation_config.env, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], sorted(reward_types), replay_dimension)
 
         while deciding:
             #input("pause")
@@ -166,24 +163,21 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             if evaluation_config.generate_xai_replay:
                 recorder.record_decision_point(action, q_values, combined_q_values, reward, env.decomposed_reward_dict)
 
-            if evaluation_config.render:
+            #if evaluation_config.render:
                 # env.render()
-                pdx_explanation.render_all_pdx(action, 4, q_values,
-                                               ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'],
-                                               sorted(reward_types))
+                # pdx_explanation.render_all_pdx(action, 4, q_values,
+                #                                ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'],
+                #                                sorted(reward_types))
                 
                # time.sleep(evaluation_config.sleep)
                 #input("pause")
             
             state, done, dead = env.step(action)
-
-            while running:
-                action = 4
+            for _ in range(skip_steps):
                 if evaluation_config.generate_xai_replay:
                     recorder.record_game_clock_tick(env.decomposed_reward_dict)
-                    #print(env.decomposed_reward_dict)
-                state, done, dead = env.step(action)
-                if done:
+                state, end = env.step(4, skip = True)
+                if end:
                     break
             
             if evaluation_config.generate_xai_replay:
@@ -191,15 +185,14 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     recorder.record_game_clock_tick(env.decomposed_reward_dict)
                     env.step(action)
 
-            if dead or (steps == 6):
+            if end:
                 if evaluation_config.generate_xai_replay:
                     for i in range(5):
                         recorder.record_game_clock_tick(env.decomposed_reward_dict)
                         env.step(action)
                     recorder.done_recording()
                 break
-            state, _, _ = env.step(4)
-            
+
             for i, rt in enumerate(reward_types):
                 total_reward += env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
         
