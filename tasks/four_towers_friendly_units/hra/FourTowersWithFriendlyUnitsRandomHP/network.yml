@@ -1,0 +1,80 @@
+# [0, 4, 9, 49, 54, 59, 64, 89, 94, 99]
+networks:
+  - name: "damageToEnemyMarine"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageByEnemyMarine"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToEnemyZergling"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageByEnemyZergling"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToEnemyMarauder"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageByEnemyMarauder"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToEnemyHydralisk"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageByEnemyHydralisk"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToEnemyThor"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageByEnemyThor"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToEnemyUltralisk"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageByEnemyUltralisk"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+  - name: "damageToFriendZealot"
+    layers:
+        - type: "FC"
+          neurons: 250
+
+
+input_shape:
+    - 20800
+
+output_shape: 4
+
+shared_layers: [] #TODO
+aggeregator: "average" #TODO
+
+network_path: "./saved_models/four_towers_friendly_units/hra/FourTowersWithFriendlyUnitsRandomHP.ckpt"
+summaries_path: "./tensorflow_summaries/four_towers_friendly_units/hra/FourTowersWithFriendlyUnitsRandomHP/network_summary"
+summaries_step: 100
+restore_network: True

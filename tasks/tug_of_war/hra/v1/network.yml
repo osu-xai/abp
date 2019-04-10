@@ -1,0 +1,86 @@
+# [0, 4, 9, 49, 54, 59, 64, 89, 94, 99]
+#reward_types = ['killEnemyMarine',
+#                    'killEnemyViking',
+#                    'killEnemyColossus',
+#                    'newMineralIncome',
+#                    'numberOfMarinesPerWave',
+#                    'numberOfVikingsPerWave',
+#                    'numberOfColossusPerWave',
+#                    'damageToEnemyBaseHP',
+#                    'damageToEnemyBaseSheild',
+#                    'damageToSelfBaseHP_Neg',
+#                    'damageToSelfBaseSheild_Neg',
+#                    'win',
+#                    'loss']
+networks:
+  - name: "killEnemyViking"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "killEnemyColossus"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "killEnemyColossus"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "newMineralIncome"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "numberOfMarinesPerWave"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "numberOfVikingsPerWave"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "numberOfColossusPerWave"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "damageToEnemyBaseHP"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "damageToEnemyBaseSheild"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "damageToSelfBaseHP_Neg"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "damageToSelfBaseSheild_Neg"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "win"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "loss"
+    layers:
+        - type: "FC"
+          neurons: 200
+input_shape:
+    - 16000
+
+output_shape: 5
+
+shared_layers: [] #TODO
+aggeregator: "average" #TODO
+
+network_path: "./saved_models/tug_of_war/hra/v1.ckpt"
+summaries_path: "./tensorflow_summaries/tug_of_war/hra/v1/network_summary"
+summaries_step: 100
+restore_network: True
