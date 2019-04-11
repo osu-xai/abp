@@ -84,8 +84,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #time.sleep(0.5)
             state, end = env.step(action)
             np.set_printoptions(precision = 2)
-            #print(np.reshape(state, (8,40,40)))
-            #input("pause")
+           # print(np.reshape(state, (,40,40)))
+           # input("pause")
             for _ in range(skip_steps):
                 state, end = env.step(4, skip = True)
                 if end:
