@@ -79,10 +79,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             stepRewards = {}
             steps += 1
             action, _, _ = agent.predict(state)
-            print("training step " + str(steps))
+            #print("training step " + str(steps))
             #print(action)
             #time.sleep(0.5)
-            state, done, dead = env.step(action)
+            state, end = env.step(action)
             np.set_printoptions(precision = 2)
             #print(np.reshape(state, (8,40,40)))
             #input("pause")
@@ -172,7 +172,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                # time.sleep(evaluation_config.sleep)
                 #input("pause")
             
-            state, done, dead = env.step(action)
+            state, end = env.step(action)
             for _ in range(skip_steps):
                 if evaluation_config.generate_xai_replay:
                     recorder.record_game_clock_tick(env.decomposed_reward_dict)
