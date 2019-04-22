@@ -1,8 +1,8 @@
-decay_steps: 300
+decay_steps: 10000
 starting_epsilon: 1
 discount_factor: 0.99
-batch_size: 50
-memory_size: 200
+batch_size: 10
+memory_size: 2000
 summaries_path: "./tensorflow_summaries/tug_of_war/hra/v1/reinforce_summary"
 update_frequency: 30
-epsilon_timesteps: 3000
+epsilon_timesteps: 10000

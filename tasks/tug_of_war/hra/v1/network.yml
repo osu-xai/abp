@@ -1,17 +1,16 @@
-# [0, 4, 9, 49, 54, 59, 64, 89, 94, 99]
-#reward_types = ['killEnemyMarine',
-#                    'killEnemyViking',
-#                    'killEnemyColossus',
-#                    'newMineralIncome',
-#                    'numberOfMarinesPerWave',
-#                    'numberOfVikingsPerWave',
-#                    'numberOfColossusPerWave',
-#                    'damageToEnemyBaseHP',
-#                    'damageToEnemyBaseSheild',
-#                    'damageToSelfBaseHP_Neg',
-#                    'damageToSelfBaseSheild_Neg',
-#                    'win',
-#                    'loss']
+#     reward_types = ['killEnemyMarine',
+#                     'killEnemyViking',
+#                     'killEnemyColossus',
+#                     'friendlyMarineCasualty_Neg',
+#                     'friendlyVikingCasualty_Neg',
+#                     'friendlyColossusCasualty_Neg',
+#                     'totalIncome',
+#                     'damageToEnemyBaseHP',
+#                     'damageToEnemyBaseSheild',
+#                     'damageToSelfBaseHP_Neg',
+#                     'damageToSelfBaseSheild_Neg',
+#                     'win',
+#                     'loss_Neg']
 networks:
   - name: "killEnemyViking"
     layers:
@@ -28,22 +27,22 @@ networks:
         - type: "FC"
           neurons: 200
 
-  - name: "newMineralIncome"
+  - name: "friendlyMarineCasualty_Neg"
     layers:
         - type: "FC"
           neurons: 200
 
-  - name: "numberOfMarinesPerWave"
+  - name: "friendlyVikingCasualty_Neg"
     layers:
         - type: "FC"
           neurons: 200
 
-  - name: "numberOfVikingsPerWave"
+  - name: "friendlyColossusCasualty_Neg"
     layers:
         - type: "FC"
           neurons: 200
 
-  - name: "numberOfColossusPerWave"
+  - name: "totalIncome"
     layers:
         - type: "FC"
           neurons: 200
@@ -68,12 +67,12 @@ networks:
     layers:
         - type: "FC"
           neurons: 200
-  - name: "loss"
+  - name: "loss_Neg"
     layers:
         - type: "FC"
           neurons: 200
 input_shape:
-    - 16000
+    - 13
 
 output_shape: 5
 

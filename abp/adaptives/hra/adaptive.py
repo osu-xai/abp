@@ -27,7 +27,7 @@ Tensor = FloatTensor
 class HRAAdaptive(object):
     """HRAAdaptive using HRA architecture"""
 
-    def __init__(self, name, choices, reward_types, network_config, reinforce_config):
+    def __init__(self, name, choices, reward_types, network_config, reinforce_config, illegal_actions_func = None):
         super(HRAAdaptive, self).__init__()
         self.name = name
         self.choices = choices
@@ -41,6 +41,7 @@ class HRAAdaptive(object):
         self.episode = 0
         self.reward_history = []
         self.best_reward_mean = -sys.maxsize
+        self.illegal_actions_func = illegal_actions_func
         self.beta_schedule = LinearSchedule(self.reinforce_config.beta_timesteps,
                                             initial_p=self.reinforce_config.beta_initial,
                                             final_p=self.reinforce_config.beta_final)
@@ -72,7 +73,6 @@ class HRAAdaptive(object):
         self.summary.add_scalar(tag='%s/Epsilon' % self.name,
                                 scalar_value=self.epsilon,
                                 global_step=self.steps)
-
         return random.random() < self.epsilon
 
     def predict(self, state):
@@ -84,18 +84,28 @@ class HRAAdaptive(object):
                             self.previous_action,
                             self.reward_list(),
                             state, 0)
-
+        if self.illegal_actions_func is not None:
+            illegal_actions = self.illegal_actions_func(state)
+        else:
+            illegal_actions = []
         if self.learning and self.should_explore():
-            action = random.choice(list(range(len(self.choices))))
+            if len(illegal_actions) == 0:
+                choice_actions = self.choices
+            else:
+                choice_actions = []
+                for ca in self.choices:
+                    if ca not in illegal_actions:
+                        choice_actions.append(ca)
+            action = random.choice(list(range(len(choice_actions))))
             q_values = None
             combined_q_values = None
-            choice = self.choices[action]
+            choice = choice_actions[action]
         else:
             _state = Tensor(state).unsqueeze(0)
             model_start_time = time.time()
             action, q_values, combined_q_values = self.eval_model.predict(_state,
                                                                           self.steps,
-                                                                          self.learning)
+                                                                          self.learning, illegal_actions = illegal_actions)
             choice = self.choices[action]
             self.model_time += time.time() - model_start_time
             '''
@@ -250,7 +260,7 @@ class HRAAdaptive(object):
             else:
                 logger.info("The best reward is still %.2f. Not saving" % current_reward_mean)
 
-    def update(self):
+    def update(self, illegal_actions = None):
         if len(self.memory) <= self.reinforce_config.batch_size:
             return
 
@@ -276,6 +286,11 @@ class HRAAdaptive(object):
 
         q_actions, q_values, _ = self.eval_model.predict_batch(states)
         q_values = q_values[:, batch_index, actions]
+        if self.illegal_actions_func is not None:
+            illegal_actions = []
+            for ns in next_states:
+                illegal_actions.append(self.illegal_actions_func(ns))
+                
         _, q_next, _ = self.eval_model.predict_batch(next_states)
 
         # Best action chioce by agent
