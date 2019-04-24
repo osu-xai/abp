@@ -71,7 +71,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     print("Now training.")
     for episode in tqdm(range(evaluation_config.training_episodes)):
     #for episode in range(1):
-
+    #    break
         state = env.reset()
         total_reward = 0
         end = False
@@ -81,43 +81,52 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         while deciding:
             stepRewards = {}
             steps += 1
-            action, _, _ = agent.predict(state)
-            state, end = env.step(action, skip = True)
             
-            #Skip frames to deal with credit assignment problem
-            for _ in range(skip_steps):
-                state, end = env.step(4, skip = True)
+            # Decision point
+            while True:
+                action, _, _ = agent.predict(state)
+                state, end, get_income = env.step(action)
+                if action == 4 or end:
+                    break
+                for i, rt in enumerate(reward_types):
+                    stepRewards[rt] = env.decomposed_rewards[i]
+                    agent.reward(rt, stepRewards[rt])
+                    total_reward += stepRewards[rt]
+                
+#                 print(action)
+#                 print(state)
+#                 print(np.array(env.decomposed_rewards))
+#                 input('pause')
+                
             
-            state, end = env.step(4)
+            #Skip frames to get to next decision point
+            while not get_income and not end:
+                state, end, get_income = env.step(4, skip = True)
+                
+            state, end, get_income = env.step(4)
             for i, rt in enumerate(reward_types):
                 stepRewards[rt] = env.decomposed_rewards[i]
                 agent.reward(rt, stepRewards[rt])
                 total_reward += stepRewards[rt]
-                
+#             print(action)
 #             print(state)
 #             print(np.array(env.decomposed_rewards))
 #             input('pause')
             if end:
                 break
+        agent.end_episode(env.end_state)        
         for i in range(len(totalRewardsDict)):
             totalRewardsDict[list(totalRewardsDict.keys())[i]] += stepRewards[reward_types[i]]
 
-        agent.end_episode(env.end_state)
         test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
                                        global_step = episode + 1)
         train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
                                         global_step = episode + 1)
 
-    '''
-    if train_forever:
-    	for i in range(10000):
-    		agent.update()
-    		if i % 100 == 0:
-    			print(i)
-    '''
-    agent.disable_learning(save = False)
-
+    agent.disable_learning(save = True)
+    
     total_rewwards_list = []
+    
     # Test Episodes
     print("======================================================================")
     print("===============================Now testing============================")
@@ -138,13 +147,19 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-            
-            #print(action)
-            #print(q_values)
-            
-            if evaluation_config.generate_xai_replay:
-                recorder.record_decision_point(action, q_values, combined_q_values, reward, env.decomposed_reward_dict)
-
+            while True:
+                action, q_values,combined_q_values = agent.predict(state)
+                if evaluation_config.generate_xai_replay:
+                    recorder.record_decision_point(action, q_values, combined_q_values, reward, env.decomposed_reward_dict)
+                state, end, get_income = env.step(action)
+                if action == 4 or end:
+                    break
+                for i, rt in enumerate(reward_types):
+                    total_reward += env.decomposed_rewards[i]
+#                 print(action)
+#                 print(state)
+#                 print(np.array(env.decomposed_rewards))
+#                 input('pause')
             #if evaluation_config.render:
                 # env.render()
                 # pdx_explanation.render_all_pdx(action, 4, q_values,
@@ -153,22 +168,28 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 
                # time.sleep(evaluation_config.sleep)
                 #input("pause")
-            
-            state, end = env.step(action, skip = True)
-            for _ in range(skip_steps):
+            #Skip frames to get to next decision point
+            while not get_income and not end:
                 if evaluation_config.generate_xai_replay:
                     recorder.record_game_clock_tick(env.decomposed_reward_dict)
-                state, end = env.step(4, skip = True)
-            
+                state, end, get_income = env.step(4, skip = True)
+
+            if evaluation_config.generate_xai_replay:
+                recorder.record_game_clock_tick(env.decomposed_reward_dict)
+            state, end, get_income = env.step(4)
+
+            for i, rt in enumerate(reward_types):
+                total_reward += env.decomposed_rewards[i]
+
 #             if evaluation_config.generate_xai_replay:
 #                 for i in range(5):
 #                     recorder.record_game_clock_tick(env.decomposed_reward_dict)
 #                     env.step(action)
-            state, end = env.step(4)
-    
-            for i, rt in enumerate(reward_types):
-                total_reward += env.decomposed_rewards[i]
-                
+#             print(action)
+#             print(state)
+#             print(np.array(env.decomposed_rewards))
+#             input('pause')
+
             if end:
                 if evaluation_config.generate_xai_replay:
                     for i in range(5):
@@ -176,7 +197,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         env.step(action)
                     recorder.done_recording()
                 break
-        
+                
         total_rewwards_list.append(total_reward)
         test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward,
                                        global_step=episode + 1)

@@ -147,7 +147,7 @@ class HRAAdaptive(object):
             return
 
         self.reward_history.append(self.total_reward)
-
+        
         logger.info("End of Episode %d with total reward %.2f, epsilon %.2f" %
                     (self.episode + 1, self.total_reward, self.epsilon))
 
@@ -160,7 +160,7 @@ class HRAAdaptive(object):
             tag = '%s/Decomposed Reward/%s' % (self.name, reward_type)
             value = self.decomposed_total_reward[reward_type]
             self.summary.add_scalar(tag=tag, scalar_value=value, global_step=self.episode)
-
+            
         self.memory.add(self.previous_state,
                         self.previous_action,
                         self.reward_list(),
@@ -244,8 +244,7 @@ class HRAAdaptive(object):
                 pickle.dump(info, fp)
 
         if (len(self.reward_history) >= self.network_config.save_steps and
-                self.episode % self.network_config.save_steps == 0):
-
+                self.episode % self.network_config.save_steps == 0) or force:
             total_reward = sum(self.reward_history[-self.network_config.save_steps:])
             current_reward_mean = total_reward / self.network_config.save_steps
 
@@ -259,7 +258,6 @@ class HRAAdaptive(object):
                     pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
             else:
                 logger.info("The best reward is still %.2f. Not saving" % current_reward_mean)
-
     def update(self, illegal_actions = None):
         if len(self.memory) <= self.reinforce_config.batch_size:
             return
