@@ -151,8 +151,10 @@ class HRAModel(Model):
                                 scalar_value=float(loss),
                                 global_step=steps)
 
-    def predict(self, input, steps, learning):
+    def predict(self, input, steps, learning, illegal_actions = None):
         q_values = self.model(input).squeeze(1)
+        if illegal_actions is not None:
+            q_values[:, illegal_actions] = np.NINF
         combined_q_values = torch.sum(q_values, 0)
         values, q_actions = torch.max(combined_q_values, 0)
 
@@ -170,8 +172,11 @@ class HRAModel(Model):
 
         return q_actions.item(), q_values, combined_q_values
 
-    def predict_batch(self, input):
+    def predict_batch(self, input, illegal_actions = None):
         q_values = self.model(input)
+        if illegal_actions is not None:
+            for i in range(input.shape[0]):
+                q_values[i, :, illegal_actions[i]] = np.NINF
         combined_q_values = torch.sum(q_values, 0)
         values, q_actions = torch.max(combined_q_values, 1)
         return q_actions, q_values, combined_q_values

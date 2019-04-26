@@ -1,0 +1,85 @@
+#     reward_types = ['killEnemyMarine',
+#                     'killEnemyViking',
+#                     'killEnemyColossus',
+#                     'friendlyMarineCasualty_Neg',
+#                     'friendlyVikingCasualty_Neg',
+#                     'friendlyColossusCasualty_Neg',
+#                     'totalIncome',
+#                     'damageToEnemyBaseHP',
+#                     'damageToEnemyBaseSheild',
+#                     'damageToSelfBaseHP_Neg',
+#                     'damageToSelfBaseSheild_Neg',
+#                     'win',
+#                     'loss_Neg']
+networks:
+  - name: "killEnemyViking"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "killEnemyColossus"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "killEnemyColossus"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "friendlyMarineCasualty_Neg"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "friendlyVikingCasualty_Neg"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "friendlyColossusCasualty_Neg"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "totalIncome"
+    layers:
+        - type: "FC"
+          neurons: 200
+
+  - name: "damageToEnemyBaseHP"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "damageToEnemyBaseSheild"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "damageToSelfBaseHP_Neg"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "damageToSelfBaseSheild_Neg"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "win"
+    layers:
+        - type: "FC"
+          neurons: 200
+  - name: "loss_Neg"
+    layers:
+        - type: "FC"
+          neurons: 200
+input_shape:
+    - 13
+
+output_shape: 5
+
+shared_layers: [] #TODO
+aggeregator: "average" #TODO
+
+network_path: "./saved_models/tug_of_war/hra/v1.ckpt"
+summaries_path: "./tensorflow_summaries/tug_of_war/hra/v1/network_summary"
+summaries_step: 100
+restore_network: True
