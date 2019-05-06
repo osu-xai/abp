@@ -5,5 +5,5 @@ batch_size: 32
 memory_size: 500
 summaries_path: "./tensorflow_summaries/tug_of_war/hra/v1/reinforce_summary"
 update_frequency: 30
-epsilon_timesteps: 20000
+epsilon_timesteps: 8000
 final_epsilon: 0.05

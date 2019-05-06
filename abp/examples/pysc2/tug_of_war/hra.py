@@ -60,7 +60,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
     totalRewardsDict = {}
 
-    skip_steps = 4
+    skip_steps = 20
 
     for rt in reward_types:
     	totalRewardsDict['total' + rt] = 0
@@ -82,6 +82,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             stepRewards = {}
             steps += 1
             
+            #skip frames
+            for _ in range(skip_steps):
+                state, end, get_income = env.step(4, skip = True)
             # Decision point
             while True:
                 action, _, _ = agent.predict(state)
@@ -93,10 +96,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     agent.reward(rt, stepRewards[rt])
                     total_reward += stepRewards[rt]
                 
-#                 print(action)
-#                 print(state)
-#                 print(np.array(env.decomposed_rewards))
-#                 input('pause')
+                print(action)
+                print(state)
+                print(np.array(env.decomposed_rewards))
+                input('pause')
                 
             
             #Skip frames to get to next decision point
@@ -108,10 +111,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 stepRewards[rt] = env.decomposed_rewards[i]
                 agent.reward(rt, stepRewards[rt])
                 total_reward += stepRewards[rt]
-#             print(action)
-#             print(state)
-#             print(np.array(env.decomposed_rewards))
-#             input('pause')
+            print(action)
+            print(state)
+            print(np.array(env.decomposed_rewards))
+            input('pause')
             if end:
                 break
         agent.end_episode(env.end_state)        
@@ -147,6 +150,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             #input("pause")
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
+            for _ in range(skip_steps):
+                state, end, get_income = env.step(4, skip = True)
             while True:
                 action, q_values,combined_q_values = agent.predict(state)
                 if evaluation_config.generate_xai_replay:
