@@ -3,6 +3,7 @@ import time
 import numpy as np
 from absl import flags
 import sys, os
+import torch
 
 from abp import SADQAdaptive
 from abp.utils import clear_summary_path
@@ -12,8 +13,13 @@ from gym.envs.registration import register
 from sc2env.environments.tug_of_war_bigA import TugOfWar
 from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
 from tqdm import tqdm
+from copy import deepcopy
+from random import randint
 
-#np.set_printoptions(precision = 2)
+np.set_printoptions(precision = 2)
+use_cuda = torch.cuda.is_available()
+FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
+
 def run_task(evaluation_config, network_config, reinforce_config, map_name = None, train_forever = False):
     flags.FLAGS(sys.argv[:1])
 
@@ -59,7 +65,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("Now training.")
         for episode in tqdm(range(evaluation_config.training_episodes)):
         #for episode in range(1):
-    #         break
+            break
             state = env.reset()
             total_reward = 0
             end = False
@@ -71,12 +77,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 state, actions, end, dp = env.step([])
                 if dp or end:
                     break
-
+            
             while playing:
                 stepRewards = {}
                 steps += 1
     #             print("state 1:")
-    #             print(state)
+   #             print(state)
                 # Decision point
                 combine_states = combine_sa(state, actions)
     #             print(combine_states)
@@ -98,9 +104,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         break
 
                 reward = sum(env.decomposed_rewards[7:11]) - 10
-    #             print(np.array(env.decomposed_rewards[7:11]))
+#                 print(np.array(env.decomposed_rewards[:]))
     #             print(total_reward)
-    #             input('pause')
+                #input('pause')
                 agent.reward(reward)
 
                 if steps > max_episode_steps:
@@ -126,12 +132,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         agent.disable_learning()
 
         total_rewwards_list = []
-
+            
         # Test Episodes
         print("======================================================================")
         print("===============================Now testing============================")
         print("======================================================================")
-        for episode in tqdm(range(evaluation_config.test_episodes)):
+        
+        collecting_experience = True
+        
+        all_experiences = []
+        for episode in tqdm(range(1000)):
 
             state = env.reset()
             total_reward = 0
@@ -139,21 +149,35 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             skiping = True
             playing = True
             steps = 0
-
+            previous_state = None
             while skiping:
                 state, actions, end, dp = env.step([])
                 if dp or end:
                     break
-
+            
             while playing:
                 stepRewards = {}
                 steps += 1
-                combine_states = combine_sa(state, actions)
+                
+                choice = randint(0, len(actions) - 1)
+                #combine_states = combine_sa(state, actions)
 
-                choice, q_values = agent.predict(combine_states)
+                #choice, q_values = agent.predict(combine_states)
 
                 state, _, _, _ = env.step(list(actions[choice]))
-
+                #######
+                #experience collecting
+                ######
+                if collecting_experience:
+                    if previous_state is not None:
+                        experience = experience_data(env.denormalization(previous_state),
+                                                     current_reward,
+                                                     env.denormalization(state))
+                        #print(experience)
+                    
+                        all_experiences.append(experience)
+                    previous_state = deepcopy(state)
+                    
                 while skiping:
                     state, actions, end, dp = env.step([])
                     if dp or end:
@@ -162,15 +186,24 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     #             print(q_values)
     #             print(choice)
     #             print(env.decomposed_rewards[7:11])
-                total_reward += sum(env.decomposed_rewards[7:11])
+                current_reward = sum(env.decomposed_rewards[7:11])
+                total_reward += current_reward
 
-    #             input('pause')
-
+#                 input('pause')
                 if steps > max_episode_steps:
                     break
                 if end:
                     break
+                    
+            if collecting_experience:
+                if previous_state is not None:
+                    experience = experience_data(env.denormalization(previous_state),
+                                                 current_reward,
+                                                 env.denormalization(state))
+                    #print(experience)
 
+                    all_experiences.append(experience)
+                previous_state = deepcopy(state)
     #         print(total_reward)
 
             total_rewwards_list.append(total_reward)
@@ -178,6 +211,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                            global_step=episode + 1)
             test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                            global_step=episode + 1)
+        torch.save(all_experiences, 'all_experiences.pt')
+        if collecting_experience:
+            break
+        #print(test.size())
         tr = sum(total_rewwards_list) / evaluation_config.test_episodes
         print("total reward:")
         print(tr)
@@ -185,3 +222,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         f.write(str(tr) + "\n")
         f.close()
         agent.enable_learning()
+
+def experience_data(state, reward, next_state):
+    diff = deepcopy(next_state - state)
+    action_a, action_b = diff[:4], diff[6:10]
+    #print(state, action_a, action_b)
+    return (np.hstack((state, action_a, action_b)), np.hstack((reward, next_state)))

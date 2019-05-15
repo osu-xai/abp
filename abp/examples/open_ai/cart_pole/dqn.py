@@ -3,7 +3,7 @@ import gym
 from abp import DQNAdaptive
 from abp.utils import clear_summary_path
 from tensorboardX import SummaryWriter
-
+import tqdm
 
 def run_task(evaluation_config, network_config, reinforce_config, log=True):
     start_time = time.time()
@@ -37,7 +37,7 @@ def run_task(evaluation_config, network_config, reinforce_config, log=True):
     start_time = time.time()
     print('Training CartPole for {} episodes...'.format(evaluation_config.training_episodes))
     # Training Episodes
-    for episode in range(evaluation_config.training_episodes):
+    for episode in tqdm.tqdm(range(evaluation_config.training_episodes)):
         state = env.reset()
         total_reward = 0
         for steps in range(max_episode_steps):

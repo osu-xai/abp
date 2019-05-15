@@ -90,9 +90,9 @@ class SADQAdaptive(object):
                             None,
                             self.current_reward,
                         state.reshape(-1, self.state_length), 0)
-        q_values = FloatTensor([self.eval_model.predict(Tensor(s).unsqueeze(0),
-                                               self.steps,
-                                               self.learning)[1] for s in state])
+#         q_values = FloatTensor([self.eval_model.predict(Tensor(s).unsqueeze(0),
+#                                                self.steps,
+#                                                self.learning)[1] for s in state])
 #         print(q_values)
 #         print(self.current_reward)
 #         input()
