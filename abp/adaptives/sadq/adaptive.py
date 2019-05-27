@@ -11,7 +11,7 @@ from baselines.common.schedules import LinearSchedule
 
 from abp.utils import clear_summary_path
 from abp.models import DQNModel
-from abp.adaptives.common.prioritized_memory.memory import PrioritizedReplayBuffer
+from abp.adaptives.common.prioritized_memory.memory import PrioritizedReplayBuffer, ReplayBuffer
 
 logger = logging.getLogger('root')
 use_cuda = torch.cuda.is_available()
@@ -31,8 +31,10 @@ class SADQAdaptive(object):
         #self.choices = choices
         self.network_config = network_config
         self.reinforce_config = reinforce_config
-
-        self.memory = PrioritizedReplayBuffer(self.reinforce_config.memory_size, 0.6)
+        if reinforce_config.use_prior_memory:
+            self.memory = PrioritizedReplayBuffer(self.reinforce_config.memory_size, 0.6)
+        else:
+            self.memory = ReplayBuffer(self.reinforce_config.memory_size)
         self.learning = True
         self.explanation = False
         self.state_length = state_length
@@ -233,11 +235,14 @@ class SADQAdaptive(object):
         beta = self.beta_schedule.value(self.steps)
         self.summary.add_scalar(tag='%s/Beta' % self.name,
                                 scalar_value=beta, global_step=self.steps)
+        if reinforce_config.use_prior_memory:
+            batch = self.memory.sample(self.reinforce_config.batch_size, beta)
+            (states, actions, reward, next_states,
+             is_terminal, weights, batch_idxes) = batch
+        else:
+            batch = self.memory.sample(self.reinforce_config.batch_size)
+            (states, actions, reward, next_states, is_terminal) = batch
 
-        batch = self.memory.sample(self.reinforce_config.batch_size, beta)
-
-        (states, actions, reward, next_states,
-         is_terminal, weights, batch_idxes) = batch
 
         self.summary.add_histogram(tag='%s/Batch Indices' % self.name,
                                    values=Tensor(batch_idxes),
@@ -255,7 +260,6 @@ class SADQAdaptive(object):
         q_values = q_values.flatten()
         # Calculate target
         q_next = [self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))[1] for ns in next_states]
-#         q_next = [self.eval_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))[1] for ns in next_states]
         q_max = torch.stack([each_qmax.max(0)[0].detach() for each_qmax in q_next], dim = 1)[0]
 
         q_max = (1 - terminal) * q_max
@@ -266,6 +270,7 @@ class SADQAdaptive(object):
         self.eval_model.fit(q_values, q_target, self.steps)
 
         # Update priorities
-        td_errors = q_values - q_target
-        new_priorities = torch.abs(td_errors) + 1e-6  # prioritized_replay_eps
-        self.memory.update_priorities(batch_idxes, new_priorities.data)
+        if reinforce_config.use_prior_memory:
+            td_errors = q_values - q_target
+            new_priorities = torch.abs(td_errors) + 1e-6  # prioritized_replay_eps
+            self.memory.update_priorities(batch_idxes, new_priorities.data)
