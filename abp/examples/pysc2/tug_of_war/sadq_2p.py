@@ -80,8 +80,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             skiping = True
             done = False
             steps = 0
-            print(list(env.denormalization(state_1)))
-            print(list(env.denormalization(state_2)))
+#             print(list(env.denormalization(state_1)))
+#             print(list(env.denormalization(state_2)))
             while skiping:
                 state_1, state_2, done, dp = env.step([], 0)
                 if dp or done:
@@ -90,9 +90,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             while not done and steps < max_episode_steps:
                 steps += 1
                 # Decision point
-                print('state:')
-                print(list(env.denormalization(state_1)))
-                print(list(env.denormalization(state_2)))
+#                 print('state:')
+#                 print(list(env.denormalization(state_1)))
+#                 print(list(env.denormalization(state_2)))
                 actions_1 = env.get_big_A(env.denormalization(state_1)[env.miner_index])
                 actions_2 = env.get_big_A(env.denormalization(state_2)[env.miner_index])
                 
@@ -115,20 +115,20 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                 print(actions_1[choice_1])
 #                 print(actions_2[choice_2])
 #                 input('pause')
-#                 env.step(list(actions_1[choice_1]), 1)
-#                 env.step(list(actions_2[choice_2]), 2)
-                env.step((0,0,1,1), 1)
-                env.step((0,1,0,1), 2)
+                env.step(list(actions_1[choice_1]), 1)
+                env.step(list(actions_2[choice_2]), 2)
+#                 env.step((0,0,0,1), 1)
+#                 env.step((0,0,0,1), 2)
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
-                    input('time_step')
+#                     input('time_step')
                     if dp or done:
                         break
 
                 reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
-                print('reward:')
-                print(reward_1)
-                print(reward_2)
+#                 print('reward:')
+#                 print(reward_1)
+#                 print(reward_2)
                 
                 for r1, r2 in zip(reward_1, reward_2):
                     if not reinforce_config.is_random_agent_1:
@@ -145,103 +145,119 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                            global_step = episode + 1)
             train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
                                             global_step = episode + 1)
-
-#         agent.disable_learning()
-
-#         total_rewwards_list = []
-            
-#         # Test Episodes
-#         print("======================================================================")
-#         print("===============================Now testing============================")
-#         print("======================================================================")
         
-#         collecting_experience = True
-        
-#         all_experiences = []
-#         for episode in tqdm(range(1000)):
-
-#             state = env.reset()
-#             total_reward = 0
-#             end = False
-#             skiping = True
-#             playing = True
-#             steps = 0
-#             previous_state = None
-#             while skiping:
-#                 state, actions, end, dp = env.step([], 0)
-#                 if dp or end:
-#                     break
+        if not reinforce_config.is_random_agent_1:
+            agent_1.disable_learning()
             
-#             while playing:
-#                 stepRewards = {}
-#                 steps += 1
+        if not reinforce_config.is_random_agent_2:
+            agent_2.disable_learning()
+
+        total_rewwards_list = []
+            
+        # Test Episodes
+        print("======================================================================")
+        print("===============================Now testing============================")
+        print("======================================================================")
+        
+        collecting_experience = True
+        
+        all_experiences = []
+        for episode in tqdm(range(evaluation_config.test_episodes)):
+            state = env.reset()
+            total_reward_1 = 0
+            done = False
+            skiping = True
+            steps = 0
+            previous_state = None
+            
+            while skiping:
+                state_1, state_2, done, dp = env.step([], 0)
+                if dp or done:
+                    break
+            
+            while not done and steps < max_episode_steps:
+                steps += 1
+#                 # Decision point
+#                 print('state:')
+#                 print(list(env.denormalization(state_1)))
+#                 print(list(env.denormalization(state_2)))
+                actions_1 = env.get_big_A(env.denormalization(state_1)[env.miner_index])
+                actions_2 = env.get_big_A(env.denormalization(state_2)[env.miner_index])
+
+                if not reinforce_config.is_random_agent_1:
+                    combine_states_1 = combine_sa(state_1, actions_1)
+                    choice_1, _ = agent_1.predict(combine_states_1)
+                else:
+                    choice_1 = randint(0, len(actions_1) - 1)
+                    
+                if not reinforce_config.is_random_agent_2:
+                    combine_states_2 = combine_sa(state_2, actions_2)
+                    choice_2, _ = agent_2.predict(combine_states_2)
+                else:
+                    choice_2 = randint(0, len(actions_2) - 1)
+                    
+                env.step(list(actions_1[choice_1]), 1)
+                env.step(list(actions_2[choice_2]), 2)
+                #######
+                #experience collecting
+                ######
+                if collecting_experience:
+                    if previous_state is not None:
+                        experience = experience_data(env.denormalization(previous_state),
+                                                     current_reward_1,
+                                                     env.denormalization(state_1))
+                        #print(experience)
+                        all_experiences.append(experience)
+                        
+                    previous_state = deepcopy(state_1)
+                    
+                while skiping:
+                    state_1, state_2, done, dp = env.step([], 0)
+#                     input('time_step')
+                    if dp or done:
+                        break
+
+                current_reward_1 = 0
+                reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
+                for r1 in reward_1:
+                    current_reward_1 += r1
+                    
+                total_reward_1 += current_reward_1
                 
-#                 choice = randint(0, len(actions) - 1)
-#                 #combine_states = combine_sa(state, actions)
-
-#                 #choice, q_values = agent.predict(combine_states)
-
-#                 state, _, _, _ = env.step(list(actions[choice]))
-#                 #######
-#                 #experience collecting
-#                 ######
-#                 if collecting_experience:
-#                     if previous_state is not None:
-#                         experience = experience_data(env.denormalization(previous_state),
-#                                                      current_reward,
-#                                                      env.denormalization(state))
-#                         #print(experience)
-                    
-#                         all_experiences.append(experience)
-#                     previous_state = deepcopy(state)
-                    
-#                 while skiping:
-#                     state, actions, end, dp = env.step([])
-#                     if dp or end:
-#                         break
-#     #             print(combine_states)
-#     #             print(q_values)
-#     #             print(choice)
-#     #             print(env.decomposed_rewards[7:11])
-#                 current_reward = sum(env.decomposed_rewards[7:11])
-#                 total_reward += current_reward
-
-# #                 input('pause')
-#                 if steps > max_episode_steps:
-#                     break
-#                 if end:
-#                     break
-                    
 #             if collecting_experience:
 #                 if previous_state is not None:
 #                     experience = experience_data(env.denormalization(previous_state),
-#                                                  current_reward,
+#                                                  current_reward_1,
 #                                                  env.denormalization(state))
-#                     #print(experience)
-
 #                     all_experiences.append(experience)
-#                 previous_state = deepcopy(state)
-#     #         print(total_reward)
+                    
 
-#             total_rewwards_list.append(total_reward)
-#             test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward,
-#                                            global_step=episode + 1)
-#             test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
-#                                            global_step=episode + 1)
-#         torch.save(all_experiences, 'all_experiences.pt')
-#         if collecting_experience:
-#             break
-#         #print(test.size())
-#         tr = sum(total_rewwards_list) / evaluation_config.test_episodes
-#         print("total reward:")
-#         print(tr)
-#         f = open("result.txt", "a+")
-#         f.write(str(tr) + "\n")
-#         f.close()
-#         agent.enable_learning()
+            total_rewwards_list.append(total_reward_1)
+            test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
+                                           global_step=episode + 1)
+            test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
+                                           global_step=episode + 1)
+        if collecting_experience:        
+            break
+        #print(test.size())
+        tr = sum(total_rewwards_list) / evaluation_config.test_episodes
+        print("total reward:")
+        print(tr)
+        f = open("result.txt", "a+")
+        f.write(str(tr) + "\n")
+        f.close()
+        if not reinforce_config.is_random_agent_1:
+            agent_1.enable_learning()
+            
+        if not reinforce_config.is_random_agent_2:
+            agent_2.enable_learning()
+        
+    if collecting_experience:
+        torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/exall_experiences.pt')
+        
 
 def experience_data(state, reward, next_state):
     diff = deepcopy(next_state - state)
-    action_a, action_b = diff[:4], diff[6:10]
+    action_a, action_b = diff[:4], diff[5:9]
     #print(state, action_a, action_b)
     return (np.hstack((state, action_a, action_b)), np.hstack((reward, next_state)))
