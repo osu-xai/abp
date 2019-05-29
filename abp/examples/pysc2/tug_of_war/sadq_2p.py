@@ -34,7 +34,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     max_episode_steps = 35
     #state = env.reset()
     
-    #choices = [0,1,2,3,4]
+    choices = [0,1,2,3]
     #pdx_explanation = PDX()
     replay_dimension = evaluation_config.xai_replay_dimension
     env = TugOfWar(reward_types, map_name = map_name, \
@@ -44,7 +44,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQAdaptive(name = "TugOfWar",
-                            state_length = len(state_1),
+                            state_length = len(state_1) + len(choices),
                             network_config = network_config,
                             reinforce_config = reinforce_config)
         print("sadq agent 1")
@@ -52,7 +52,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("random agent 1")
     if not reinforce_config.is_random_agent_2:
         agent_2 = SADQAdaptive(name = "TugOfWar",
-                            state_length = len(state_2),
+                            state_length = len(state_2) + len(choices),
                             network_config = network_config,
                             reinforce_config = reinforce_config)
         print("sadq agent 2")
@@ -99,6 +99,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 if not reinforce_config.is_random_agent_1:
                     combine_states_1 = combine_sa(state_1, actions_1)
                     choice_1, _ = agent_1.predict(combine_states_1)
+#                     print(combine_states_1)
                 else:
                     choice_1 = randint(0, len(actions_1) - 1)
                     
@@ -110,7 +111,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                 print("action list:")
 #                 print(actions_1)
 #                 print(actions_2)
-#                 # assign action
+                # assign action
 #                 print("choice:")
 #                 print(actions_1[choice_1])
 #                 print(actions_2[choice_2])
@@ -137,9 +138,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         agent_2.reward(r2)
             
             if not reinforce_config.is_random_agent_1:
-                agent_1.end_episode(env.end_state_1)
+                agent_1.end_episode(np.hstack((env.end_state_1, np.zeros(4))))
             if not reinforce_config.is_random_agent_2:
-                agent_2.end_episode(env.end_state_2)
+                agent_2.end_episode(np.hstack((env.end_state_2, np.zeros(4))))
 
             test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
                                            global_step = episode + 1)
@@ -159,7 +160,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("===============================Now testing============================")
         print("======================================================================")
         
-        collecting_experience = True
+        collecting_experience = False
         
         all_experiences = []
         for episode in tqdm(range(evaluation_config.test_episodes)):
@@ -253,7 +254,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             agent_2.enable_learning()
         
     if collecting_experience:
-        torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/exall_experiences.pt')
+        torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
         
 
 def experience_data(state, reward, next_state):

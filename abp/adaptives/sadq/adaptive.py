@@ -31,7 +31,7 @@ class SADQAdaptive(object):
         #self.choices = choices
         self.network_config = network_config
         self.reinforce_config = reinforce_config
-        if reinforce_config.use_prior_memory:
+        if self.reinforce_config.use_prior_memory:
             self.memory = PrioritizedReplayBuffer(self.reinforce_config.memory_size, 0.6)
         else:
             self.memory = ReplayBuffer(self.reinforce_config.memory_size)
@@ -235,7 +235,7 @@ class SADQAdaptive(object):
         beta = self.beta_schedule.value(self.steps)
         self.summary.add_scalar(tag='%s/Beta' % self.name,
                                 scalar_value=beta, global_step=self.steps)
-        if reinforce_config.use_prior_memory:
+        if self.reinforce_config.use_prior_memory:
             batch = self.memory.sample(self.reinforce_config.batch_size, beta)
             (states, actions, reward, next_states,
              is_terminal, weights, batch_idxes) = batch
@@ -270,7 +270,7 @@ class SADQAdaptive(object):
         self.eval_model.fit(q_values, q_target, self.steps)
 
         # Update priorities
-        if reinforce_config.use_prior_memory:
+        if self.reinforce_config.use_prior_memory:
             td_errors = q_values - q_target
             new_priorities = torch.abs(td_errors) + 1e-6  # prioritized_replay_eps
             self.memory.update_priorities(batch_idxes, new_priorities.data)
