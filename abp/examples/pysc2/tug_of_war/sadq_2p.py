@@ -67,7 +67,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     clear_summary_path(test_summaries_path)
     test_summary_writer = SummaryWriter(test_summaries_path)
     
+    enemy_update = 20
+    
+    round_num = 0
     while True:
+        if round_num % enemy_update == 0 and not reinforce_config.is_random_agent_2:
+            print("replace enemy agent's weight with self agent")
+            agent_2.load_model(agent_1.eval_model)
+        if not reinforce_config.is_random_agent_2:
+            agent_2.disable_learning()
+        round_num += 1
+        
         print("=======================================================================")
         print("===============================Now training============================")
         print("=======================================================================")
@@ -111,7 +121,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                 print("action list:")
 #                 print(actions_1)
 #                 print(actions_2)
-                # assign action
+# #                 assign action
 #                 print("choice:")
 #                 print(actions_1[choice_1])
 #                 print(actions_2[choice_2])
@@ -134,13 +144,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 for r1, r2 in zip(reward_1, reward_2):
                     if not reinforce_config.is_random_agent_1:
                         agent_1.reward(r1)
-                    if not reinforce_config.is_random_agent_2:
-                        agent_2.reward(r2)
+#                     if not reinforce_config.is_random_agent_2:
+#                         agent_2.reward(r2)
             
             if not reinforce_config.is_random_agent_1:
                 agent_1.end_episode(np.hstack((env.end_state_1, np.zeros(4))))
-            if not reinforce_config.is_random_agent_2:
-                agent_2.end_episode(np.hstack((env.end_state_2, np.zeros(4))))
+#             if not reinforce_config.is_random_agent_2:
+#                 agent_2.end_episode(np.hstack((env.end_state_2, np.zeros(4))))
 
             test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
                                            global_step = episode + 1)
@@ -204,14 +214,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 ######
                 if collecting_experience:
                     if previous_state is not None:
-                        experience = experience_data(env.denormalization(previous_state),
-                                                     current_reward_1,
-                                                     env.denormalization(state_1))
-                        #print(experience)
+                        experience = [np.hstack((env.denormalization(previous_state), 
+                                                actions_1[choice_1],
+                                                actions_2[choice_2],
+                                                np.array([current_reward_1]))),
+                                     env.denormalization(state_1)]
+                        print(experience)
                         all_experiences.append(experience)
                         
                     previous_state = deepcopy(state_1)
-                    
+#                 input("123")
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
 #                     input('time_step')
@@ -244,21 +256,14 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         tr = sum(total_rewwards_list) / evaluation_config.test_episodes
         print("total reward:")
         print(tr)
-        f = open("result.txt", "a+")
+        f = open("result_self_play.txt", "a+")
         f.write(str(tr) + "\n")
         f.close()
         if not reinforce_config.is_random_agent_1:
             agent_1.enable_learning()
             
-        if not reinforce_config.is_random_agent_2:
-            agent_2.enable_learning()
+#         if not reinforce_config.is_random_agent_2:
+#             agent_2.enable_learning()
         
     if collecting_experience:
         torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
-        
-
-def experience_data(state, reward, next_state):
-    diff = deepcopy(next_state - state)
-    action_a, action_b = diff[:4], diff[5:9]
-    #print(state, action_a, action_b)
-    return (np.hstack((state, action_a, action_b)), np.hstack((reward, next_state)))

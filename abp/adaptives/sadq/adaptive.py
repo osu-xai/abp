@@ -274,3 +274,6 @@ class SADQAdaptive(object):
             td_errors = q_values - q_target
             new_priorities = torch.abs(td_errors) + 1e-6  # prioritized_replay_eps
             self.memory.update_priorities(batch_idxes, new_priorities.data)
+            
+    def load_model(self, model):
+        self.eval_model.replace(model)
