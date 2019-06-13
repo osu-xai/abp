@@ -170,7 +170,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("===============================Now testing============================")
         print("======================================================================")
         
-        collecting_experience = False
+        collecting_experience = True
         
         all_experiences = []
         for episode in tqdm(range(evaluation_config.test_episodes)):
@@ -180,12 +180,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             skiping = True
             steps = 0
             previous_state = None
+            previous_action_1 = None
+            previous_action_2 = None 
+            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Starting episode%%%%%%%%%%%%%%%%%%%%%%%%%")
             
             while skiping:
                 state_1, state_2, done, dp = env.step([], 0)
+                
                 if dp or done:
                     break
-            
+            input("done stepping to finish prior action")
             while not done and steps < max_episode_steps:
                 steps += 1
 #                 # Decision point
@@ -208,35 +212,46 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     choice_2 = randint(0, len(actions_2) - 1)
                     
                 env.step(list(actions_1[choice_1]), 1)
+                input('stepped with command 1')
                 env.step(list(actions_2[choice_2]), 2)
+                input('stepped with command 2')
                 #######
                 #experience collecting
                 ######
                 if collecting_experience:
-                    if previous_state is not None:
+                    if previous_state is not None and previous_action_1 is not None and previous_action_2 is not None:
+                        print("======================================================")
+                        print(f"previous state  P1 {env.denormalization(previous_state)}")
+                        print(f"actions 1 {previous_action_1}")
+                        print(f"actions 2 {previous_action_2}")
+                        print(f"current state P1 {env.denormalization(state_1)}")
                         experience = [np.hstack((env.denormalization(previous_state), 
-                                                actions_1[choice_1],
-                                                actions_2[choice_2],
-                                                np.array([current_reward_1]))),
+                                                previous_action_1,
+                                                previous_action_2,
+                                                np.array([previous_reward_1]))),
                                      env.denormalization(state_1)]
-                        print(experience)
+                        #print(experience)
                         all_experiences.append(experience)
                         
                     previous_state = deepcopy(state_1)
 #                 input("123")
+                previous_action_1 = deepcopy(actions_1[choice_1])
+                previous_action_2 = deepcopy(actions_2[choice_2])
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
-#                     input('time_step')
+                    #input(' step wating for done signal')
                     if dp or done:
                         break
-
+                input('done stepping after collecting experience')
                 current_reward_1 = 0
                 reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
                 for r1 in reward_1:
                     current_reward_1 += r1
                     
                 total_reward_1 += current_reward_1
-                
+                previous_reward_1 = current_reward_1
+ 
+
 #             if collecting_experience:
 #                 if previous_state is not None:
 #                     experience = experience_data(env.denormalization(previous_state),
