@@ -67,13 +67,26 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     clear_summary_path(test_summaries_path)
     test_summary_writer = SummaryWriter(test_summaries_path)
     
-    enemy_update = 20
+    random_enemy = True
+    enemy_update = 30
     
     round_num = 0
+    
+    privous_5_result = []
+    
+    agent_2.load_model(agent_1.eval_model)
     while True:
-        if round_num % enemy_update == 0 and not reinforce_config.is_random_agent_2:
+        if len(privous_5_result) >= 5 and \
+        sum(privous_5_result) > 10000 and \
+        not reinforce_config.is_random_agent_2:
             print("replace enemy agent's weight with self agent")
+            random_enemy = False
+            f = open("result_self_play.txt", "a+")
+            f.write("Update agent\n")
+            f.close()
             agent_2.load_model(agent_1.eval_model)
+            agent_1.steps = 10000
+            
         if not reinforce_config.is_random_agent_2:
             agent_2.disable_learning()
         round_num += 1
@@ -82,6 +95,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("===============================Now training============================")
         print("=======================================================================")
         print("Now training.")
+        if random_enemy:
+            print("enemy is random")
         for episode in tqdm(range(evaluation_config.training_episodes)):
 #         for episode in range(1):
 #             break
@@ -113,7 +128,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 else:
                     choice_1 = randint(0, len(actions_1) - 1)
                     
-                if not reinforce_config.is_random_agent_2:
+                if not reinforce_config.is_random_agent_2 and not random_enemy:
                     combine_states_2 = combine_sa(state_2, actions_2)
                     choice_2, _ = agent_2.predict(combine_states_2)
                 else:
@@ -271,6 +286,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         tr = sum(total_rewwards_list) / evaluation_config.test_episodes
         print("total reward:")
         print(tr)
+        privous_5_result.append(tr)
+        if len(privous_5_result) > 5:
+            del privous_5_result[0]
+            
         f = open("result_self_play.txt", "a+")
         f.write(str(tr) + "\n")
         f.close()
