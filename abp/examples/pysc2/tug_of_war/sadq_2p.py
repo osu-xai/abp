@@ -77,7 +77,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     agent_2.load_model(agent_1.eval_model)
     while True:
         if len(privous_5_result) >= 5 and \
-        sum(privous_5_result) > 10000 and \
+        sum(privous_5_result) / 5 > 11000 and \
         not reinforce_config.is_random_agent_2:
             print("replace enemy agent's weight with self agent")
             random_enemy = False
@@ -85,7 +85,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             f.write("Update agent\n")
             f.close()
             agent_2.load_model(agent_1.eval_model)
-            agent_1.steps = 10000
+            agent_1.steps = 0
             
         if not reinforce_config.is_random_agent_2:
             agent_2.disable_learning()
@@ -185,7 +185,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("===============================Now testing============================")
         print("======================================================================")
         
-        collecting_experience = True
+        collecting_experience = False
         
         all_experiences = []
         for episode in tqdm(range(evaluation_config.test_episodes)):
@@ -197,14 +197,14 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             previous_state = None
             previous_action_1 = None
             previous_action_2 = None 
-            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Starting episode%%%%%%%%%%%%%%%%%%%%%%%%%")
+#             print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Starting episode%%%%%%%%%%%%%%%%%%%%%%%%%")
             
             while skiping:
                 state_1, state_2, done, dp = env.step([], 0)
                 
                 if dp or done:
                     break
-            input("done stepping to finish prior action")
+#             input("done stepping to finish prior action")
             while not done and steps < max_episode_steps:
                 steps += 1
 #                 # Decision point
@@ -220,16 +220,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 else:
                     choice_1 = randint(0, len(actions_1) - 1)
                     
-                if not reinforce_config.is_random_agent_2:
+                if not reinforce_config.is_random_agent_2 and not random_enemy:
                     combine_states_2 = combine_sa(state_2, actions_2)
                     choice_2, _ = agent_2.predict(combine_states_2)
                 else:
                     choice_2 = randint(0, len(actions_2) - 1)
                     
                 env.step(list(actions_1[choice_1]), 1)
-                input('stepped with command 1')
+#                 input('stepped with command 1')
                 env.step(list(actions_2[choice_2]), 2)
-                input('stepped with command 2')
+#                 input('stepped with command 2')
                 #######
                 #experience collecting
                 ######
@@ -257,7 +257,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     #input(' step wating for done signal')
                     if dp or done:
                         break
-                input('done stepping after collecting experience')
+#                 input('done stepping after collecting experience')
                 current_reward_1 = 0
                 reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
                 for r1 in reward_1:
@@ -265,14 +265,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     
                 total_reward_1 += current_reward_1
                 previous_reward_1 = current_reward_1
- 
-
-#             if collecting_experience:
-#                 if previous_state is not None:
-#                     experience = experience_data(env.denormalization(previous_state),
-#                                                  current_reward_1,
-#                                                  env.denormalization(state))
-#                     all_experiences.append(experience)
                     
 
             total_rewwards_list.append(total_reward_1)
