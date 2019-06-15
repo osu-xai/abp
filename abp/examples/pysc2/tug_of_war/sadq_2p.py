@@ -67,7 +67,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     clear_summary_path(test_summaries_path)
     test_summary_writer = SummaryWriter(test_summaries_path)
     
-    random_enemy = False
+    random_enemy = True
     enemy_update = 30
     
     round_num = 0
@@ -99,7 +99,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             print("enemy is random")
         for episode in tqdm(range(evaluation_config.training_episodes)):
 #         for episode in range(1):
-#             break
+            break
             state_1, state_2 = env.reset()
             total_reward = 0
             skiping = True
@@ -219,13 +219,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 actions_2 = env.get_big_A(env.denormalization(state_2)[env.miner_index])
 
                 if not reinforce_config.is_random_agent_1:
-                    combine_states_1 = combine_sa(state_1, actions_1)
+                    combine_states_1 = combine_sa(state_1, actions_1, 1)
                     choice_1, _ = agent_1.predict(combine_states_1)
                 else:
                     choice_1 = randint(0, len(actions_1) - 1)
                     
                 if not reinforce_config.is_random_agent_2 and not random_enemy:
-                    combine_states_2 = combine_sa(state_2, actions_2)
+                    combine_states_2 = combine_sa(state_2, actions_2, 2)
                     choice_2, _ = agent_2.predict(combine_states_2)
                 else:
                     choice_2 = randint(0, len(actions_2) - 1)
