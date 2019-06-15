@@ -44,7 +44,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQAdaptive(name = "TugOfWar",
-                            state_length = len(state_1) + len(choices),
+                            state_length = len(state_1),
                             network_config = network_config,
                             reinforce_config = reinforce_config)
         print("sadq agent 1")
@@ -52,7 +52,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("random agent 1")
     if not reinforce_config.is_random_agent_2:
         agent_2 = SADQAdaptive(name = "TugOfWar",
-                            state_length = len(state_2) + len(choices),
+                            state_length = len(state_2),
                             network_config = network_config,
                             reinforce_config = reinforce_config)
         print("sadq agent 2")
@@ -67,7 +67,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     clear_summary_path(test_summaries_path)
     test_summary_writer = SummaryWriter(test_summaries_path)
     
-    random_enemy = True
+    random_enemy = False
     enemy_update = 30
     
     round_num = 0
@@ -116,20 +116,21 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 steps += 1
                 # Decision point
 #                 print('state:')
+#                 print("=======================================================================")
 #                 print(list(env.denormalization(state_1)))
 #                 print(list(env.denormalization(state_2)))
                 actions_1 = env.get_big_A(env.denormalization(state_1)[env.miner_index])
                 actions_2 = env.get_big_A(env.denormalization(state_2)[env.miner_index])
                 
                 if not reinforce_config.is_random_agent_1:
-                    combine_states_1 = combine_sa(state_1, actions_1)
+                    combine_states_1 = combine_sa(state_1, actions_1, 1)
                     choice_1, _ = agent_1.predict(combine_states_1)
 #                     print(combine_states_1)
                 else:
                     choice_1 = randint(0, len(actions_1) - 1)
                     
                 if not reinforce_config.is_random_agent_2 and not random_enemy:
-                    combine_states_2 = combine_sa(state_2, actions_2)
+                    combine_states_2 = combine_sa(state_2, actions_2, 2)
                     choice_2, _ = agent_2.predict(combine_states_2)
                 else:
                     choice_2 = randint(0, len(actions_2) - 1)
@@ -140,6 +141,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                 print("choice:")
 #                 print(actions_1[choice_1])
 #                 print(actions_2[choice_2])
+#                 print("after state:")
+#                 print(env.denormalization(combine_states_1[choice_1]).tolist())
+#                 print(env.denormalization(combine_states_2[choice_2]).tolist())
 #                 input('pause')
                 env.step(list(actions_1[choice_1]), 1)
                 env.step(list(actions_2[choice_2]), 2)
@@ -163,7 +167,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                         agent_2.reward(r2)
             
             if not reinforce_config.is_random_agent_1:
-                agent_1.end_episode(np.hstack((env.end_state_1, np.zeros(4))))
+                agent_1.end_episode(env.end_state_1)
 #             if not reinforce_config.is_random_agent_2:
 #                 agent_2.end_episode(np.hstack((env.end_state_2, np.zeros(4))))
 

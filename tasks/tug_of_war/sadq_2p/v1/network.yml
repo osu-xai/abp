@@ -6,7 +6,7 @@ layers:
       neurons: 256
       
 input_shape:
-    - 21
+    - 17
 
 output_shape: 1
 
