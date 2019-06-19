@@ -239,20 +239,18 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 ######
                 if collecting_experience:
                     if previous_state is not None and previous_action_1 is not None and previous_action_2 is not None:
-                        print("======================================================")
-                        print(f"previous after state  P1 {list(env.denormalization(previous_state))}")
-                        print(f"actions 1 {previous_action_1}")
-                        print(f"actions 2 {previous_action_2}")
-                        print(f"current after state P1 {list(env.denormalization(combine_states_1[choice_1]))}")
-                        experience = [np.hstack((env.denormalization(previous_state), 
-                                                previous_action_1,
-                                                previous_action_2,
-                                                np.array([previous_reward_1]))),
-                                     env.denormalization(combine_states_1[choice_1])]
+                        et1 = deepcopy(combine_states_1[choice_1])
+                        et1[5:9] = combine_states_2[choice_2][0:4] # Include player 2's action
+
+                        experience = [
+                            env.denormalization(previous_state),
+                            env.denormalization(combine_states_1[choice_1])
+                        ]
+                        
                         #print(experience)
                         all_experiences.append(experience)
                         
-                    previous_state = deepcopy(combine_states_1[choice_1])
+                    previous_state = deepcopy(et1)
 #                 input("123")
                 previous_action_1 = deepcopy(actions_1[choice_1])
                 previous_action_2 = deepcopy(actions_2[choice_2])
