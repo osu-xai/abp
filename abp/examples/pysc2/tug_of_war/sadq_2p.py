@@ -246,6 +246,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
 
                         experience = [
+                            previous_action_1,
+                            previous_action_2,
                             env.denormalization(previous_state_1),
                             env.denormalization(combine_states_1[choice_1])
                         ]
