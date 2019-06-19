@@ -189,7 +189,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("===============================Now testing============================")
         print("======================================================================")
         
-        collecting_experience = False
+        reinforce_config.collecting_experience = True
         
         all_experiences = []
         for episode in tqdm(range(evaluation_config.test_episodes)):
@@ -237,7 +237,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 #######
                 #experience collecting
                 ######
-                if collecting_experience:
+                if reinforce_config.collecting_experience:
                     if previous_state is not None and previous_action_1 is not None and previous_action_2 is not None:
                         et1 = deepcopy(combine_states_1[choice_1])
                         et1[5:9] = combine_states_2[choice_2][0:4] # Include player 2's action
@@ -274,7 +274,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                            global_step=episode + 1)
             test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                            global_step=episode + 1)
-        if collecting_experience:        
+        if reinforce_config.collecting_experience:        
             break
         #print(test.size())
         tr = sum(total_rewwards_list) / evaluation_config.test_episodes
@@ -293,5 +293,5 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #         if not reinforce_config.is_random_agent_2:
 #             agent_2.enable_learning()
         
-    if collecting_experience:
+    if reinforce_config.collecting_experience:
         torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
