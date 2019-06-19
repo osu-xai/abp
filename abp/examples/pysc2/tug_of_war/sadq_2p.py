@@ -76,7 +76,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     if not reinforce_config.is_random_agent_2:
         agent_2.load_model(agent_1.eval_model)
-
+        
     while True:
         if len(privous_5_result) >= 5 and \
         sum(privous_5_result) / 5 > 11000 and \
@@ -200,7 +200,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             done = False
             skiping = True
             steps = 0
-            previous_state = None
+            previous_state_1 = None
+            previous_state_2 = None
             previous_action_1 = None
             previous_action_2 = None 
 #             print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Starting episode%%%%%%%%%%%%%%%%%%%%%%%%%")
@@ -240,18 +241,19 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 #experience collecting
                 ######
                 if reinforce_config.collecting_experience:
-                    et1 = deepcopy(combine_states_1[choice_1])
-                    et1[5:9] = combine_states_2[choice_2][0:4] # Include player 2's action
-                    if previous_state is not None and previous_action_1 is not None and previous_action_2 is not None:
+                    if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
+                        previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
+
                         experience = [
-                            env.denormalization(previous_state),
+                            env.denormalization(previous_state_1),
                             env.denormalization(combine_states_1[choice_1])
                         ]
                         
                         #print(experience)
                         all_experiences.append(experience)
                         
-                    previous_state = deepcopy(et1)
+                    previous_state_1 = deepcopy(combine_states_1[choice_1])
+                    previous_state_2 = deepcopy(combine_states_2[choice_2])
 #                 input("123")
                 previous_action_1 = deepcopy(actions_1[choice_1])
                 previous_action_2 = deepcopy(actions_2[choice_2])
