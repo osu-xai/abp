@@ -74,7 +74,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     privous_5_result = []
     
-    agent_2.load_model(agent_1.eval_model)
+    if not reinforce_config.is_random_agent_2:
+        agent_2.load_model(agent_1.eval_model)
+        
     while True:
         if len(privous_5_result) >= 5 and \
         sum(privous_5_result) / 5 > 11000 and \
