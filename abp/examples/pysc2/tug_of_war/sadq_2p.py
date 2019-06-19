@@ -222,7 +222,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 actions_2 = env.get_big_A(env.denormalization(state_2)[env.miner_index])
 
                 combine_states_1 = combine_sa(state_1, actions_1, 1)
-
                 if not reinforce_config.is_random_agent_1:
                     choice_1, _ = agent_1.predict(combine_states_1)
                 else:
@@ -246,8 +245,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
 
                         experience = [
-                            previous_action_1,
-                            previous_action_2,
                             env.denormalization(previous_state_1),
                             env.denormalization(combine_states_1[choice_1])
                         ]
