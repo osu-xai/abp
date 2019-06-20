@@ -21,6 +21,14 @@ use_cuda = torch.cuda.is_available()
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
 def run_task(evaluation_config, network_config, reinforce_config, map_name = None, train_forever = False):
+    if (use_cuda):
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print("|       USING CUDA       |")
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    else:
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print("|     NOT USING CUDA     |")
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
     flags.FLAGS(sys.argv[:1])
     
     # at the end of the reward type name:
