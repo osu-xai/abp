@@ -277,7 +277,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 total_reward_1 += current_reward_1
                 previous_reward_1 = current_reward_1
 
-            if (steps == max_episode_steps) and reinforce_config.collecting_experience:
+            if reinforce_config.collecting_experience:
                 all_experiences.append(state_1)
 
             total_rewwards_list.append(total_reward_1)
