@@ -277,8 +277,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 total_reward_1 += current_reward_1
                 previous_reward_1 = current_reward_1
 
-            if reinforce_config.collecting_experience:
-                all_experiences.append(state_1)
+            #if reinforce_config.collecting_experience:
+            #    all_experiences.append(state_1)
 
             total_rewwards_list.append(total_reward_1)
             test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
@@ -286,7 +286,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                            global_step=episode + 1)
         if reinforce_config.collecting_experience:
-            all_experiences.append(state_1)
+            #all_experiences.append(state_1)
             break
         #print(test.size())
         tr = sum(total_rewwards_list) / evaluation_config.test_episodes
