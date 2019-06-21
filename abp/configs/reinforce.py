@@ -18,7 +18,8 @@ default_reinforce_config = {
     "decay_rate": .96,
     "use_prior_memory" : True,
     "is_random_agent_1" : False,
-    "is_random_agent_2" : False
+    "is_random_agent_2" : False,
+    "collecting_experience": False
 }
 
 
@@ -84,3 +85,6 @@ class ReinforceConfig(BaseConfig):
     
     is_random_agent_2 = property(BaseConfig.get_property("is_random_agent_2"),
                           BaseConfig.set_property("is_random_agent_2"))
+
+    collecting_experience = property(BaseConfig.get_property("collecting_experience"),
+                        BaseConfig.set_property("collecting_experience"))
