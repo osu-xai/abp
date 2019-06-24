@@ -262,7 +262,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         
                         #print(experience)
                         all_experiences.append(experience)
-                        if ((all_experiences.len()) % 10000 == 0) and reinforce_config.collecting_experience:
+                        if ((len(all_experiences)) % 10000 == 0) and reinforce_config.collecting_experience:
                             torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(all_experiences.len()) + "experience.pt")
                         pretty_print(len(all_experiences) - 1, all_experiences)
                         print()
@@ -295,12 +295,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     np.append(env.denormalization(state_1), previous_reward_1)
                 ]
                 all_experiences.append(experience)
-                if ((all_experiences.len()) % 10000 == 0) and reinforce_config.collecting_experience:
+                if ((len(all_experiences)) % 10000 == 0) and reinforce_config.collecting_experience:
                     torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(all_experiences.len()) + "experience.pt")
                 pretty_print(len(all_experiences) - 1, all_experiences)
                 print()
                 input("pause")
-                
+
             total_rewwards_list.append(total_reward_1)
             test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
                                            global_step=episode + 1)
