@@ -329,6 +329,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #         torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
         
 def pretty_print(i,data):
+    data = np.stack(np.array(data))
+    print(data)
     print("---------------------------------------------- input --------------------------------------------------------------------")
     print("i:\t" + str(i) + "\t\tfriendly nexus: " + str(data[i][0][4]) + "\t\tenemey nexus: " + str(data[i][0][9]))
     print("i+1:\t" + str(i+1) + "\t\tfriendly nexus: " + str(data[i+1][0][4]) + "\t\tenemey nexus: " + str(data[i+1][0][9]))
