@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from abp import DQNAdaptive
 from tensorboardX import SummaryWriter
-
+from tqdm import tqdm
 
 def run_task(evaluation_config, network_config, reinforce_config):
     env = gym.make(evaluation_config.env)
@@ -24,7 +24,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     test_summary_writer = SummaryWriter(test_summaries_path)
 
     # Training Episodes
-    for episode in range(evaluation_config.training_episodes):
+    for episode in tqdm(range(evaluation_config.training_episodes)):
         state = env.reset()
         total_reward = 0
         for steps in range(max_episode_steps):
@@ -41,10 +41,10 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 train_summary_writer.add_scalar(tag="Episode Reward", scalar_value=total_reward,
                                                     global_step=episode + 1)
                 break
-
+    
     agent.disable_learning()
 
-    for episode in range(evaluation_config.test_episodes):
+    for episode in (range(evaluation_config.test_episodes)):
         state = env.reset()
         total_reward = 0
 
@@ -64,3 +64,4 @@ def run_task(evaluation_config, network_config, reinforce_config):
                 break
 
     env.close()
+    

@@ -34,6 +34,9 @@ def generate_layers(input_shape, layers):
         elif layer_type == "BatchNorm2d":
             layer_modules[layer_name] = nn.BatchNorm2d(layer["size"])
             layer_modules[layer_name + "relu"] = nn.ReLU()
+            
+        elif layer_type == "BatchNorm1d":
+            layer_modules[layer_name] = nn.BatchNorm1d(layer["size"])
 
         elif layer_type == "MaxPool2d":
             stride = layer["stride"]

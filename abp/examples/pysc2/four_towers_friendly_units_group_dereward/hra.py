@@ -11,6 +11,7 @@ from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.four_towers_friendly_units_group_dereward import FourTowersFriendlyUnitsGroupDereward
 from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
+from tqdm import tqdm
 
 def run_task(evaluation_config, network_config, reinforce_config, map_name = None, train_forever = False):
     flags.FLAGS(sys.argv[:1])
@@ -54,14 +55,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
     for rt in reward_types:
     	totalRewardsDict['total' + rt] = 0
-    
-    for episode in range(evaluation_config.training_episodes):
+    print("=======================================================================")
+    print("===============================Now training============================")
+    print("=======================================================================")
+    print("Now training.")
+    for episode in tqdm(range(evaluation_config.training_episodes)):
     #for episode in range(1):
 
-        print("=======================================================================")
-        print("===============================Now training============================")
-        print("=======================================================================")
-        print("Now training.")
         state = env.reset()
         total_reward = 0
         done = False
@@ -74,13 +74,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             stepRewards = {}
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
-            print("training step " + str(steps))
-            #print(action)
-            #time.sleep(0.5)
             state, done, dead = env.step(action)
-            np.set_printoptions(precision = 2)
-            #print(np.reshape(state, (8,40,40)))
-            #input("pause")
             while running:
                 action = 4
                 state, done, dead = env.step(action)
@@ -92,35 +86,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 stepRewards[rt] = env.decomposed_rewards[len(env.decomposed_rewards) - 1][i]
                 agent.reward(rt, stepRewards[rt])
                 total_reward += stepRewards[rt]
-            
-            #print("l1:")
-#            print(rewards)
- #           print(np.array(env.decomposed_rewards))
-            #print(rewards)
-
-
-            #print(stepRewards)
-            #print(sum(rewards.values()))
-            #time.sleep(40)
-            #input("pause")
             if dead:
                 break
         for i in range(len(totalRewardsDict)):
             totalRewardsDict[list(totalRewardsDict.keys())[i]] += stepRewards[reward_types[i]]
 
         agent.end_episode(env.end_state)
-        #np.set_printoptions(precision = 2)
-        #print(np.reshape(env.end_state, (13,40,40)))
-        #print(rewards)
-        #time.sleep(40)
-        #input("pause")
         test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
                                        global_step = episode + 1)
         train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
                                         global_step = episode + 1)
 
- #       print("EPISODE REWARD {}".format(total_reward))
-#        print("EPISODE {}".format(episode))
     '''
     if train_forever:
     	for i in range(10000):
@@ -129,14 +105,14 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     			print(i)
     '''
     agent.disable_learning(save = False)
-
+    print("======================================================================")
+    print("===============================Now testing============================")
+    print("======================================================================")
     total_rewwards_list = []
     # Test Episodes
-    #for episode in range(evaluation_config.test_episodes):
-    for episode in range(1):
-        print("======================================================================")
-        print("===============================Now testing============================")
-        print("======================================================================")
+    for episode in tqdm(range(evaluation_config.test_episodes)):
+#     for episode in range(1):
+
         state = env.reset()
         total_reward = 0
         done = False
@@ -144,7 +120,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         deciding = True
         running = True
         reward = [[]]
-        ''
+        
         if evaluation_config.generate_xai_replay:
             recorder = XaiReplayRecorder(env.sc2_env, episode, evaluation_config.env, ['Top_Left', 'Top_Right', 'Bottom_Left', 'Bottom_Right'], sorted(reward_types), replay_dimension)
 
@@ -153,8 +129,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             steps += 1
             action, q_values,combined_q_values = agent.predict(state)
             
-            
             print(action)
+            input("pause")
+#             print(action)
             #print(q_values)
             
             if evaluation_config.generate_xai_replay:
@@ -167,7 +144,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                sorted(reward_types))
                 
                # time.sleep(evaluation_config.sleep)
-                #input("pause")
+            
             
             state, done, dead = env.step(action)
 
@@ -185,7 +162,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     recorder.record_game_clock_tick(env.decomposed_reward_dict)
                     env.step(action)
 
-            if dead or (steps == 6):
+            if dead:
                 if evaluation_config.generate_xai_replay:
                     for i in range(5):
                         recorder.record_game_clock_tick(env.decomposed_reward_dict)

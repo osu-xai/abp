@@ -1,0 +1,10 @@
+decay_steps: 300
+starting_epsilon: 1
+discount_factor: 0.999
+batch_size: 64
+memory_size: 300
+summaries_path: "./tensorflow_summaries/tug_of_war/sadq/v1/reinforce_summary"
+update_frequency: 50
+replace_frequency: 50
+epsilon_timesteps: 8000
+final_epsilon: 0.1
