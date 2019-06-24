@@ -264,7 +264,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         #print(experience)
                         all_experiences.append(experience)
                         if ((len(all_experiences)) % 10000 == 0) and reinforce_config.collecting_experience:
-                            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(all_experiences.len()) + "experience.pt")
+                            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(len(all_experiences)) + "experience.pt")
 #                         pretty_print(len(all_experiences) - 1, all_experiences)
 #                         print()
 #                         input("pause")
@@ -302,7 +302,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 ]
                 all_experiences.append(experience)
                 if ((len(all_experiences)) % 10000 == 0) and reinforce_config.collecting_experience:
-                    torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(all_experiences.len()) + "experience.pt")
+                    torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(len(all_experiences)) + "experience.pt")
 #                 pretty_print(len(all_experiences) - 1, all_experiences)
 #                 print()
 #                 input("pause")
