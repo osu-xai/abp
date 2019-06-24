@@ -289,7 +289,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     np.stack((env.denormalization(previous_state_1), previous_reward_1)), 
                     env.denormalization(state_1)
                 ]
-                all_experiences.append(experience])
+                all_experiences.append(experience)
             
             total_rewwards_list.append(total_reward_1)
             test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
