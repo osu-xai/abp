@@ -111,6 +111,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         for episode in tqdm(range(evaluation_config.training_episodes)):
 #         for episode in range(1):
 #             break
+            if reinforce_config.collecting_experience:
+                break
             state_1, state_2 = env.reset()
             total_reward = 0
             skiping = True
@@ -250,14 +252,18 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 if reinforce_config.collecting_experience:
                     if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
                         previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
+                        previous_state_1[env.miner_index] += previous_state_1[3] * 50 + 100
 
                         experience = [
-                            env.denormalization(previous_state_1),
-                            env.denormalization(combine_states_1[choice_1])
+                            np.stack((env.denormalization(previous_state_1), previous_reward_1)), 
+                            env.denormalization(state_1)
                         ]
                         
                         #print(experience)
                         all_experiences.append(experience)
+                        pretty_print(len(all_experiences) - 1, all_experiences)
+                        print()
+                        input("pause")
                         
                     previous_state_1 = deepcopy(combine_states_1[choice_1])
                     previous_state_2 = deepcopy(combine_states_2[choice_2])
@@ -289,8 +295,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                            global_step=episode + 1)
             test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                            global_step=episode + 1)
-        if reinforce_config.collecting_experience:
-            break
+#         if reinforce_config.collecting_experience:
+#             break
         #print(test.size())
         tr = sum(total_rewwards_list) / evaluation_config.test_episodes
         print("total reward:")
@@ -308,5 +314,20 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #         if not reinforce_config.is_random_agent_2:
 #             agent_2.enable_learning()
         
-    if reinforce_config.collecting_experience:
-        torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
+#     if reinforce_config.collecting_experience:
+#         torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
+        
+def pretty_print(i,data):
+    print("---------------------------------------------- input --------------------------------------------------------------------")
+    print("i:\t" + str(i) + "\t\tfriendly nexus: " + str(data[i][0][4]) + "\t\tenemey nexus: " + str(data[i][0][9]))
+    print("i+1:\t" + str(i+1) + "\t\tfriendly nexus: " + str(data[i+1][0][4]) + "\t\tenemey nexus: " + str(data[i+1][0][9]))
+    print("\tmarine: " + str(data[i][0][0]) + "\tvikings: " + str(data[i][0][1]) + "\tcolossus: " + str(data[i][0][2]) + "\tpylons: " + str(data[i][0][3]) + "\tE marine: " + str(data[i][0][5]) + "\tE vikings: " + str(data[i][0][6]) + "\tE colossus: " + str(data[i][0][7]) + "\tE pylons: " + str(data[i][0][8]))
+    print("\tmarine: " + str(data[i+1][0][0]) + "\tvikings: " + str(data[i+1][0][1]) + "\tcolossus: " + str(data[i+1][0][2]) + "\tpylons: " + str(data[i+1][0][3]) + "\tE marine: " + str(data[i+1][0][5]) + "\tE vikings: " + str(data[i+1][0][6]) + "\tE colossus: " + str(data[i+1][0][7]) + "\tE pylons: " + str(data[i+1][0][8]))
+    print("-------------------------------------------------------------------------------------------------------------------------")
+    
+    print("---------------------------------------------- output ------------------------------------------------------------------------")
+    print("i:\t" + str(i) + "\t\tfriendly nexus: " + str(data[i][1][4]) + "\t\tenemey nexus: " + str(data[i][1][9]))
+    print("i+1:\t" + str(i+1) + "\t\tfriendly nexus: " + str(data[i+1][1][4]) + "\t\tenemey nexus: " + str(data[i+1][1][9]))
+    print("\tmarine: " + str(data[i][1][0]) + "\tvikings: " + str(data[i][1][1]) + "\tcolossus: " + str(data[i][1][2]) + "\tpylons: " + str(data[i][1][3]) + "\tE marine: " + str(data[i][1][5]) + "\tE vikings: " + str(data[i][1][6]) + "\tE colossus: " + str(data[i][1][7]) + "\tE pylons: " + str(data[i][1][8]))
+    print("\tmarine: " + str(data[i+1][1][0]) + "\tvikings: " + str(data[i+1][1][1]) + "\tcolossus: " + str(data[i+1][1][2]) + "\tpylons: " + str(data[i+1][1][3]) + "\tE marine: " + str(data[i+1][1][5]) + "\tE vikings: " + str(data[i+1][1][6]) + "\tE colossus: " + str(data[i+1][1][7]) + "\tE pylons: " + str(data[i+1][1][8]))
+    print("-------------------------------------------------------------------------------------------------------------------------")

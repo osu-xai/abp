@@ -207,22 +207,22 @@ class SADQAdaptive(object):
             "episode": self.episode
         }
         
-        if (len(self.reward_history) >= self.network_config.save_steps and
-                self.episode % self.network_config.save_steps == 0):
+#         if (len(self.reward_history) >= self.network_config.save_steps and
+#                 self.episode % self.network_config.save_steps == 0):
 
-            total_reward = sum(self.reward_history[-self.network_config.save_steps:])
-            current_reward_mean = total_reward / self.network_config.save_steps
+        total_reward = sum(self.reward_history[-self.network_config.save_steps:])
+        current_reward_mean = total_reward / self.network_config.save_steps
 
-            if current_reward_mean >= self.best_reward_mean:
-                print("*************saved*****************")
-                self.best_reward_mean = current_reward_mean
-                logger.info("Saving network. Found new best reward (%.2f)" % current_reward_mean)
-                self.eval_model.save_network()
-                self.target_model.save_network()
-                with open(self.network_config.network_path + "/adaptive.info", "wb") as file:
-                    pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
-            else:
-                logger.info("The best reward is still %.2f. Not saving" % self.best_reward_mean)
+        if current_reward_mean >= self.best_reward_mean:
+            print("*************saved*****************")
+            self.best_reward_mean = current_reward_mean
+            logger.info("Saving network. Found new best reward (%.2f)" % current_reward_mean)
+            self.eval_model.save_network()
+            self.target_model.save_network()
+            with open(self.network_config.network_path + "/adaptive.info", "wb") as file:
+                pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
+        else:
+            logger.info("The best reward is still %.2f. Not saving" % self.best_reward_mean)
 
     def reward(self, r):
         self.total_reward += r
