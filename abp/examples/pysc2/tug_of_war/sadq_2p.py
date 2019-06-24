@@ -102,6 +102,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             agent_2.disable_learning()
         round_num += 1
         
+        if (round_num % 100 == 0) and reinforce_config.collecting_experience:
+            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
+        
         print("=======================================================================")
         print("===============================Now training============================")
         print("=======================================================================")
@@ -255,15 +258,15 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         previous_state_1[env.miner_index] += previous_state_1[3] * 50 + 100
 
                         experience = [
-                            np.stack((env.denormalization(previous_state_1), previous_reward_1)), 
+                            np.append(env.denormalization(previous_state_1), previous_reward_1), 
                             env.denormalization(state_1)
                         ]
                         
                         #print(experience)
                         all_experiences.append(experience)
-                        pretty_print(len(all_experiences) - 1, all_experiences)
-                        print()
-                        input("pause")
+                        #pretty_print(len(all_experiences) - 1, all_experiences)
+                        #print()
+                        #input("pause")
                         
                     previous_state_1 = deepcopy(combine_states_1[choice_1])
                     previous_state_2 = deepcopy(combine_states_2[choice_2])
@@ -286,7 +289,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
             if reinforce_config.collecting_experience:
                 experience = [
-                    np.stack((env.denormalization(previous_state_1), previous_reward_1)), 
+                    np.append(env.denormalization(previous_state_1), previous_reward_1), 
                     env.denormalization(state_1)
                 ]
                 all_experiences.append(experience)
