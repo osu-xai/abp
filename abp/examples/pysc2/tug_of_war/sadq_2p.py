@@ -101,9 +101,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         if not reinforce_config.is_random_agent_2:
             agent_2.disable_learning()
         round_num += 1
-        
-        if (round_num % 100 == 0) and reinforce_config.collecting_experience:
-            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
+    
         
         print("=======================================================================")
         print("===============================Now training============================")
@@ -245,9 +243,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 else:
                     choice_2 = randint(0, len(actions_2) - 1)
                     
-                env.step(list(actions_1[choice_1]), 1)
-#                 input('stepped with command 1')
-                env.step(list(actions_2[choice_2]), 2)
+
 #                 input('stepped with command 2')
                 #######
                 #experience collecting
@@ -255,22 +251,29 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 if reinforce_config.collecting_experience:
                     if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
                         previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
-                        previous_state_1[env.miner_index] += previous_state_1[3] * 50 + 100
+#                         print(previous_state_1[env.miner_index])
+                        denorm_previous_state_1 = env.denormalization(previous_state_1)
+                        denorm_previous_state_1[env.miner_index] += denorm_previous_state_1[3] * 50 + 100
+#                         print(previous_state_1[env.miner_index])
 
                         experience = [
-                            np.append(env.denormalization(previous_state_1), previous_reward_1), 
-                            env.denormalization(state_1)
+                            denorm_previous_state_1,
+                            np.append(env.denormalization(state_1), previous_reward_1)
                         ]
                         
                         #print(experience)
                         all_experiences.append(experience)
-                        #pretty_print(len(all_experiences) - 1, all_experiences)
-                        #print()
-                        #input("pause")
+                        if ((len(all_experiences)) % 10000 == 0) and reinforce_config.collecting_experience:
+                            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(len(all_experiences)) + "experience.pt")
+#                         pretty_print(len(all_experiences) - 1, all_experiences)
+#                         print()
+#                         input("pause")
                         
                     previous_state_1 = deepcopy(combine_states_1[choice_1])
                     previous_state_2 = deepcopy(combine_states_2[choice_2])
-#                 input("123")
+                env.step(list(actions_1[choice_1]), 1)
+#                 input('stepped with command 1')
+                env.step(list(actions_2[choice_2]), 2)
                 previous_action_1 = deepcopy(actions_1[choice_1])
                 previous_action_2 = deepcopy(actions_2[choice_2])
                 while skiping:
@@ -288,12 +291,22 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 previous_reward_1 = current_reward_1
 
             if reinforce_config.collecting_experience:
+                previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
+                denorm_previous_state_1 = env.denormalization(previous_state_1)
+                denorm_previous_state_1[env.miner_index] += denorm_previous_state_1[3] * 50 + 100
+#                         print(previous_state_1[env.miner_index])
+
                 experience = [
-                    np.append(env.denormalization(previous_state_1), previous_reward_1), 
-                    env.denormalization(state_1)
+                    denorm_previous_state_1,
+                    np.append(env.denormalization(state_1), previous_reward_1)
                 ]
                 all_experiences.append(experience)
-            
+                if ((len(all_experiences)) % 10000 == 0) and reinforce_config.collecting_experience:
+                    torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(len(all_experiences)) + "experience.pt")
+#                 pretty_print(len(all_experiences) - 1, all_experiences)
+#                 print()
+#                 input("pause")
+
             total_rewwards_list.append(total_reward_1)
             test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
                                            global_step=episode + 1)
@@ -322,16 +335,26 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #         torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experiences_2.pt')
         
 def pretty_print(i,data):
+#     data = np.stack(np.array(data))
+#     print(len(data[i+1][]))
     print("---------------------------------------------- input --------------------------------------------------------------------")
     print("i:\t" + str(i) + "\t\tfriendly nexus: " + str(data[i][0][4]) + "\t\tenemey nexus: " + str(data[i][0][9]))
-    print("i+1:\t" + str(i+1) + "\t\tfriendly nexus: " + str(data[i+1][0][4]) + "\t\tenemey nexus: " + str(data[i+1][0][9]))
+#     print("i+1:\t" + str(i+1) + "\t\tfriendly nexus: " + str(data[i+1][0][4]) + "\t\tenemey nexus: " + str(data[i+1][0][9]))
     print("\tmarine: " + str(data[i][0][0]) + "\tvikings: " + str(data[i][0][1]) + "\tcolossus: " + str(data[i][0][2]) + "\tpylons: " + str(data[i][0][3]) + "\tE marine: " + str(data[i][0][5]) + "\tE vikings: " + str(data[i][0][6]) + "\tE colossus: " + str(data[i][0][7]) + "\tE pylons: " + str(data[i][0][8]))
-    print("\tmarine: " + str(data[i+1][0][0]) + "\tvikings: " + str(data[i+1][0][1]) + "\tcolossus: " + str(data[i+1][0][2]) + "\tpylons: " + str(data[i+1][0][3]) + "\tE marine: " + str(data[i+1][0][5]) + "\tE vikings: " + str(data[i+1][0][6]) + "\tE colossus: " + str(data[i+1][0][7]) + "\tE pylons: " + str(data[i+1][0][8]))
+    print('on feild:')
+    print("\tmarine: " + str(data[i][0][11]) + "\tvikings: " + str(data[i][0][12]) + "\tcolossus: " + str(data[i][0][13]) + "\tE marine: " + str(data[i][0][14]) + "\tE vikings: " + str(data[i][0][15]) + "\tE colossus: " + str(data[i][0][16]))
+    print('mineral:' + str(data[i][0][10]))
+#     print('reward:' + str(data[i][0][17]))
+#     print("\tmarine: " + str(data[i+1][0][0]) + "\tvikings: " + str(data[i+1][0][1]) + "\tcolossus: " + str(data[i+1][0][2]) + "\tpylons: " + str(data[i+1][0][3]) + "\tE marine: " + str(data[i+1][0][5]) + "\tE vikings: " + str(data[i+1][0][6]) + "\tE colossus: " + str(data[i+1][0][7]) + "\tE pylons: " + str(data[i+1][0][8]))
     print("-------------------------------------------------------------------------------------------------------------------------")
     
     print("---------------------------------------------- output ------------------------------------------------------------------------")
     print("i:\t" + str(i) + "\t\tfriendly nexus: " + str(data[i][1][4]) + "\t\tenemey nexus: " + str(data[i][1][9]))
-    print("i+1:\t" + str(i+1) + "\t\tfriendly nexus: " + str(data[i+1][1][4]) + "\t\tenemey nexus: " + str(data[i+1][1][9]))
+#     print("i+1:\t" + str(i+1) + "\t\tfriendly nexus: " + str(data[i+1][1][4]) + "\t\tenemey nexus: " + str(data[i+1][1][9]))
     print("\tmarine: " + str(data[i][1][0]) + "\tvikings: " + str(data[i][1][1]) + "\tcolossus: " + str(data[i][1][2]) + "\tpylons: " + str(data[i][1][3]) + "\tE marine: " + str(data[i][1][5]) + "\tE vikings: " + str(data[i][1][6]) + "\tE colossus: " + str(data[i][1][7]) + "\tE pylons: " + str(data[i][1][8]))
-    print("\tmarine: " + str(data[i+1][1][0]) + "\tvikings: " + str(data[i+1][1][1]) + "\tcolossus: " + str(data[i+1][1][2]) + "\tpylons: " + str(data[i+1][1][3]) + "\tE marine: " + str(data[i+1][1][5]) + "\tE vikings: " + str(data[i+1][1][6]) + "\tE colossus: " + str(data[i+1][1][7]) + "\tE pylons: " + str(data[i+1][1][8]))
+    print('on feild:')
+    print("\tmarine: " + str(data[i][1][11]) + "\tvikings: " + str(data[i][1][12]) + "\tcolossus: " + str(data[i][1][13]) + "\tE marine: " + str(data[i][1][14]) + "\tE vikings: " + str(data[i][1][15]) + "\tE colossus: " + str(data[i][1][16]))
+    print('mineral:' + str(data[i][1][10]))
+    print('reward:' + str(data[i][1][17]))
+#     print("\tmarine: " + str(data[i+1][1][0]) + "\tvikings: " + str(data[i+1][1][1]) + "\tcolossus: " + str(data[i+1][1][2]) + "\tpylons: " + str(data[i+1][1][3]) + "\tE marine: " + str(data[i+1][1][5]) + "\tE vikings: " + str(data[i+1][1][6]) + "\tE colossus: " + str(data[i+1][1][7]) + "\tE pylons: " + str(data[i+1][1][8]))
     print("-------------------------------------------------------------------------------------------------------------------------")

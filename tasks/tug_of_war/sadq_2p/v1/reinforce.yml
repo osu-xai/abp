@@ -9,7 +9,7 @@ replace_frequency: 3000
 epsilon_timesteps: 10000
 starting_epsilon: 1
 final_epsilon: 0.01
-is_random_agent_1: False
-is_random_agent_2: False
-collecting_experience: False
+is_random_agent_1: True
+is_random_agent_2: True
+collecting_experience: True
 use_prior_memory: True
