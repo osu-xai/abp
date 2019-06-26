@@ -22,7 +22,12 @@ IntTensor = torch.cuda.IntTensor if use_cuda else torch.IntTensor
 ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
 Tensor = FloatTensor
 
-
+building_types = {
+    'Marine': 1,
+    'Viking': 2,
+    'Colossus': 3,
+    'Pylon'; 4
+}
 class MBTSAdaptive(object):
     """Adaptive which uses the Model base Tree search algorithm"""
 
@@ -45,9 +50,16 @@ class MBTSAdaptive(object):
         self.env = env
         self.player = player
         
+        self.index_hp = np.array([4, 9])
+        self.index_units = np.array(range(11 : 17))
+        
         self.look_forward_step = 1
+        self.normalization_array = np.array([30, 30, 30, 30, 2000,
+                                             30, 30, 30, 30, 2000,
+                                             1500, 60, 60, 60, 60, 60, 60])
 
         self.reset()
+        
     def reward_func(self):
         return 
     
@@ -63,7 +75,7 @@ class MBTSAdaptive(object):
 #         self.transition_model_unit(torch.load(models_path + 'transition_model_unit.pt'))
         self.value_model.load_weight(torch.load(models_path + 'value_model.pt'))
 
-    def predict(self, state):
+    def predict(self, state, minerals_enemy):
         # Get actions of self
         all_sub_nodes = [state]
         if self.player == 1:
@@ -75,36 +87,68 @@ class MBTSAdaptive(object):
         
         for _ in range(self.look_forward_step)
             for n in all_sub_nodes:
-                all_sub_nodes = self.expand_node(n, fifo_self, fifo_enemy)
+                all_sub_nodes = self.expand_node(n, mineral_enemy, fifo_self, fifo_enemy)
+            
             
             
         action, _ = self.value_model.predict(state, 0, False)
         return action
     
-    def expand_node(self, state, fifo_self, fifo_enemy):
+    def expand_node(self, state, mineral_enemy, fifo_self, fifo_enemy):
+        actions_self = self.env.get_big_A(env.denormalization(state)[env.miner_index])
+        actions_enemy = self.env.get_big_A(mineral_enemy)
         
-        self.env.get_big_A(env.denormalization(state)[env.miner_index])
-       
+        after_states = self.get_after_states(state, actions_self, actions_enemy, fifo_self, fifo_enemy)
+        next_states = self.get_next_states(after_states)
+        
+        return next_states
     
     def action_ranking(self, q_state, k):
+        # TODO
         pass
     
     def reset(self):
         self.current_reward = 0
         self.total_reward = 0
 
-    def combine_sa(self, s, actions, fifo):
-        s = np.repeat(s.reshape((1,-1)), len(actions), axis = 0)
+    def get_next_states(self, after_state):
+        next_HPs = self.transition_model_HP.predict_batch(after_state)
+        next_units = self.transition_model_unit.predict_batch(after_state)
+        
+        after_state[:, self.index_hp] = next_HPs
+        after_state[:, self.index_units] = next_units
+        
+        return after_state
+        
+    def get_after_state(self, state, actions_self, actions_enemy, fifo_self, fifo_enemy):
+        # Faster combination way
+        after_states_self, _ = self.combine_sa(state, actions_self, fifo_self, False)
+        after_states_self = self.imply_mineral_by_action(after_states_self)
+        
+        after_states = np.zeros((after_states_self.shape[1], len(actions_self) * len(actions_enemy)))
+        for i, action_e in enumerate(actions_enemy):
+            after_states[i] = self.combine_sa(state, action_e, fifo_enemy)
+        return after_states
+        
+    def combine_sa(self, de_s, actions, fifo, is_enemy):
+        
+        # Change that if the index is changed, generalize it later
+        if not is_enemy:
+            building_index = range(0, 4)
+        else:
+            building_index = range(5, 9)
+            
+        s = np.repeat(de_s.reshape((1,-1)), len(actions), axis = 0)
         fifo_array = np.repeat(fifo.reshape((1,-1)), len(actions), axis = 0)
         
         actions = np.array(actions)
-        s[:,:4] += actions
+        s[:,building_index] += actions
             
         # Get rid of the building from the candidate after_states until no exceeders to match the FIFO behavior
         for building_type in fifo:
             # Get the count of building of the candidate after_state
-            count_of_bulding = s[:, :4].sum(axis = 1)
-            array_of_indices_of_exceeders = count_of_bulding > self.building_limiation
+            count_of_bulding = s[:, building_index].sum(axis = 1)
+            array_of_indices_of_exceeders = count_of_bulding > self.env.building_limiation
             
             s[array_of_indices_of_exceeders, building_type, building_type] -= 1
             
@@ -112,5 +156,28 @@ class MBTSAdaptive(object):
             fifo_array[array_of_indices_of_exceeders, :-1] = fifo_array[array_of_indices_of_exceeders, 1:]
             fifo_array[array_of_indices_of_exceeders, 1:] = building_type
             
-        s[:, self.miner_index] -= np.sum(self.maker_cost_np * actions, axis = 1) / 100
+        s[:, self.env.miner_index] -= np.sum(self.env.maker_cost_np * actions, axis = 1)
         return s, fifo_array
+    
+    def imply_mineral_by_action(self, mineral, action):
+        mineral -= np.sum(self.env.maker_cost_np * action)
+        return mineral
+        
+    def imply_after_mineral(self, state):
+        state[env.miner_index] += state[building_types['Pylon']] * 50 + 100
+        return state
+
+class node():
+    def __init__(self, name, reward, parent = None):
+        self.parent = None
+        self.reward = None
+        self.children = []
+        self.name = name
+    def add_child(sub_node):
+        self.children.append(sub_node)
+        
+class tree():
+    def __init__(self, root):
+        self.nodes = []
+    def create_node():
+        
