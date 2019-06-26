@@ -26,7 +26,7 @@ building_types = {
     'Marine': 1,
     'Viking': 2,
     'Colossus': 3,
-    'Pylon'; 4
+    'Pylon': 4
 }
 class MBTSAdaptive(object):
     """Adaptive which uses the Model base Tree search algorithm"""
@@ -51,7 +51,7 @@ class MBTSAdaptive(object):
         self.player = player
         
         self.index_hp = np.array([4, 9])
-        self.index_units = np.array(range(11 : 17))
+        self.index_units = np.array(range(11, 17))
         
         self.look_forward_step = 1
         self.normalization_array = np.array([30, 30, 30, 30, 2000,
@@ -85,7 +85,7 @@ class MBTSAdaptive(object):
             fifo_self = self.env.fifo_player_2
             fifo_enemy = self.env.fifo_player_1
         
-        for _ in range(self.look_forward_step)
+        for _ in range(self.look_forward_step):
             for n in all_sub_nodes:
                 all_sub_nodes = self.expand_node(n, mineral_enemy, fifo_self, fifo_enemy)
             
