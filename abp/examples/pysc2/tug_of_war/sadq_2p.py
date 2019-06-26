@@ -193,7 +193,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                             global_step = episode + 1)
         
         if not reinforce_config.is_random_agent_1:
-            agent_1.disable_learning()
+            agent_1.disable_learning(is_save = False)
             
         if not reinforce_config.is_random_agent_2:
             agent_2.disable_learning()
