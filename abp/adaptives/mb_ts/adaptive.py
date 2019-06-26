@@ -167,18 +167,3 @@ class MBTSAdaptive(object):
         state[env.miner_index] += state[building_types['Pylon']] * 50 + 100
         return state
 
-class node():
-    def __init__(self, name, reward, parent = None):
-        self.parent = None
-        self.reward = None
-        self.children = []
-        self.name = name
-    def add_child(sub_node):
-        self.children.append(sub_node)
-        
-class tree():
-    def __init__(self, root):
-        self.nodes = []
-        
-    def create_node():
-        
