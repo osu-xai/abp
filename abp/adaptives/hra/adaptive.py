@@ -289,7 +289,7 @@ class HRAAdaptive(object):
             for ns in next_states:
                 illegal_actions.append(self.illegal_actions_func(ns))
                 
-        _, q_next, _ = self.eval_model.predict_batch(next_states)
+        _, q_next, _ = self.target_model.predict_batch(next_states)
 
         # Best action chioce by agent
         q_next_sum = q_next.sum(0).detach()

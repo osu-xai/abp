@@ -1,8 +1,8 @@
 decay_steps: 300
 starting_epsilon: 1
 discount_factor: 0.99
-batch_size: 50
-memory_size: 200
+batch_size: 32
+memory_size: 1000
 summaries_path: "./tensorflow_summaries/four_towers_friendly_units_group_dereward/hra/v1/reinforce_summary"
-update_frequency: 30
-epsilon_timesteps: 3000
+update_frequency: 1000
+epsilon_timesteps: 5000

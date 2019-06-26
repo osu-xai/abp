@@ -52,3 +52,12 @@ class Model(object):
 
     def replace(self, dest):
         self.model.load_state_dict(dest.model.state_dict())
+    
+    def load_weight(self, state_dict):
+        self.model.load_state_dict(state_dict)
+        
+    def eval_mode(self):
+        self.model.eval()
+    
+    def train_mode(self):
+        self.model.train()

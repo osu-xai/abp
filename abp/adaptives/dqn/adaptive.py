@@ -244,7 +244,6 @@ class DQNAdaptive(object):
 
         # update model
         self.eval_model.fit(q_values, q_target, self.steps)
-
         # Update priorities
         td_errors = q_values - q_target
         new_priorities = torch.abs(td_errors) + 1e-6  # prioritized_replay_eps
