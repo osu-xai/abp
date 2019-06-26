@@ -130,9 +130,10 @@ class SADQAdaptive(object):
 
         return choice, q_values
 
-    def disable_learning(self):
+    def disable_learning(self, is_save = True):
         logger.info("Disabled Learning for %s agent" % self.name)
-        self.save()
+        if is_save:
+            self.save()
         self.learning = False
         self.episode = 0
         
