@@ -1,0 +1,20 @@
+layers:
+    - type: "FC"
+      neurons: 512
+
+    - type: "FC"
+      neurons: 256
+
+input_shape:
+    - 17
+
+output_shape: 1
+
+shared_layers: [] #TODO
+aggeregator: "average" #TODO
+
+network_path: "./saved_models/tug_of_war/mbts/v1.ckpt"
+summaries_path: "./tensorflow_summaries/tug_of_war/mbts/v1/network_summary"
+summaries_step: 10000000000
+restore_network: True
+save_steps: 10

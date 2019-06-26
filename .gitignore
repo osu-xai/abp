@@ -1,5 +1,6 @@
 .DS_Store
-*.pyc
+**.pyc
+**/.ipynb_checkpoints
 demos
 tensorflow_summaries
 abp.egg-info

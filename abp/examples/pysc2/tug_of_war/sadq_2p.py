@@ -82,6 +82,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     privous_5_result = []
     
+    all_experiences = []
+    
     if not reinforce_config.is_random_agent_2:
         agent_2.load_model(agent_1.eval_model)
         
@@ -203,7 +205,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("===============================Now testing============================")
         print("======================================================================")
                 
-        all_experiences = []
+        
         for episode in tqdm(range(evaluation_config.test_episodes)):
             state = env.reset()
             total_reward_1 = 0
@@ -263,8 +265,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         
                         #print(experience)
                         all_experiences.append(experience)
-                        if ((len(all_experiences)) % 10000 == 0) and reinforce_config.collecting_experience:
-                            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(len(all_experiences)) + "experience.pt")
+                        if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
+                            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experience.pt')
 #                         pretty_print(len(all_experiences) - 1, all_experiences)
 #                         print()
 #                         input("pause")
@@ -301,8 +303,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     np.append(env.denormalization(state_1), previous_reward_1)
                 ]
                 all_experiences.append(experience)
-                if ((len(all_experiences)) % 10000 == 0) and reinforce_config.collecting_experience:
-                    torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/' + str(len(all_experiences)) + "experience.pt")
+                if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
+                    torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experience.pt')
 #                 pretty_print(len(all_experiences) - 1, all_experiences)
 #                 print()
 #                 input("pause")
