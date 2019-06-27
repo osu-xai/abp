@@ -1,4 +1,4 @@
-class node():
+class Node():
     def __init__(self, name, state, reward = None, parent = None, total_reward = 0):
         self.parent = parent
         self.reward = reward
@@ -7,6 +7,8 @@ class node():
         self.action_dict = {}
         self.state = state
         self.name = name
+        self.best_reward = 0
+        self.best_child = None
         
     def add_child(self, sub_node, action):
         self.children.append(sub_node)
@@ -14,6 +16,7 @@ class node():
         
     def save(self):
         pass
+    
     # Give the node find the worst reward sibling
     # add child (sort by reward)
     # get best child
