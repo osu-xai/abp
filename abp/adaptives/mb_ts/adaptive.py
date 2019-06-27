@@ -13,6 +13,7 @@ from abp.utils import clear_summary_path
 from abp.models import DQNModel
 # TODO: Generalize it
 from abp.examples.pysc2.tug_of_war.models_mb.transition_model import TransModel
+from abp.utils.search_tree import node
 
 logger = logging.getLogger('root')
 use_cuda = torch.cuda.is_available()
