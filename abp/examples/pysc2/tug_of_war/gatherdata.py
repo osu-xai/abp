@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import pprint
 
 a_mar = 0
 a_vik = 1
@@ -14,26 +15,54 @@ e_pyl = 8
 e_nex = 9
 
 def main():
-    data = np.array 
     data = torch.load('sadq_v_sadq.pt')
-    print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline = get_options(len(data)-1)
-    gather_data(data, print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline)
+    data = np.array(data).tolist()
 
+    #print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline = get_options(len(data)-1)
+    #forrealls##ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline = gather_data(data, print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline)
+    ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline, strategies = gather_data(data, 0, 0, 0, 0, 0, 11145, 1)
+
+    # if(show_win_percentage):
+    #     win_percentage_graph(ally_wins, enemy_wins)
+    # if(show_win_timeline):
+    #     win_total_line_graph(win_total_timeline)
+    # if(show_average_cases):
+    #     average_case_graph(sum_ally_units_win, ally_wins, sum_enemy_units_win, enemy_wins)
 
 def gather_data(data, print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline):
     ally_wins = 0
     enemy_wins = 0
+    episodes = 0
+
 
     sum_ally_units_win = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     sum_enemy_units_win = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #0-4 ally: mar, vik, col, pyl, nexus, 5-9 enemy: mar, vik, col, pyl, nexus
-    
     win_total_timeline = [0]
-    episodes = 0
-    
-    for i in range(i_lower, i_upper):
+    strategies ={  }
+                
 
-        if (((data[i][0][a_mar]) + (data[i][0][a_vik]) + (data[i][0][a_col]) + (data[i][0][a_pyl]) + (data[i][0][e_mar]) + (data[i][0][e_vik]) + (data[i][0][e_col]) + (data[i][0][e_pyl])) < ((data[i-1][0][a_mar]) + (data[i-1][0][a_vik]) + (data[i-1][0][a_col]) + (data[i-1][0][a_pyl]) + (data[i-1][0][e_mar]) + (data[i-1][0][e_vik]) + (data[i-1][0][e_col]) + (data[i-1][0][e_pyl]))):               
+    for i in range(i_lower, i_upper):
+        player_1_input = ""
+        strategies_current = ""
+        if (i == 0):
+            for n in range(4):
+                for o in range(4):
+                    player_1_input += (str(data[i+n][0][o]) + ",")
+            strategies.update({player_1_input : 1})
+            
+        elif (((data[i][0][a_mar]) + (data[i][0][a_vik]) + (data[i][0][a_col]) + (data[i][0][a_pyl]) + (data[i][0][e_mar]) + (data[i][0][e_vik]) + (data[i][0][e_col]) + (data[i][0][e_pyl])) < ((data[i-1][0][a_mar]) + (data[i-1][0][a_vik]) + (data[i-1][0][a_col]) + (data[i-1][0][a_pyl]) + (data[i-1][0][e_mar]) + (data[i-1][0][e_vik]) + (data[i-1][0][e_col]) + (data[i-1][0][e_pyl]))):               
             episodes += 1
+           
+            for n in range(4):
+                for o in range(4):
+                    strategies_current += (str(data[(i+1)+n][0][o]) + ",")
+
+            if (strategies_current in strategies):
+                current_count = strategies[strategies_current]
+                strategies[strategies_current] = current_count + 1
+
+            else:
+                strategies.update({strategies_current : 1})
 
             if (data[i-1][0][a_nex]) > (data[i-1][0][e_nex]):
                 if (print_ally_episode_win):
@@ -57,15 +86,12 @@ def gather_data(data, print_ally_episode_win, print_enemy_episode_win, show_win_
 
                 for x in range(0,10):
                     sum_enemy_units_win[x] = data[i-1][1][x] + sum_enemy_units_win[x]
+    
+    print("_______________________________________________________________________")
+    print("------------- Player 1 First Four Moves Frequency Table ---------------")
+    pprint.pprint(strategies)
 
-    if(show_win_percentage):
-        win_percentage_graph(ally_wins, enemy_wins)
-    if(show_win_timeline):
-        win_total_line_graph(win_total_timeline)
-    if(show_average_cases):
-        average_case_graph(sum_ally_units_win, ally_wins, sum_enemy_units_win, enemy_wins)
-
-    return ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win
+    return ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline, strategies
 
 
 
@@ -164,6 +190,8 @@ def average_case_graph(sum_ally_units_win, ally_wins, sum_enemy_units_win, enemy
         enemy_losing.pie(sizes_enemy_losing, labels=labels, colors=colors,
         autopct=make_autopct(sizes_enemy_losing), shadow=True, startangle=140)
         plt.title('Enemy Average (Losing)\nNexus Health (' + str(int(sum_ally_units_win[9]/ally_wins)) + ')')
+
+    fig1.suptitle('Average End State of Games by Winning Player and Losing Player', fontsize=16)
 
     plt.show()
     plt.close()
