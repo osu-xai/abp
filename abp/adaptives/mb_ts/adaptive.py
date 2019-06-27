@@ -55,6 +55,8 @@ class MBTSAdaptive(object):
         self.index_units = np.array(range(11, 17))
         
         self.look_forward_step = 1
+        
+        # Generalize it 
         self.normalization_array = np.array([30, 30, 30, 30, 2000,
                                              30, 30, 30, 30, 2000,
                                              1500, 60, 60, 60, 60, 60, 60])
@@ -78,7 +80,8 @@ class MBTSAdaptive(object):
 
     def predict(self, state, minerals_enemy):
         # Get actions of self
-        all_sub_nodes = [state]
+        root = Node('root', state)
+        parents = [state]
         if self.player == 1:
             fifo_self = self.env.fifo_player_1
             fifo_enemy = self.env.fifo_player_2
@@ -86,23 +89,67 @@ class MBTSAdaptive(object):
             fifo_self = self.env.fifo_player_2
             fifo_enemy = self.env.fifo_player_1
         
-        for _ in range(self.look_forward_step):
-            for n in all_sub_nodes:
-                all_sub_nodes = self.expand_node(n, mineral_enemy, fifo_self, fifo_enemy)
+        leaf_node = []
+        leaf_node_states = []
+        leaf_fifo = []
+        for i in range(self.look_forward_step):
+            for n in parents:
+                next_states, next_fifo_self = self.expand_node(n, mineral_enemy, fifo_self, fifo_enemy)
+                if i == (self.look_forward_step - 1):
+                    leaf_node_states.append(next_states)
+                    leaf_fifo.append(next_fifo_self)
+                    leaf_node.append(n.children)
+                    
+        if self.look_forward_step == 0:
+            leaf_node.append(root)
+            leaf_node_states(root.state)
             
+        for lns, ln, ff in zip(leaf_node_states, leaf_node, fifo, leaf_fifo)
+            self.rollout(lns, ln, ff)
             
-            
-        action, _ = self.value_model.predict(state, 0, False)
+#         action, _ = self.value_model.predict(state, 0, False)
+
         return action
     
-    def expand_node(self, state, mineral_enemy, fifo_self, fifo_enemy):
-        actions_self = self.env.get_big_A(env.denormalization(state)[env.miner_index])
+    def rollout(self, state, node, ff):
+        actions_self = self.env.get_big_A(leaf_node_states[env.miner_index])
+        combine_sa
+        
+        
+    def expand_node(self, parent, mineral_enemy, fifo_self, fifo_enemy):
+        # TODO: check the state change or not ,if yes deepcopy for the reward func state
+        state = deepcopy(parent.state)
+        parent_name = parent.name
+        actions_self = self.env.get_big_A(state[env.miner_index])
         actions_enemy = self.env.get_big_A(mineral_enemy)
         
-        after_states = self.get_after_states(state, actions_self, actions_enemy, fifo_self, fifo_enemy)
+        after_states, after_fifo_self = self.get_after_states(state, actions_self, actions_enemy, fifo_self, fifo_enemy)
         next_states = self.get_next_states(after_states)
         
-        return next_states
+        rewards = self.reward_func(state, next_states)
+        
+        all_sub_nodes = []
+        best_reward = float('-inf')
+        best_node = None
+        for i, n_s, reward, action in enumerate(zip(next_states, rewards, actions_self)):
+            child = Node(parent_name + '_' + str(i + 1)), n_s, reward, parent
+            parent.add_child(child, action)
+            
+            if best_reward < reward:
+                best_reward = reward
+                best_node = child
+            
+        self.reward_brack_prop(best_node)
+    
+        return next_states, after_fifo_self
+    
+    def reward_brack_prop(node):
+        if node.name == "root":
+            return
+        parent = node.parent
+        parent.best_child = node
+        parent.best_reward = node.best_reward
+        self.reward_brack_prop(parent)
     
     def action_ranking(self, q_state, k):
         # TODO
@@ -123,16 +170,15 @@ class MBTSAdaptive(object):
         
     def get_after_state(self, state, actions_self, actions_enemy, fifo_self, fifo_enemy):
         # Faster combination way
-        after_states_self, _ = self.combine_sa(state, actions_self, fifo_self, False)
+        after_states_self, after_fifo_self = self.combine_sa(state, actions_self, fifo_self, False)
         after_states_self = self.imply_mineral_by_action(after_states_self)
         
         after_states = np.zeros((after_states_self.shape[1], len(actions_self) * len(actions_enemy)))
         for i, action_e in enumerate(actions_enemy):
-            after_states[i] = self.combine_sa(state, action_e, fifo_enemy)
-        return after_states
+            after_states[i], _ = self.combine_sa(state, action_e, fifo_enemy)
+        return after_states, after_fifo_self
         
     def combine_sa(self, de_s, actions, fifo, is_enemy):
-        
         # Change that if the index is changed, generalize it later
         if not is_enemy:
             building_index = range(0, 4)
