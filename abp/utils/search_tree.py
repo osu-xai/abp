@@ -16,7 +16,8 @@ class Node():
         
     def save(self):
         pass
-    
+    def sort_children(self):
+        pass
     # Give the node find the worst reward sibling
     # add child (sort by reward)
     # get best child

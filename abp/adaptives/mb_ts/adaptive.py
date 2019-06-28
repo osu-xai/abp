@@ -13,7 +13,7 @@ from abp.utils import clear_summary_path
 from abp.models import DQNModel
 # TODO: Generalize it
 from abp.examples.pysc2.tug_of_war.models_mb.transition_model import TransModel
-from abp.utils.search_tree import node
+from abp.utils.search_tree import Node
 
 logger = logging.getLogger('root')
 use_cuda = torch.cuda.is_available()
@@ -101,19 +101,21 @@ class MBTSAdaptive(object):
                     leaf_node.append(n.children)
                     
         if self.look_forward_step == 0:
-            leaf_node.append(root)
-            leaf_node_states(root.state)
+            leaf_node.append(parents)
+            leaf_node_states([parents[0].state])
             
-        for lns, ln, ff in zip(leaf_node_states, leaf_node, fifo, leaf_fifo)
+        for lns, ln, ff in zip(leaf_node_states, leaf_node, fifo, leaf_fifo):
             self.rollout(lns, ln, ff)
             
 #         action, _ = self.value_model.predict(state, 0, False)
 
         return action
     
-    def rollout(self, state, node, ff):
-        actions_self = self.env.get_big_A(leaf_node_states[env.miner_index])
-        combine_sa
+    def rollout(self, states, nodes, ffs):
+        for s, n, ff in zip(states, nodes, ffs):
+            actions_self = self.env.get_big_A(s[env.miner_index])
+            com_s, _ = combine_sa(s, actions_self, ff)
+            self.value_model(com_s)
         
         
     def expand_node(self, parent, mineral_enemy, fifo_self, fifo_enemy):
