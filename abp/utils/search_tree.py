@@ -1,5 +1,5 @@
 class Node():
-    def __init__(self, name, state, reward = None, parent = None, total_reward = 0):
+    def __init__(self, name, state, reward = 0, parent = None, total_reward = 0):
         self.parent = parent
         self.reward = reward
         self.total_reward = 0
@@ -9,6 +9,7 @@ class Node():
         self.name = name
         self.best_reward = 0
         self.best_child = None
+        self.best_action = None
         
     def add_child(self, sub_node, action):
         self.children.append(sub_node)
