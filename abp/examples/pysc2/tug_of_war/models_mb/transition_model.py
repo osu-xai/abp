@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 from tensorboardX import SummaryWriter
+import collections
 
 use_cuda = torch.cuda.is_available()
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
@@ -17,37 +18,57 @@ def weights_initialize(module):
         nn.init.xavier_uniform_(module.weight, gain=nn.init.calculate_gain('relu'))
         module.bias.data.fill_(0.01)
         
+# class _TransModel(nn.Module):
+#     """ Model for DQN """
+
+#     def __init__(self, input_len, output_len):
+#         super(_TransModel, self).__init__()
+        
+#         self.fc1 = nn.Sequential(
+#             torch.nn.Linear(input_len, 512),
+#             torch.nn.BatchNorm1d(512),
+#             nn.ReLU()
+#         )
+#         self.fc1.apply(weights_initialize)
+        
+#         self.fc2 = nn.Sequential(
+#             torch.nn.Linear(512, 128),
+#             torch.nn.BatchNorm1d(128),
+#             nn.ReLU()
+#         )
+#         self.fc2.apply(weights_initialize)
+        
+#         self.output_layer = nn.Sequential(
+#             torch.nn.Linear(128, output_len)
+#         )
+#         self.output_layer.apply(weights_initialize)
+        
+#     def forward(self, input):
+#         x = self.fc1(input)
+#         x = self.fc2(x)
+        
+#         return self.output_layer(x)
 class _TransModel(nn.Module):
     """ Model for DQN """
 
     def __init__(self, input_len, output_len):
-        super(_TransModel, self).__init__()
+        # super(_TransModel, self).__init__()
+        super().__init__()
         
-        self.fc1 = nn.Sequential(
-            torch.nn.Linear(input_len, 512),
-            torch.nn.BatchNorm1d(512),
-            nn.ReLU()
-        )
-        self.fc1.apply(weights_initialize)
-        
-        self.fc2 = nn.Sequential(
-            torch.nn.Linear(512, 128),
-            torch.nn.BatchNorm1d(128),
-            nn.ReLU()
-        )
-        self.fc2.apply(weights_initialize)
-        
-        self.output_layer = nn.Sequential(
-            torch.nn.Linear(128, output_len)
-        )
-        self.output_layer.apply(weights_initialize)
-        
-    def forward(self, input):
-        x = self.fc1(input)
-        x = self.fc2(x)
-        
-        return self.output_layer(x)
+        self.model = nn.Sequential(collections.OrderedDict([
+                        ('fc1', nn.Linear(input_len, 512)),
+                        ('rl1', nn.ReLU()),
+                        ('bn1', nn.BatchNorm1d(512)),
+                        ('fc2', nn.Linear(512, 128)),
+                        ('rl2', nn.ReLU()),
+                        ('bn2', nn.BatchNorm1d(128)),
+                        ('fc3', nn.Linear(128, output_len))
+                    ]))#.to(device, non_blocking=True)
+            
+        self.model.apply(weights_initialize)
 
+    def forward(self, xb):
+        return self.model(xb)
     
 class TransModel():
     def __init__(self, input_len, ouput_len, learning_rate = 0.0001):
