@@ -2,6 +2,9 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import pprint
+import operator
+import collections
+import sys
 
 a_mar = 0
 a_vik = 1
@@ -15,83 +18,115 @@ e_pyl = 8
 e_nex = 9
 
 def main():
-    data = torch.load('sadq_v_sadq.pt')
+    data_file = input("Please enter the file name you want to load:\t")
+    data = torch.load(data_file)
     data = np.array(data).tolist()
 
-    #print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline = get_options(len(data)-1)
-    #forrealls##ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline = gather_data(data, print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline)
-    ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline, strategies = gather_data(data, 0, 0, 0, 0, 0, 11145, 1)
+    # data = torch.load('60000_sadq_v_random.pt')
 
-    # if(show_win_percentage):
-    #     win_percentage_graph(ally_wins, enemy_wins)
-    # if(show_win_timeline):
-    #     win_total_line_graph(win_total_timeline)
-    # if(show_average_cases):
-    #     average_case_graph(sum_ally_units_win, ally_wins, sum_enemy_units_win, enemy_wins)
+    print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline, show_strats, show_episodes_len = get_options(len(data)-1)
+    ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline, sorted_refined_strats, sorted_episodes_length = gather_data(data, print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline)
+    # ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline, sorted_refined_strats, sorted_episodes_length = gather_data(data, 0, 0, 0, 0, 0, 63399, 0)
+
+    if(show_win_percentage):
+        win_percentage_graph(ally_wins, enemy_wins)
+    if(show_win_timeline):
+        win_total_line_graph(win_total_timeline)
+    if(show_average_cases):
+        average_case_graph(sum_ally_units_win, ally_wins, sum_enemy_units_win, enemy_wins)
+    if(show_strats):
+        strats_histogram(sorted_refined_strats)
+    if(show_episodes_len):
+        print_episodes_by_len(sorted_episodes_length)
+
 
 def gather_data(data, print_ally_episode_win, print_enemy_episode_win, show_win_percentage, show_average_cases, i_lower, i_upper, show_win_timeline):
+    # init vars
     ally_wins = 0
     enemy_wins = 0
-    episodes = 0
-
+    curr_episode = 0
 
     sum_ally_units_win = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     sum_enemy_units_win = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] #0-4 ally: mar, vik, col, pyl, nexus, 5-9 enemy: mar, vik, col, pyl, nexus
     win_total_timeline = [0]
-    strategies ={  }
-                
+
+    episodes_length = {  }
+
+    moves_0_3 = {  }
+    moves_4_7 = {  }
+    moves_8_11 = {  }
+    moves_12_15 = {  }
+    moves_16_19 = {  }
+    moves_20_23 = {  }
+    moves_24_27 = {  }
+    moves_28_31 = {  }
+    moves_32_34 = {  }
+
+    episode_strategies = [ moves_0_3, moves_4_7, moves_8_11, moves_12_15, moves_16_19, moves_20_23, moves_24_27, moves_28_31, moves_32_34 ]
 
     for i in range(i_lower, i_upper):
-        player_1_input = ""
-        strategies_current = ""
-        if (i == 0):
-            for n in range(4):
-                for o in range(4):
-                    player_1_input += (str(data[i+n][0][o]) + ",")
-            strategies.update({player_1_input : 1})
             
-        elif (((data[i][0][a_mar]) + (data[i][0][a_vik]) + (data[i][0][a_col]) + (data[i][0][a_pyl]) + (data[i][0][e_mar]) + (data[i][0][e_vik]) + (data[i][0][e_col]) + (data[i][0][e_pyl])) < ((data[i-1][0][a_mar]) + (data[i-1][0][a_vik]) + (data[i-1][0][a_col]) + (data[i-1][0][a_pyl]) + (data[i-1][0][e_mar]) + (data[i-1][0][e_vik]) + (data[i-1][0][e_col]) + (data[i-1][0][e_pyl]))):               
-            episodes += 1
-           
-            for n in range(4):
-                for o in range(4):
-                    strategies_current += (str(data[(i+1)+n][0][o]) + ",")
+        #checks for end of episode
+        c = i
+        p = i-1
+        current_building_total =  ((data[c][0][a_mar]) + (data[c][0][a_vik]) + (data[c][0][a_col]) + (data[c][0][a_pyl]) + (data[c][0][e_mar]) + (data[c][0][e_vik]) + (data[c][0][e_col]) + (data[c][0][e_pyl]))
+        previous_building_total = ((data[p][0][a_mar]) + (data[p][0][a_vik]) + (data[p][0][a_col]) + (data[p][0][a_pyl]) + (data[p][0][e_mar]) + (data[p][0][e_vik]) + (data[p][0][e_col]) + (data[p][0][e_pyl]))
 
-            if (strategies_current in strategies):
-                current_count = strategies[strategies_current]
-                strategies[strategies_current] = current_count + 1
+        if current_building_total < previous_building_total:
 
+            #create a dictionary of episode ids (0 - num of eps) and episode lengths
+            if(curr_episode != 0):
+                episode_len = 0
+                aggregate_prior_episode_length = 0
+
+                for k in range(curr_episode):
+                    aggregate_prior_episode_length += episodes_length[k]
+                episode_len = i - aggregate_prior_episode_length
+                episodes_length[curr_episode] = episode_len
             else:
-                strategies.update({strategies_current : 1})
+                episode_len = i 
+                episodes_length[curr_episode] = episode_len
+            
 
+            #making a strategy that consists of four moves for the episode length
+            episode_strategies = seperate_strategy(data, episodes_length, episode_strategies, i, curr_episode)
+    
+            curr_episode += 1
+    
+            # check for ally win
             if (data[i-1][0][a_nex]) > (data[i-1][0][e_nex]):
                 if (print_ally_episode_win):
-                    print_episode_end_state_and_next_state(i-1,data) 
+                    print_episode_end_state_and_next_state(i-1,data, episodes_length, curr_episode) 
                     ally_graph(i-1,data)
                 
                 ally_wins += 1
-                win_total_timeline.append((win_total_timeline[len(win_total_timeline)-2]) + 1)
+                win_total_timeline.append((win_total_timeline[len(win_total_timeline)-1]) + 1)
                 
                 for x in range(0,10):
                     sum_ally_units_win[x] = data[i-1][1][x] + sum_ally_units_win[x]
             
-            
+            #check for ally loss
             elif (data[i-1][0][a_nex]) < (data[i-1][0][e_nex]):
                 if (print_enemy_episode_win):
-                    print_episode_end_state_and_next_state(i-1,data) 
+                    print_episode_end_state_and_next_state(i-1,data, episodes_length, curr_episode) 
                     enemy_graph(i-1,data)
                 
                 enemy_wins += 1
-                win_total_timeline.append((win_total_timeline[len(win_total_timeline)-2])-1)
+                win_total_timeline.append((win_total_timeline[len(win_total_timeline)-1])-1)
 
                 for x in range(0,10):
                     sum_enemy_units_win[x] = data[i-1][1][x] + sum_enemy_units_win[x]
-    
-    print("_______________________________________________________________________")
-    print("------------- Player 1 First Four Moves Frequency Table ---------------")
-    pprint.pprint(strategies)
+            
 
-    return ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline, strategies
+    #creates a list of tuples for strategies and episode lengths
+    sorted_episodes_length = sorted(episodes_length.items(), key=operator.itemgetter(1), reverse=True)
+    
+    sorted_episode_strats = [[],[],[],[],[],[],[],[],[]]
+    for k in range(len(episode_strategies)):
+        sorted_episode_strats[k] = sorted(episode_strategies[k].items(), key=operator.itemgetter(1), reverse=True)
+    
+    # sorted_refined_episode_strats = [i for i in sorted_episode_strats[0] if i[1] > 10]
+    return ally_wins, enemy_wins, sum_ally_units_win, sum_enemy_units_win, win_total_timeline, sorted_episode_strats, sorted_episodes_length
 
 
 
@@ -101,6 +136,8 @@ def get_options(data_range):
     show_win_percentage = -1
     show_average_cases = -1
     show_win_timeline = -1
+    show_strats = -1
+    show_episodes_len = -1
 
     cases_hi = -1
     cases_lo = -1
@@ -133,13 +170,97 @@ def get_options(data_range):
     while(show_average_cases != '0' and show_average_cases != '1'):
         show_average_cases = input("Do you want to have the average cases reported? (1 - 0):\t")
 
-    return int(print_ally_episode_win), int(print_enemy_episode_win), int(show_win_percentage), int(show_average_cases), int(cases_lo), int(cases_hi), int(show_win_timeline)
+    while(show_strats != '0' and show_strats != '1'):
+        show_strats = input("Do you want to see the fequency of Ally's unique moves grouped by four waves? (1 - 0):\t")
+    
+    while(show_episodes_len != '0' and show_episodes_len != '1'):
+        show_episodes_len = input("Do you want to have the episodes' length printed by decreasing length? (1 - 0):\t")
+
+    return int(print_ally_episode_win), int(print_enemy_episode_win), int(show_win_percentage), int(show_average_cases), int(cases_lo), int(cases_hi), int(show_win_timeline), int(show_strats), int(show_episodes_len)
 
 
 
 
-def print_episode_end_state_and_next_state(i,data):
+def store_strategy(index, strategies_current, episode_strategies):
+    if (strategies_current in episode_strategies[index]):
+        current_count = episode_strategies[index][strategies_current]
+        episode_strategies[index][strategies_current] = current_count + 1
+    else:
+        episode_strategies[index].update({strategies_current : 1})
+
+
+
+
+def seperate_strategy(data, episodes_length, episode_strategies, start_wave, episodes):
+    strategies_current = ""
+    curr_wave = 0
+    x = 0
+    while(curr_wave < (episodes_length[episodes])):
+        if(curr_wave + start_wave == len(data)-1):
+            break
+        for buildings in range(4):
+            strategies_current += (str(data[start_wave + curr_wave][0][buildings]))
+            strategies_current += ", "
+        strategies_current += "| "
+
+        x = ((curr_wave + 1) / 4) - 1
+
+        if(curr_wave == 3):
+            store_strategy(0, strategies_current, episode_strategies)
+            strategies_current = ""
+
+        elif(curr_wave == 7):
+            store_strategy(1, strategies_current, episode_strategies)
+            strategies_current = ""
+
+        elif(curr_wave == 11):
+            store_strategy(2, strategies_current, episode_strategies)
+            strategies_current = ""
+
+        elif(curr_wave == 15):
+            store_strategy(3, strategies_current, episode_strategies)
+            strategies_current = ""
+
+        elif(curr_wave == 19):
+            store_strategy(4, strategies_current, episode_strategies)
+            strategies_current = ""
+
+        elif(curr_wave == 23):
+            store_strategy(5, strategies_current, episode_strategies)
+            strategies_current = ""
+
+        elif(curr_wave == 27):
+            store_strategy(6, strategies_current, episode_strategies)
+            strategies_current = ""
+
+        elif(curr_wave == 31):
+            store_strategy(7, strategies_current, episode_strategies)
+            strategies_current = ""
+
+        elif(curr_wave == 34):
+            store_strategy(8, strategies_current, episode_strategies)
+            strategies_current = ""
+
+
+        #TODO add an else to catch excess waves not mult of 4
+        curr_wave += 1
+
+    return episode_strategies
+
+
+
+def print_episodes_by_len(sorted_episodes_length):
+    print("-----------------------------------Episode Lengths: (Episode Id, Episode Length)-----------------------------------------")
+    j = 0
+    while j != len(sorted_episodes_length)-13:
+        print(str(sorted_episodes_length[j+0]) + "\t" + str(sorted_episodes_length[j+1]) + "\t" + str(sorted_episodes_length[j+2]) + "\t" + str(sorted_episodes_length[j+3]) + "\t" + str(sorted_episodes_length[j+4]) + "\t" + str(sorted_episodes_length[j+5]) + "\t" + str(sorted_episodes_length[j+6]) + "\t" + str(sorted_episodes_length[j+7]))
+        j += 8
+
+
+
+def print_episode_end_state_and_next_state(i,data, episodes_length, episodes):
     print("-------------------------------------------------------------------------------------------------------------------------")
+    print("Episode Length:\t" + str(episodes_length[episodes]))
     print("i:\t" + str(i) + "\t\tfriendly nexus: " + str(data[i][0][a_nex]) + "\t\tenemey nexus: " + str(data[i][0][e_nex]))
     print("i+1:\t" + str(i+1) + "\t\tfriendly nexus: " + str(data[i+1][0][4]) + "\t\tenemey nexus: " + str(data[i+1][0][9]))
     print("\tmarine: " + str(data[i][0][a_mar]) + "\tvikings: " + str(data[i][0][a_vik]) + "\tcolossus: " + str(data[i][0][a_col]) + "\tpylons: " + str(data[i][0][a_pyl]) + "\tE marine: " + str(data[i][0][e_mar]) + "\tE vikings: " + str(data[i][0][e_vik]) + "\tE colossus: " + str(data[i][0][e_col]) + "\tE pylons: " + str(data[i][0][e_pyl]))
@@ -147,8 +268,70 @@ def print_episode_end_state_and_next_state(i,data):
     print("-------------------------------------------------------------------------------------------------------------------------")
 
 
+
+
+def strats_histogram(sorted_refined_strats):
+    moves = []
+    frequency = []
+    table = []
+    temp_label = []
+    count = 0
+    counter = 0
+
+    for j in range(len(sorted_refined_strats)):
+        for i in range(len(sorted_refined_strats[j])):
+            moves.append(sorted_refined_strats[j][i][0])
+            frequency.append(sorted_refined_strats[j][i][1])
+            temp_label.append(i)
+            count += frequency[i]
+            counter += 1
+        print(str(count) + "\t" + str(counter))
+        count = 0
+        counter = 0
+
+    print("____________________________________________________________________________________________________")
+    print("------------------ Frequency of Player 1's Unique Moves Grouped by Four Waves ----------------------")
+    print("------ WAVE 0 ------|------- WAVE 1 ------|------ WAVE 2 -------|------ WAVE 3 -------|")
+    for i in range(len(frequency)):
+        if (i == len(sorted_refined_strats[0])):
+            input("Press enter to view the next 4 waves.")
+            print("------ WAVE 4 ------|------- WAVE 5 ------|------ WAVE 6 -------|------ WAVE 7 -------|")
+        elif (i == (len(sorted_refined_strats[0]) + len(sorted_refined_strats[1]))):
+            input("Press enter to view the next 4 waves.")
+            print("------ WAVE 8 ------|------- WAVE 9 ------|------ WAVE 10 ------|------ WAVE 11 ------|")
+        elif (i == (len(sorted_refined_strats[0]) + len(sorted_refined_strats[1]) + len(sorted_refined_strats[2]))):
+            input("Press enter to view the next 4 waves.")
+            print("------ WAVE 12 ------|------- WAVE 13 ------|------ WAVE 14 ------|------ WAVE 15 ------|")
+        elif (i == (len(sorted_refined_strats[0]) + len(sorted_refined_strats[1]) + len(sorted_refined_strats[2]) + len(sorted_refined_strats[3]))):
+            input("Press enter to view the next 4 waves.")
+            print("------ WAVE 16 ------|------- WAVE 17 ------|------ WAVE 18 ------|------ WAVE 19 ------|")
+        elif (i == (len(sorted_refined_strats[0]) + len(sorted_refined_strats[1]) + len(sorted_refined_strats[2]) + len(sorted_refined_strats[3]) + len(sorted_refined_strats[4]))):
+            input("Press enter to view the next 4 waves.")
+            print("------ WAVE 20 ------|------- WAVE 21 ------|------ WAVE 22 ------|------ WAVE 23 ------|")
+        elif (i == (len(sorted_refined_strats[0]) + len(sorted_refined_strats[1]) + len(sorted_refined_strats[2]) + len(sorted_refined_strats[3]) + len(sorted_refined_strats[4]) + len(sorted_refined_strats[5]))):
+            input("Press enter to view the next 4 waves.")
+            print("------ WAVE 24 ------|------- WAVE 25 ------|------ WAVE 26 ------|------ WAVE 27 ------|")
+        elif (i == (len(sorted_refined_strats[0]) + len(sorted_refined_strats[1]) + len(sorted_refined_strats[2]) + len(sorted_refined_strats[3]) + len(sorted_refined_strats[4]) + len(sorted_refined_strats[5]) + len(sorted_refined_strats[6]))):
+            input("Press enter to view the next 4 waves.")
+            print("------ WAVE 28 ------|------- WAVE 29 ------|------ WAVE 30 ------|------ WAVE 31 ------|")
+        elif (i == (len(sorted_refined_strats[0]) + len(sorted_refined_strats[1]) + len(sorted_refined_strats[2]) + len(sorted_refined_strats[3]) + len(sorted_refined_strats[4]) + len(sorted_refined_strats[5]) + len(sorted_refined_strats[6]) + len(sorted_refined_strats[7]))):
+            input("Press enter to view the next 4 waves.")
+            print("------ WAVE 32 ------|------- WAVE 33 ------|------ WAVE 34 ------|")
+
+        print(moves[i] + ":\t" + str(frequency[i]))
+
+    fig1 = plt.figure(num=None, figsize=(10, 15), dpi=200, facecolor='w', edgecolor='k')
+    plt.bar(temp_label, frequency,)
+    plt.title("Frequency of Player 1's Unique Moves Grouped by Four Waves")
+
+    plt.show()
+    plt.close()
+
+
+
 def average_case_graph(sum_ally_units_win, ally_wins, sum_enemy_units_win, enemy_wins):
     labels = 'Marines', 'Vikings', 'Colossus', 'Pylons'
+    #create averages
     if(ally_wins != 0):
         sizes_ally_winning = [sum_ally_units_win[a_mar]/ally_wins, sum_ally_units_win[a_vik]/ally_wins, sum_ally_units_win[a_col]/ally_wins, sum_ally_units_win[a_pyl]/ally_wins]
         sizes_enemy_losing = [sum_ally_units_win[e_mar]/ally_wins, sum_ally_units_win[e_vik]/ally_wins, sum_ally_units_win[e_col]/ally_wins, sum_ally_units_win[e_pyl]/ally_wins]
@@ -197,6 +380,9 @@ def average_case_graph(sum_ally_units_win, ally_wins, sum_enemy_units_win, enemy
     plt.close()
 
 
+
+
+
 def win_total_line_graph(win_total_timeline):
     x_less = []
     x_more = []
@@ -207,13 +393,6 @@ def win_total_line_graph(win_total_timeline):
     for i in range(len(win_total_timeline)):
         zero.append(0)
         x.append(i)
-        if win_total_timeline[i] <= 0:
-            y_less.append(win_total_timeline[i])
-            x_less.append(i)
-
-        else:
-            y_more.append(win_total_timeline[i])
-            x_more.append(i)
 
     fig1 = plt.figure(num=None, figsize=(15, 10), dpi=200, facecolor='w', edgecolor='k')
     plt.plot(x, win_total_timeline, color='b', linewidth=0.5)
@@ -222,6 +401,7 @@ def win_total_line_graph(win_total_timeline):
 
 
     plt.show()
+
 
 
 
@@ -315,6 +495,8 @@ def enemy_graph(i,data):
 
     plt.show()
     plt.close()
+
+
 
 if __name__ == "__main__":
     main()
