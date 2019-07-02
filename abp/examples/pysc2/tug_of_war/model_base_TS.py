@@ -97,15 +97,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 actions_1 = env.get_big_A(env.denormalization(state_1)[env.miner_index])
                 actions_2 = env.get_big_A(env.denormalization(state_2)[env.miner_index])
                 
-                choice_1 = agent_1.predict(env.denormalization(state_1))
-
+#                 choice_1 = agent_1.predict(env.denormalization(state_1), env.denormalization(state_2)[env.miner_index])
+                actions_1111111 = agent_1.predict(env.denormalization(state_1), env.denormalization(state_2)[env.miner_index])
                 combine_states_2 = combine_sa(state_2, actions_2, 2)
                 if not reinforce_config.is_random_agent_2 and not random_enemy:
                     choice_2, _ = agent_2.predict(combine_states_2)
                 else:
                     choice_2 = randint(0, len(actions_2) - 1)
                     
-                env.step(list(actions_1[choice_1]), 1)
+#                 env.step(list(actions_1[choice_1]), 1)
+                env.step(list(actions_1111111), 1)
                 env.step(list(actions_2[choice_2]), 2)
                 
                 while skiping:

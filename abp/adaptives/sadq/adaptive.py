@@ -105,11 +105,21 @@ class SADQAdaptive(object):
         else:
             self.prediction_time -= time.time()
             #_state = Tensor(state).unsqueeze(0)
-            
-            q_values = FloatTensor([self.eval_model.predict(Tensor(s).unsqueeze(0),
-                                                   self.steps,
-                                                   self.learning)[1] for s in state])
+#             print(state.shape)
+#             print(state)
+#             input()
+#             q_values = FloatTensor([self.eval_model.predict(Tensor(s).unsqueeze(0),
+#                                                    self.steps,
+#                                                    self.learning)[1] for s in state])
+            q_values = FloatTensor(self.eval_model.predict_batch(Tensor(state))[1]).view(-1)
+#             print(q_values)
+#             print(q_values_2)
+#             print(q_values.size())
+#             print(q_values_2.size())
+#             _, choice = q_values.max(0)
             _, choice = q_values.max(0)
+#             print(choice, choice_2)
+#             input()
             action = choice
             self.prediction_time += time.time()
             
@@ -217,7 +227,7 @@ class SADQAdaptive(object):
         if current_reward_mean >= self.best_reward_mean:
             print("*************saved*****************")
             self.best_reward_mean = current_reward_mean
-            logger.info("Saving network. Found new best reward (%.2f)" % current_reward_mean)
+            logger.info("Saving network. Found new best reward (%.2f)" % total_reward)
             self.eval_model.save_network()
             self.target_model.save_network()
             with open(self.network_config.network_path + "/adaptive.info", "wb") as file:

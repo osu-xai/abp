@@ -219,9 +219,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #             print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Starting episode%%%%%%%%%%%%%%%%%%%%%%%%%")
             
             while skiping:
+#                 start_time = time.time()
                 state_1, state_2, done, dp = env.step([], 0)
-                
                 if dp or done:
+#                     print(time.time() - start_time)
                     break
 #             input("done stepping to finish prior action")
             while not done and steps < max_episode_steps:
@@ -230,15 +231,21 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                 print('state:')
 #                 print(list(env.denormalization(state_1)))
 #                 print(list(env.denormalization(state_2)))
+#                 print("Get actions time:")
+#                 start_time = time.time()
                 actions_1 = env.get_big_A(env.denormalization(state_1)[env.miner_index])
                 actions_2 = env.get_big_A(env.denormalization(state_2)[env.miner_index])
+#                 print(time.time() - start_time)
 
                 combine_states_1 = combine_sa(state_1, actions_1, 1)
                 if not reinforce_config.is_random_agent_1:
+                    start_time = time.time()
+
                     choice_1, _ = agent_1.predict(combine_states_1)
+                    print(time.time() - start_time)
                 else:
                     choice_1 = randint(0, len(actions_1) - 1)
-
+                
                 combine_states_2 = combine_sa(state_2, actions_2, 2)
                 if not reinforce_config.is_random_agent_2 and not random_enemy:
                     choice_2, _ = agent_2.predict(combine_states_2)
@@ -279,9 +286,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 previous_action_1 = deepcopy(actions_1[choice_1])
                 previous_action_2 = deepcopy(actions_2[choice_2])
                 while skiping:
+#                     print("Get actions time:")
+#                     start_time = time.time()
                     state_1, state_2, done, dp = env.step([], 0)
                     #input(' step wating for done signal')
                     if dp or done:
+#                         print(time.time() - start_time)
                         break
 #                 input('done stepping after collecting experience')
                 current_reward_1 = 0
