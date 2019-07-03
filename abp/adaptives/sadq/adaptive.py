@@ -23,7 +23,7 @@ Tensor = FloatTensor
 
 
 class SADQAdaptive(object):
-    """Adaptive which uses the  DQN algorithm"""
+    """Adaptive which uses the SADQ algorithm"""
 
     def __init__(self, name, state_length, network_config, reinforce_config):
         super(SADQAdaptive, self).__init__()
@@ -140,10 +140,11 @@ class SADQAdaptive(object):
 
         return choice, q_values
 
-    def disable_learning(self, is_save = True):
+    def disable_learning(self, is_save = False):
         logger.info("Disabled Learning for %s agent" % self.name)
         if is_save:
             self.save()
+            self.save(force = True, appendix = "_for_now")
         self.learning = False
         self.episode = 0
         
@@ -211,7 +212,7 @@ class SADQAdaptive(object):
             self.best_reward_mean = info["best_reward_mean"]
             self.episode = info["episode"]
 
-    def save(self, force=False):
+    def save(self, force=False, appendix=""):
         info = {
             "steps": self.steps,
             "best_reward_mean": self.best_reward_mean,
@@ -224,12 +225,12 @@ class SADQAdaptive(object):
         total_reward = sum(self.reward_history[-self.network_config.save_steps:])
         current_reward_mean = total_reward / self.network_config.save_steps
 
-        if current_reward_mean >= self.best_reward_mean:
+        if current_reward_mean >= self.best_reward_mean or force:
             print("*************saved*****************")
             self.best_reward_mean = current_reward_mean
             logger.info("Saving network. Found new best reward (%.2f)" % total_reward)
-            self.eval_model.save_network()
-            self.target_model.save_network()
+            self.eval_model.save_network(appendix = appendix)
+            self.target_model.save_network(appendix = appendix)
             with open(self.network_config.network_path + "/adaptive.info", "wb") as file:
                 pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
         else:

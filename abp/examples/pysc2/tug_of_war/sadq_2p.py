@@ -99,6 +99,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             agent_2.load_model(agent_1.eval_model)
             agent_1.steps = 0
             agent_1.best_reward_mean = 0
+            agent_1.save(force = True, appendix = "update_" + str(round_num))
             
         if not reinforce_config.is_random_agent_2:
             agent_2.disable_learning()
@@ -193,7 +194,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                             global_step = episode + 1)
         
         if not reinforce_config.is_random_agent_1:
-            agent_1.disable_learning(is_save = False)
+            agent_1.disable_learning(is_save = not reinforce_config.collecting_experience)
             
         if not reinforce_config.is_random_agent_2:
             agent_2.disable_learning()

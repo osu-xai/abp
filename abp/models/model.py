@@ -22,11 +22,11 @@ class Model(object):
         self.model = model
         self.restore_network()
 
-    def save_network(self):
+    def save_network(self, appendix = ""):
         if self.network_config.network_path and self.network_config.save_network:
             logger.info("Saving network for..." + self.name)
             logger.info("Saving the network at %s" % self.model_path)
-            torch.save(self.model.state_dict(), self.model_path)
+            torch.save(self.model.state_dict(), self.model_path + appendix)
 
     def restore_network(self):
         if (self.restore and
