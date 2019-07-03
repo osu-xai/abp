@@ -1,0 +1,8 @@
+# SADQ agent self-play on tug_of_way
+python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p/v1/ -tk task_2p
+
+# run Model base (tree search) agent on tug_of_way
+python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/mbts/v1/ -tk task_mbts
+
+# SADQ agent self-play on tug_of_way 2 lanes version
+python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p_2l/v1/ -tk task_2p_2l
