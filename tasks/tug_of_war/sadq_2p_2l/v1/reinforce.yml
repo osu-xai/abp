@@ -12,4 +12,4 @@ final_epsilon: 0.01
 is_random_agent_1: False
 is_random_agent_2: False
 collecting_experience: False
-use_prior_memory: False
+use_prior_memory: True
