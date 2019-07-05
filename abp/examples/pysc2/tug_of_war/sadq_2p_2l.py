@@ -82,6 +82,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         if len(privous_result) >= update_wins_waves and \
         sum(privous_result) / update_wins_waves > 10000 and \
         not reinforce_config.is_random_agent_2:
+            privous_result = []
             print("replace enemy agent's weight with self agent")
             random_enemy = False
             f = open("result_self_play_2l.txt", "a+")
@@ -251,6 +252,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     choice_1, _ = agent_1.predict(env.normalization(combine_states_1))
                 else:
                     actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = True)
+                    combine_states_1 = combine_sa(state_1, actions_1)
                     choice_1 = randint(0, len(actions_1) - 1)
                 
                 
@@ -260,40 +262,35 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     choice_2, _ = agent_2.predict(env.normalization(combine_states_2))
                 else:
                     actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = True)
+                    combine_states_2 = combine_sa(state_2, actions_2)
                     choice_2 = randint(0, len(actions_2) - 1)
 
 #                 input('stepped with command 2')
                 #######
                 #experience collecting
                 ######
-#                 if reinforce_config.collecting_experience:
-#                     if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
-#                         previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
-# #                         print(previous_state_1[env.miner_index])
-#                         denorm_previous_state_1 = previous_state_1
-#                         denorm_previous_state_1[env.miner_index] += denorm_previous_state_1[3] * 50 + 100
-# #                         print(previous_state_1[env.miner_index])
+                if reinforce_config.collecting_experience:
+                    if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
+                        previous_state_1[1:7] = previous_state_2[8:14] # Include player 2's action
+                        previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
 
-#                         experience = [
-#                             denorm_previous_state_1,
-#                             np.append(state_1, previous_reward_1)
-#                         ]
+                        experience = [
+                            previous_state_1,
+                            np.append(state_1, previous_reward_1)
+                        ]
+                        all_experiences.append(experience)
+                        if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
+                            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/test_random_vs_random_2l.pt')
 
-#                         #print(experience)
-#                         all_experiences.append(experience)
-#                         if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
-#                             torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experience.pt')
-# #                         pretty_print(len(all_experiences) - 1, all_experiences)
-# #                         print()
-# #                         input("pause")
-
-#                     previous_state_1 = deepcopy(combine_states_1[choice_1])
-#                     previous_state_2 = deepcopy(combine_states_2[choice_2])
+                    previous_state_1 = deepcopy(combine_states_1[choice_1])
+                    previous_state_2 = deepcopy(combine_states_2[choice_2])
+                    
+                    previous_action_1 = deepcopy(actions_1[choice_1])
+                    previous_action_2 = deepcopy(actions_2[choice_2])
+        
                 env.step(list(actions_1[choice_1]), 1)
-#                 input('stepped with command 1')
                 env.step(list(actions_2[choice_2]), 2)
-                previous_action_1 = deepcopy(actions_1[choice_1])
-                previous_action_2 = deepcopy(actions_2[choice_2])
+            
                 while skiping:
 #                     print("Get actions time:")
 #                     start_time = time.time()
@@ -326,22 +323,18 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     input()
                 previous_reward_1 = current_reward_1
 
-#             if reinforce_config.collecting_experience:
-#                 previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
-#                 denorm_previous_state_1 = previous_state_1
-#                 denorm_previous_state_1[env.miner_index] += denorm_previous_state_1[3] * 50 + 100
-# #                         print(previous_state_1[env.miner_index])
+            if reinforce_config.collecting_experience:
+                previous_state_1[1:7] = previous_state_2[8:14] # Include player 2's action
+                previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
 
-#                 experience = [
-#                     denorm_previous_state_1,
-#                     np.append(state_1, previous_reward_1)
-#                 ]
-#                 all_experiences.append(experience)
-#                 if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
-#                     torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experience.pt')
-# #                 pretty_print(len(all_experiences) - 1, all_experiences)
-# #                 print()
-# #                 input("pause")
+                experience = [
+                    previous_state_1,
+                    np.append(state_1, previous_reward_1)
+                ]
+                all_experiences.append(experience)
+                if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
+                    torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/test_random_vs_random_2l.pt')
+
             average_end_state += state_1
     
             total_rewwards_list.append(total_reward_1)

@@ -257,14 +257,12 @@ class SADQAdaptive(object):
             batch = self.memory.sample(self.reinforce_config.batch_size, beta)
             (states, actions, reward, next_states,
              is_terminal, weights, batch_idxes) = batch
+            self.summary.add_histogram(tag='%s/Batch Indices' % self.name,
+                                       values=Tensor(batch_idxes),
+                                       global_step=self.steps)
         else:
             batch = self.memory.sample(self.reinforce_config.batch_size)
             (states, actions, reward, next_states, is_terminal) = batch
-
-
-        self.summary.add_histogram(tag='%s/Batch Indices' % self.name,
-                                   values=Tensor(batch_idxes),
-                                   global_step=self.steps)
 
         states = FloatTensor(states)
         #next_states = FloatTensor(next_states)
