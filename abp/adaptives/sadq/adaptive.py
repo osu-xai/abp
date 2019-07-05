@@ -12,6 +12,7 @@ from baselines.common.schedules import LinearSchedule
 from abp.utils import clear_summary_path
 from abp.models import DQNModel
 from abp.adaptives.common.prioritized_memory.memory import PrioritizedReplayBuffer, ReplayBuffer
+import numpy as np
 
 logger = logging.getLogger('root')
 use_cuda = torch.cuda.is_available()
@@ -60,6 +61,7 @@ class SADQAdaptive(object):
 
         self.target_model = DQNModel(self.name + "_target", self.network_config, use_cuda)
         self.eval_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
+#         self.target_model.eval_mode()
 
         self.beta_schedule = LinearSchedule(self.reinforce_config.beta_timesteps,
                                             initial_p=self.reinforce_config.beta_initial,
@@ -84,14 +86,13 @@ class SADQAdaptive(object):
     def predict(self, state, isGreedy = False):
         if self.learning:
             self.steps += 1
-
         # add to experience
         if self.previous_state is not None:
-            self.previous_state
+            state_crr = np.unique(state, axis=0)
             self.memory.add(self.previous_state,
                             None,
                             self.current_reward,
-                        state.reshape(-1, self.state_length), 0)
+                        state_crr.reshape(-1, self.state_length), 0)
 #         q_values = FloatTensor([self.eval_model.predict(Tensor(s).unsqueeze(0),
 #                                                self.steps,
 #                                                self.learning)[1] for s in state])
@@ -103,7 +104,7 @@ class SADQAdaptive(object):
             choice = random.choice(list(range(len(state))))
             action = choice
         else:
-            self.prediction_time -= time.time()
+#             self.prediction_time -= time.time()
             #_state = Tensor(state).unsqueeze(0)
 #             print(state.shape)
 #             print(state)
@@ -111,7 +112,10 @@ class SADQAdaptive(object):
 #             q_values = FloatTensor([self.eval_model.predict(Tensor(s).unsqueeze(0),
 #                                                    self.steps,
 #                                                    self.learning)[1] for s in state])
-            q_values = FloatTensor(self.eval_model.predict_batch(Tensor(state))[1]).view(-1)
+#             self.eval_model.eval_mode()
+            state = np.unique(state, axis=0)
+            with torch.no_grad():
+                q_values = FloatTensor(self.eval_model.predict_batch(Tensor(state))[1]).view(-1)
 #             print(q_values)
 #             print(q_values_2)
 #             print(q_values.size())
@@ -126,6 +130,7 @@ class SADQAdaptive(object):
         if self.learning and self.steps % self.reinforce_config.replace_frequency == 0:
             logger.debug("Replacing target model for %s" % self.name)
             self.target_model.replace(self.eval_model)
+#             self.target_model.eval_mode()
 
         if (self.learning and
             self.steps > self.reinforce_config.update_start and
@@ -219,22 +224,23 @@ class SADQAdaptive(object):
             "episode": self.episode
         }
         
-#         if (len(self.reward_history) >= self.network_config.save_steps and
-#                 self.episode % self.network_config.save_steps == 0):
+        if (len(self.reward_history) >= self.network_config.save_steps and
+                self.episode % self.network_config.save_steps == 0) or force:
 
-        total_reward = sum(self.reward_history[-self.network_config.save_steps:])
-        current_reward_mean = total_reward / self.network_config.save_steps
+            total_reward = sum(self.reward_history[-self.network_config.save_steps:])
+            current_reward_mean = total_reward / self.network_config.save_steps
 
-        if current_reward_mean >= self.best_reward_mean or force:
-            print("*************saved*****************")
-            self.best_reward_mean = current_reward_mean
-            logger.info("Saving network. Found new best reward (%.2f)" % total_reward)
-            self.eval_model.save_network(appendix = appendix)
-            self.target_model.save_network(appendix = appendix)
-            with open(self.network_config.network_path + "/adaptive.info", "wb") as file:
-                pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
-        else:
-            logger.info("The best reward is still %.2f. Not saving" % self.best_reward_mean)
+            if current_reward_mean >= self.best_reward_mean or force:
+                print("*************saved*****************", current_reward_mean, self.best_reward_mean)
+                if not force:
+                    self.best_reward_mean = current_reward_mean
+                logger.info("Saving network. Found new best reward (%.2f)" % total_reward)
+                self.eval_model.save_network(appendix = appendix)
+                self.target_model.save_network(appendix = appendix)
+                with open(self.network_config.network_path + "/adaptive.info", "wb") as file:
+                    pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
+            else:
+                logger.info("The best reward is still %.2f. Not saving" % self.best_reward_mean)
 
     def reward(self, r):
         self.total_reward += r
@@ -243,7 +249,7 @@ class SADQAdaptive(object):
     def update(self):
         if len(self.memory._storage) <= self.reinforce_config.batch_size:
             return
-
+#         self.eval_model.train_mode()
         beta = self.beta_schedule.value(self.steps)
         self.summary.add_scalar(tag='%s/Beta' % self.name,
                                 scalar_value=beta, global_step=self.steps)

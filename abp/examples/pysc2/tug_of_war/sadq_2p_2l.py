@@ -16,7 +16,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from random import randint
 
-np.set_printoptions(precision = 2)
+# np.set_printoptions(precision = 2)
 use_cuda = torch.cuda.is_available()
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
@@ -31,7 +31,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
     flags.FLAGS(sys.argv[:1])
 
-    max_episode_steps = 10
+    max_episode_steps = 40
     
     #pdx_explanation = PDX()
     replay_dimension = evaluation_config.xai_replay_dimension
@@ -80,11 +80,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
     while True:
         if len(privous_result) >= update_wins_waves and \
-        sum(privous_result) / update_wins_waves > 13000 and \
+        sum(privous_result) / update_wins_waves > 10000 and \
         not reinforce_config.is_random_agent_2:
             print("replace enemy agent's weight with self agent")
             random_enemy = False
-            f = open("result_self_play.txt", "a+")
+            f = open("result_self_play_2l.txt", "a+")
             f.write("Update agent\n")
             f.close()
             agent_2.load_model(agent_1.eval_model)
@@ -96,7 +96,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             agent_2.disable_learning()
         round_num += 1
     
-        
         print("=======================================================================")
         print("===============================Now training============================")
         print("=======================================================================")
@@ -123,22 +122,29 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 steps += 1
                 # Decision point
 #                 print('state:')
-                print("=======================================================================")
-                pretty_print(state_1, text = "state 1")
-                pretty_print(state_2, text = "state 2")
-                actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
-                actions_2 = env.get_big_A(state_2[env.miner_index], state_1[env.pylon_index])
+#                 print("=======================================================================")
+#                 pretty_print(state_1, text = "state 1")
+#                 pretty_print(state_2, text = "state 2")
+                
+                actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = True)
+                actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = True)
                 
                 if not reinforce_config.is_random_agent_1:
                     combine_states_1 = combine_sa(state_1, actions_1)
-                    choice_1, _ = agent_1.predict(combine_states_1)
 #                     print(combine_states_1)
+#                     print(env.normalization(combine_states_1))
+#                     print(state_1[env.miner_index])
+                    choice_1, _ = agent_1.predict(env.normalization(combine_states_1))
+#                     input()
+#                     for cs1 in combine_states_1:
+#                         print(cs1.tolist())
                 else:
+#                     combine_states_1 = combine_sa(state_1, actions_1)
                     choice_1 = randint(0, len(actions_1) - 1)
                     
                 if not reinforce_config.is_random_agent_2 and not random_enemy:
                     combine_states_2 = combine_sa(state_2, actions_2)
-                    choice_2, _ = agent_2.predict(combine_states_2)
+                    choice_2, _ = agent_2.predict(env.normalization(combine_states_2))
                 else:
                     choice_2 = randint(0, len(actions_2) - 1)
 #                 print("action list:")
@@ -148,40 +154,42 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                 print("choice:")
 #                 print(actions_1[choice_1])
 #                 print(actions_2[choice_2])
-#                 print("after state:")
-#                 print(combine_states_1[choice_1].tolist())
+#                 pretty_print(combine_states_1[choice_1], text = "after state:")
+#                 input("pause")
 #                 print(combine_states_2[choice_2].tolist())
 #                 input('pause')
                 env.step(list(actions_1[choice_1]), 1)
                 env.step(list(actions_2[choice_2]), 2)
-#                 env.step((0,1,0,0,0,0,0), 1)
-#                 env.step((0,1,0,0,0,0,0), 2)
+#                 if steps == 1:
+#                     env.step((1,0,0,0,0,0,0), 1)
+#                     env.step((1,0,0,0,0,0,0), 2)
+#                 if steps > 2:
+#                     env.step((1,0,0,0,0,0,0), 1)
+#                     env.step((0,0,0,0,0,0,1), 2)
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
 #                     input('time_step')
                     if dp or done:
                         break
 #                 print(steps)
-                if steps == max_episode_steps and not done:
+                if steps == max_episode_steps and not done and sum(state_1[27:29]) != sum(state_1[29:31]):
                     if sum(state_1[27:29]) > sum(state_1[29:31]):
                         env.decomposed_rewards[4] = 10000
                     else:
                         env.decomposed_rewards[5] = 10000
                 reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
-                print('reward:')
-                print(reward_1)
-                print(reward_2)
-                input()
+#                 print('reward:')
+#                 print(reward_1)
+#                 print(reward_2)
+#                 input("pause")
 
-            
-                for r1, r2 in zip(reward_1, reward_2):
-                    if not reinforce_config.is_random_agent_1:
-                        agent_1.reward(r1)
+                if not reinforce_config.is_random_agent_1:
+                    agent_1.reward(sum(reward_1))
 #                     if not reinforce_config.is_random_agent_2:
 #                         agent_2.reward(r2)
             
             if not reinforce_config.is_random_agent_1:
-                agent_1.end_episode(env.end_state_1)
+                agent_1.end_episode(state_1)
 #             if not reinforce_config.is_random_agent_2:
 #                 agent_2.end_episode(np.hstack((env.end_state_2, np.zeros(4))))
 
@@ -193,8 +201,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         if not reinforce_config.is_random_agent_1:
             agent_1.disable_learning(is_save = not reinforce_config.collecting_experience)
             
-        if not reinforce_config.is_random_agent_2:
-            agent_2.disable_learning()
+#         if not reinforce_config.is_random_agent_2:
+#             agent_2.disable_learning(is_save = False)
 
         total_rewwards_list = []
             
@@ -203,7 +211,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("===============================Now testing============================")
         print("======================================================================")
                 
-        
+        average_end_state = np.zeros(len(state_1))
         for episode in tqdm(range(evaluation_config.test_episodes)):
             env.reset()
             total_reward_1 = 0
@@ -231,53 +239,56 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                 print(list(state_2))
 #                 print("Get actions time:")
 #                 start_time = time.time()
-                actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
-                actions_2 = env.get_big_A(state_2[env.miner_index], state_1[env.pylon_index])
+                
+            
+                
 #                 print(time.time() - start_time)
 
-                combine_states_1 = combine_sa(state_1, actions_1)
+                
                 if not reinforce_config.is_random_agent_1:
-                    start_time = time.time()
-
-                    choice_1, _ = agent_1.predict(combine_states_1)
-                    print(time.time() - start_time)
+                    actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
+                    combine_states_1 = combine_sa(state_1, actions_1)
+                    choice_1, _ = agent_1.predict(env.normalization(combine_states_1))
                 else:
+                    actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = True)
                     choice_1 = randint(0, len(actions_1) - 1)
                 
-                combine_states_2 = combine_sa(state_2, actions_2)
+                
                 if not reinforce_config.is_random_agent_2 and not random_enemy:
-                    choice_2, _ = agent_2.predict(combine_states_2)
+                    actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
+                    combine_states_2 = combine_sa(state_2, actions_2)
+                    choice_2, _ = agent_2.predict(env.normalization(combine_states_2))
                 else:
+                    actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = True)
                     choice_2 = randint(0, len(actions_2) - 1)
-                    
 
 #                 input('stepped with command 2')
                 #######
                 #experience collecting
                 ######
-                if reinforce_config.collecting_experience:
-                    if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
-                        previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
-#                         print(previous_state_1[env.miner_index])
-                        denorm_previous_state_1 = previous_state_1
-                        denorm_previous_state_1[env.miner_index] += denorm_previous_state_1[3] * 50 + 100
-#                         print(previous_state_1[env.miner_index])
+#                 if reinforce_config.collecting_experience:
+#                     if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
+#                         previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
+# #                         print(previous_state_1[env.miner_index])
+#                         denorm_previous_state_1 = previous_state_1
+#                         denorm_previous_state_1[env.miner_index] += denorm_previous_state_1[3] * 50 + 100
+# #                         print(previous_state_1[env.miner_index])
 
-                        experience = [
-                            denorm_previous_state_1,
-                            np.append(state_1, previous_reward_1)
-                        ]
-                        
-                        #print(experience)
-                        all_experiences.append(experience)
-                        if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
-                            torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experience.pt')
-#                         pretty_print(len(all_experiences) - 1, all_experiences)
-#                         print()
-#                         input("pause")
-                        
-                    previous_state_1 = deepcopy(combine_states_1[choice_1])
-                    previous_state_2 = deepcopy(combine_states_2[choice_2])
+#                         experience = [
+#                             denorm_previous_state_1,
+#                             np.append(state_1, previous_reward_1)
+#                         ]
+
+#                         #print(experience)
+#                         all_experiences.append(experience)
+#                         if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
+#                             torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experience.pt')
+# #                         pretty_print(len(all_experiences) - 1, all_experiences)
+# #                         print()
+# #                         input("pause")
+
+#                     previous_state_1 = deepcopy(combine_states_1[choice_1])
+#                     previous_state_2 = deepcopy(combine_states_2[choice_2])
                 env.step(list(actions_1[choice_1]), 1)
 #                 input('stepped with command 1')
                 env.step(list(actions_2[choice_2]), 2)
@@ -292,31 +303,47 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                         print(time.time() - start_time)
                         break
 #                 input('done stepping after collecting experience')
-                current_reward_1 = 0
+#                 current_reward_1 = 0
+    
+                if steps == max_episode_steps and not done and sum(state_1[27:29]) != sum(state_1[29:31]):
+                    if sum(state_1[27:29]) > sum(state_1[29:31]):
+                        env.decomposed_rewards[4] = 10000
+                    else:
+                        env.decomposed_rewards[5] = 10000
+                        
                 reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
-                for r1 in reward_1:
-                    current_reward_1 += r1
-                    
+#                 print(env.decomposed_rewards)
+#                 print(reward_1, reward_2)
+                
+#                 for r1 in reward_1:
+                current_reward_1 = sum(reward_1)
+#                 print(current_reward_1)
+                
+            
                 total_reward_1 += current_reward_1
+#                 print(total_reward_1)
+#                 if total_reward_1 > 14000 or total_reward_1 < -14000:
+#                     input()
                 previous_reward_1 = current_reward_1
 
-            if reinforce_config.collecting_experience:
-                previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
-                denorm_previous_state_1 = previous_state_1
-                denorm_previous_state_1[env.miner_index] += denorm_previous_state_1[3] * 50 + 100
-#                         print(previous_state_1[env.miner_index])
+#             if reinforce_config.collecting_experience:
+#                 previous_state_1[5:9] = previous_state_2[0:4] # Include player 2's action
+#                 denorm_previous_state_1 = previous_state_1
+#                 denorm_previous_state_1[env.miner_index] += denorm_previous_state_1[3] * 50 + 100
+# #                         print(previous_state_1[env.miner_index])
 
-                experience = [
-                    denorm_previous_state_1,
-                    np.append(state_1, previous_reward_1)
-                ]
-                all_experiences.append(experience)
-                if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
-                    torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experience.pt')
-#                 pretty_print(len(all_experiences) - 1, all_experiences)
-#                 print()
-#                 input("pause")
-
+#                 experience = [
+#                     denorm_previous_state_1,
+#                     np.append(state_1, previous_reward_1)
+#                 ]
+#                 all_experiences.append(experience)
+#                 if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
+#                     torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/all_experience.pt')
+# #                 pretty_print(len(all_experiences) - 1, all_experiences)
+# #                 print()
+# #                 input("pause")
+            average_end_state += state_1
+    
             total_rewwards_list.append(total_reward_1)
             test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
                                            global_step=episode + 1)
@@ -325,14 +352,26 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #         if reinforce_config.collecting_experience:
 #             break
         #print(test.size())
+#         print(total_rewwards_list)
+        total_rewards_list_np = np.array(total_rewwards_list)
+    
+        tied = np.sum(total_rewards_list_np == 0)
+        wins = np.sum(total_rewards_list_np > 0)
+        lose = np.sum(total_rewards_list_np < 0)
+        
+        print("wins/lose/tied")
+        print(str(wins / evaluation_config.test_episodes * 100) + "% \t",
+             str(lose / evaluation_config.test_episodes * 100) + "% \t",
+             str(tied / evaluation_config.test_episodes * 100) + "% \t")
         tr = sum(total_rewwards_list) / evaluation_config.test_episodes
         print("total reward:")
         print(tr)
+        pretty_print(average_end_state / evaluation_config.test_episodes)
         privous_result.append(tr)
         if len(privous_result) > update_wins_waves:
             del privous_result[0]
             
-        f = open("result_self_play.txt", "a+")
+        f = open("result_self_play_2l.txt", "a+")
         f.write(str(tr) + "\n")
         f.close()
         if not reinforce_config.is_random_agent_1:
