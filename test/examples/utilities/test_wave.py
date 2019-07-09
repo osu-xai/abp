@@ -1,9 +1,9 @@
 import sys
 import unittest
 
-sys.path.append('../../../abp/examples/pysc2/tug_of_war/')
+sys.path.append('../../../abp/examples/pysc2/tug_of_war/utilities')
 
-from abp.examples.pysc2.tug_of_war import wave
+from abp.examples.pysc2.tug_of_war.utilities import wave
 
 
 
@@ -57,7 +57,7 @@ nex_self_bot = 128
 nex_enemy_top = 129
 nex_enemy_bot = 130
 
-def get_waves(amount_of_waves):
+def get_waves_raw_data(amount_of_waves):
     list_of_waves = []
     for i in range(amount_of_waves):
 
@@ -69,17 +69,16 @@ def get_waves(amount_of_waves):
             beb_mar + i * 100,beb_ban + i * 100,beb_imm + i * 100,
             pylon_enemy + i * 100,
 
-            ust_mar + i * 100,ust_ban,ust_imm + i * 100,
-            usb_mar + i * 100,usb_ban,usb_imm + i * 100,
+            ust_mar + i * 100,ust_ban + i * 100,ust_imm + i * 100,
+            usb_mar + i * 100,usb_ban + i * 100,usb_imm + i * 100,
 
-            ust_mar + i * 100,ust_ban,ust_imm + i * 100,
-            usb_mar + i * 100,usb_ban,usb_imm + i * 100,
+            ust_mar + i * 100,ust_ban + i * 100,ust_imm + i * 100,
+            usb_mar + i * 100,usb_ban + i * 100,usb_imm + i * 100,
             nex_self_top + i * 100,
             nex_self_bot + i * 100,
             nex_enemy_top + i * 100,
             nex_enemy_bot + i * 100
             ]
-        w = wave.Wave(w)
 
         list_of_waves.append(w)
     return list_of_waves
@@ -87,7 +86,264 @@ def get_waves(amount_of_waves):
 
 
 
+def get_waves(amount_of_waves):
+    list_of_waves = []
+    raw_wave_data = get_waves_raw_data(amount_of_waves)
+    for d in raw_wave_data:
+        w = wave.Wave(d)
+        list_of_waves.append(w)
+    return list_of_waves
+
+def get_t_wave(t1,t2,b1,b2):
+    w = get_waves(1)[0]
+    w.top.nexus_self = t1
+    w.top.nexus_enemy = t2
+    w.bottom.nexus_self = b1
+    w.bottom.nexus_enemy = b2
+    return w
+
+
+
+
 class TestWave(unittest.TestCase):
+
+    def test_is_reset(self):
+        waves = get_waves(2)
+        w0 = waves[0]
+        w1 = waves[1]
+        self.assertTrue(w0.is_reset(w1, w0))
+        self.assertFalse(w0.is_reset(w0, w1))
+
+    # checking for all relationships that will determine a win, loss, or tie
+    
+# is a win for p1???
+    def test_is_p1_win(self):
+    # t1 = t2 = b1 = b2     player 2 wins 0,0,0,0(tie)
+        self.assertFalse(get_t_wave(0,0,0,0).is_p1_win())
+    # t1 = t2 = b1 = b2     player 2 wins 2000,2000,2000,2000 (tie)
+        self.assertFalse(get_t_wave(2000,2000,2000,2000).is_p1_win())
+    # t1 > t2 > b1 > b2     player 1 wins 2000,1000,500,0
+        self.assertTrue(get_t_wave(2000,1000,500,0).is_p1_win())
+    # t1 > t2 > b1 > b2     player 1 wins 2000,1000,500,100
+        self.assertTrue(get_t_wave(2000,1000,500,100).is_p1_win())
+    # t1 < t2 < b1 < b2     player 2 wins 0,500,1000,2000
+        self.assertFalse(get_t_wave(0,500,1000,2000).is_p1_win())
+       
+                            ## >==
+    # t1 > t2 = b1 = b2     player 1 wins 2000,0,0,0
+        self.assertTrue(get_t_wave(2000,0,0,0).is_p1_win())
+    # t1 = t2 > b1 = b2     player 2 wins 2000,2000,0,0 (tie)
+        self.assertFalse(get_t_wave(2000,2000,0,0).is_p1_win())
+    # t1 = t2 = b1 > b2     player 1 wins 500,500,500,0
+        self.assertTrue(get_t_wave(500,500,500,0).is_p1_win())
+
+                            ## <==
+    # t1 < t2 = b1 = b2     player 2 wins 100,2000,2000,2000
+        self.assertFalse(get_t_wave(100,2000,2000,2000).is_p1_win())
+    # t1 = t2 < b1 = b2     player 2 wins 500,500,2000,2000 (tie)
+        self.assertFalse(get_t_wave(500,500,2000,2000).is_p1_win())
+    # t1 = t2 = b1 < b2     player 2 wins 500,500 500,2000
+        self.assertFalse(get_t_wave(500,500,500,2000).is_p1_win())
+    # t1 = t2 = b1 < b2     player 2 wins 0,0 0,2000
+        self.assertFalse(get_t_wave(0,0,0,2000).is_p1_win())
+    
+
+                            ## >>=
+    # t1 > t2 > b1 = b2     player 1 wins 2000,1000,500,500
+        self.assertTrue(get_t_wave(2000,1000,500,500).is_p1_win())
+    # t1 > t2 > b1 = b2     player 1 wins 2000,1000,0,0
+        self.assertTrue(get_t_wave(2000,1000,0,0).is_p1_win())
+    # t1 = t2 > b1 > b2     player 1 wins 2000,2000,500,0
+        self.assertTrue(get_t_wave(2000,2000,2000,0).is_p1_win())
+    # t1 > t2 = b1 > b2     player 1 wins 2000,500,500,0
+        self.assertTrue(get_t_wave(2000,500,500,0).is_p1_win())
+
+                            ## <<=
+    # t1 < t2 < b1 = b2     player 2 wins 0,500,2000,2000
+        self.assertFalse(get_t_wave(0,500,2000,2000).is_p1_win())
+    # t1 < t2 = b1 < b2     player 2 wins 0,1000,1000,2000
+        self.assertFalse(get_t_wave(0,1000,1000,2000).is_p1_win())
+    # t1 = t2 < b1 < b2     player 2 wins 0,0,500,2000
+        self.assertFalse(get_t_wave(0,0,500,2000).is_p1_win())
+    # t1 = t2 < b1 < b2     player 2 wins 100,100,500,2000
+        self.assertFalse(get_t_wave(100,100,500,2000).is_p1_win())
+
+                            ## >><
+    # t1 > t2 > b1 < b2  (b2 == t2, b1 == 0)   player 2 wins 2000,1000,0,1000 
+        self.assertFalse(get_t_wave(2000,1000,0,1000).is_p1_win())
+    # t1 > t2 > b1 < b2  (b2 == t2)            player 2 wins 2000,1000,500,1000 
+        self.assertFalse(get_t_wave(2000,1000,500,1000).is_p1_win())
+    # t1 > t2 > b1 < b2  (b2 > t1)             player 2 wins 1500,1000,500,2000 
+        self.assertFalse(get_t_wave(1500,1000,500,2000).is_p1_win())
+    # t1 > t2 > b1 < b2  (t1 > b2 > t2)        player 2 wins 2000,1000,500,1800 
+        self.assertFalse(get_t_wave(2000,1000,500,1800).is_p1_win())
+    # t1 > t2 > b1 < b2  (b2 < t2)             player 2 wins 2000,1000,500,800 
+        self.assertFalse(get_t_wave(2000,1000,500,800).is_p1_win())
+    
+    # t1 < t2 > b1 > b2     player 2 wins 0,2000,1000,500
+        self.assertFalse(get_t_wave(0,2000,1000,500).is_p1_win())
+    # t1 < t2 > b1 > b2     player 2 wins 0,2000,1000,0
+        self.assertFalse(get_t_wave(0,2000,1000,0).is_p1_win())
+    # t1 > t2 < b1 > b2     player 1 wins 2000,0,1000,0
+        self.assertTrue(get_t_wave(2000,0,1000,0).is_p1_win())
+
+                            ## ><<  
+    # t1 < t2 < b1 > b2     player 2 wins 0,500,2000,1000
+        self.assertFalse(get_t_wave(0,500,2000,1000).is_p1_win())
+    # t1 > t2 < b1 < b2     player 1 wins 2000,500,1000,1500
+        self.assertTrue(get_t_wave(2000,500,1000,1500).is_p1_win())
+    # t1 < t2 > b1 < b2     player 2 wins 0,1000,0,1000
+        self.assertFalse(get_t_wave(0,1000,0,1000).is_p1_win())
+
+                            ##   <=>
+    # t1 < t2 = b1 > b2     player 2 wins 500,2000,2000,500
+        self.assertFalse(get_t_wave(500,2000,2000,500).is_p1_win())
+    # t1 < t2 = b1 > b2     player 2 wins 0,2000,2000,500
+        self.assertFalse(get_t_wave(0,2000,2000,500).is_p1_win())
+    # t1 < t2 = b1 > b2     player 1 wins 500,2000,2000,0
+        self.assertTrue(get_t_wave(500,2000,2000,0).is_p1_win())
+
+    # t1 < t2 > b1 = b2     player 2 wins 500,2000,500,500
+        self.assertFalse(get_t_wave(500,2000,500,500).is_p1_win())
+    # t1 = t2 > b1 < b2     player 2 wins 500,500,0,500 
+        self.assertFalse(get_t_wave(500,500,0,500).is_p1_win())
+    # t1 = t2 < b1 > b2     player 1 wins 500,500,2000,0
+        self.assertTrue(get_t_wave(500,500,2000,0).is_p1_win())
+    # t1 > t2 < b1 = b2     player 1 wins 2000,500,1000,1000
+        self.assertTrue(get_t_wave(2000,500,1000,1000).is_p1_win())
+    # t1 > t2 = b1 < b2     player 1 wins 2000,500,500,1000 (false)!
+        self.assertTrue(get_t_wave(2000,500,500,1000).is_p1_win())
+    # t1 > t2 = b1 < b2     player 1 wins 2000,0,0,1000
+        self.assertTrue(get_t_wave(2000,0,0,1000).is_p1_win())
+
+
+####################
+
+    # t1 = t2 = b1 = b2     0,0,0,0
+    # t1 = t2 = b1 = b2     2000,2000,2000,2000
+    # t1 > t2 > b1 > b2     player 1 wins (true)
+    # t1 < t2 < b1 < b2     player 2 wins (false)
+                            ## >==
+    # t1 > t2 = b1 = b2
+    # t1 = t2 > b1 = b2
+    # t1 = t2 = b1 > b2 
+                            ## <==
+    # t1 < t2 = b1 = b2 
+    # t1 = t2 < b1 = b2 
+    # t1 = t2 = b1 < b2
+                            ## >>=
+    # t1 > t2 > b1 = b2    
+    # t1 = t2 > b1 > b2 
+    # t1 > t2 = b1 > b2
+                            ## <<=
+    # t1 < t2 < b1 = b2
+    # t1 < t2 = b1 < b2
+    # t1 = t2 < b1 < b2
+                            ## >><
+    # t1 > t2 > b1 < b2 
+    # t1 < t2 > b1 > b2 
+    # t1 > t2 < b1 > b2
+                            ## ><<  
+    # t1 < t2 < b1 > b2 
+    # t1 > t2 < b1 < b2
+    # t1 < t2 > b1 < b2
+                            ##   <=>
+    # t1 < t2 = b1 > b2 
+    # t1 < t2 > b1 = b2 
+    # t1 = t2 > b1 < b2 
+    # t1 = t2 < b1 > b2
+    # t1 > t2 < b1 = b2 
+    # t1 > t2 = b1 < b2 
+
+    # def test_is_health_same(self):
+    #     w = get_waves(1)
+    #     # everybody loses all at same time, it's a tie
+    #     w.top.nexus_self     = 0
+    #     w.top.nexus_enemy    = 0
+    #     w.bottom.nexus_self  = 0
+    #     w.bottom.nexus_enemy = 0
+    #     self.assertTrue(w.is_health_same())
+        
+    #     # everybody wins, its a tie
+    #     w.top.nexus_self     = 2000
+    #     w.top.nexus_enemy    = 2000
+    #     w.bottom.nexus_self  = 2000
+    #     w.bottom.nexus_enemy = 2000
+    #     self.assertTrue(w.is_health_same())
+
+    #     # true tie, both players did damage to eachother equally
+    #     w.top.nexus_self     = 500
+    #     w.top.nexus_enemy    = 500
+    #     w.bottom.nexus_self  = 1800
+    #     w.bottom.nexus_enemy = 1800
+    #     self.assertTrue(w.is_health_same())
+
+    #     # true tie, where each players nexus has different values
+    #     w.top.nexus_self     = 500
+    #     w.top.nexus_enemy    = 1800
+    #     w.bottom.nexus_self  = 1800
+    #     w.bottom.nexus_enemy = 500
+    #     self.assertTrue(w.is_health_same()) #?
+
+    #     # player 1  loses, bottom lane is destroyed
+    #     w.top.nexus_self     = 2000
+    #     w.top.nexus_enemy    = 2000
+    #     w.bottom.nexus_self  = 0
+    #     w.bottom.nexus_enemy = 2000
+    #     self.assertFalse(w.is_health_same())
+        
+    #     # player 1 loses, top lane is destroyed
+    #     w.top.nexus_self     = 0
+    #     w.top.nexus_enemy    = 2000
+    #     w.bottom.nexus_self  = 2000
+    #     w.bottom.nexus_enemy = 2000
+    #     self.assertFalse(w.is_health_same())
+
+    #      # player 2  loses, bottom lane is destroyed
+    #     w.top.nexus_self     = 2000
+    #     w.top.nexus_enemy    = 2000
+    #     w.bottom.nexus_self  = 2000
+    #     w.bottom.nexus_enemy = 0
+    #     self.assertFalse(w.is_health_same())
+        
+    #     # player 2 loses, top lane is destroyed
+    #     w.top.nexus_self     = 2000
+    #     w.top.nexus_enemy    = 0
+    #     w.bottom.nexus_self  = 2000
+    #     w.bottom.nexus_enemy = 2000
+    #     self.assertFalse(w.is_health_same())
+
+    #     # player 1 loses, bottom lane destroyed
+    #     w.top.nexus_self     = 1800
+    #     w.top.nexus_enemy    = 500
+    #     w.bottom.nexus_self  = 0
+    #     w.bottom.nexus_enemy = 500
+    #     self.assertFalse(w.is_health_same())
+
+    #     # player 1 loses, top lane destroyed
+    #     w.top.nexus_self     = 0
+    #     w.top.nexus_enemy    = 500
+    #     w.bottom.nexus_self  = 1800
+    #     w.bottom.nexus_enemy = 500
+
+    #      # player 2 loses, bottom lane destroyed
+    #     w.top.nexus_self     = 1800
+    #     w.top.nexus_enemy    = 500
+    #     w.bottom.nexus_self  = 500
+    #     w.bottom.nexus_enemy = 0
+    #     self.assertFalse(w.is_health_same())
+
+    #     # player 2 loses, top lane destroyed
+    #     w.top.nexus_self     = 500
+    #     w.top.nexus_enemy    = 0
+    #     w.bottom.nexus_self  = 1800
+    #     w.bottom.nexus_enemy = 500
+
+
+    #     self.assertFalse(w.is_health_same())
+
+
+
 
     def test_wave(self):
         w = get_waves(1)[0]
