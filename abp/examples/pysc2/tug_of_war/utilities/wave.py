@@ -59,6 +59,110 @@ class Wave():
         self.nexus_enemy_top    = self.top.nexus_enemy    = wave_data[29]
         self.nexus_enemy_bottom = self.bottom.nexus_enemy = wave_data[30]
 
+    def sum_buildings(self):
+        total_enemy_top = self.buildings_enemy_top.marine + self.buildings_enemy_top.baneling + self.buildings_enemy_top.immortal 
+        total_enemy_bottom = self.buildings_enemy_bottom.marine + self.buildings_enemy_bottom.baneling + self.buildings_enemy_bottom.immortal
+        
+        total_self_top = self.buildings_self_top.marine + self.buildings_self_top.baneling + self.buildings_self_top.immortal 
+        total_self_bottom = self.buildings_self_bottom.marine + self.buildings_self_bottom.baneling + self.buildings_self_bottom.immortal
+
+        total = total_enemy_top + total_enemy_bottom + total_self_top + total_self_bottom
+        return total
+
+
+    def get_p1_building_totals(self):
+        total_self_top = self.buildings_self_top.marine + self.buildings_self_top.baneling + self.buildings_self_top.immortal 
+        total_self_bottom = self.buildings_self_bottom.marine + self.buildings_self_bottom.baneling + self.buildings_self_bottom.immortal
+        return total_self_bottom + total_self_top
+
+    def get_p2_building_totals(self):
+        total_enemy_top = self.buildings_enemy_top.marine + self.buildings_enemy_top.baneling + self.buildings_enemy_top.immortal 
+        total_enemy_bottom = self.buildings_enemy_bottom.marine + self.buildings_enemy_bottom.baneling + self.buildings_enemy_bottom.immortal
+        return total_enemy_bottom + total_enemy_top
+
+    def is_reset(self, prev_wave, curr_wave):
+        if (prev_wave.sum_buildings() > curr_wave.sum_buildings()):
+            return True
+        else:
+            return False
+    
+
+
+    def is_p1_win(self):
+        t1 = self.top.nexus_self
+        t2 = self.top.nexus_enemy
+        b1 = self.bottom.nexus_self
+        b2 = self.bottom.nexus_enemy
+        lowest_p1 = -1
+        next_lowest_p1 = -1
+        equal_p1 = -1
+        lowest_p2 = -1
+        next_lowest_p2 = -1
+        equal_p2 = -1
+        if t1 < b1:
+            lowest_p1 = t1
+            next_lowest_p1 = b1
+        elif b1 < t1:
+            lowest_p1 = b1
+            next_lowest_p1 = t1
+        else:
+            equal_p1 = b1
+
+        if t2 < b2:
+            lowest_p2 = t2
+            next_lowest_p2 = b2
+        elif b2 < t2:
+            lowest_p2 = b2
+            next_lowest_p2 = t2
+        else:
+            equal_p2 = b2
+
+        if equal_p1 == -1 and equal_p2 == -1:
+            if lowest_p1 > lowest_p2:
+                return True
+            elif lowest_p2 > lowest_p1:
+                return False
+            else:
+                if next_lowest_p1 > next_lowest_p2:
+                    return True
+                elif next_lowest_p2 > next_lowest_p1:
+                    return False
+                else:
+                    return False
+        elif equal_p1 == -1 and equal_p2 != -1:
+            if lowest_p1 > equal_p2:
+                return True
+            elif equal_p2 > lowest_p1:
+                return False
+            else:
+                if next_lowest_p1 > equal_p2:
+                    return True
+                elif equal_p2 > next_lowest_p1:
+                    return False
+                else:
+                    return False
+        elif equal_p1 != -1 and equal_p2 == -1:
+            if equal_p1 > lowest_p2:
+                return True
+            elif lowest_p2 > equal_p1:
+                return False
+            else:
+                if equal_p1 > next_lowest_p2:
+                    return True
+                elif next_lowest_p2 > equal_p1:
+                    return False
+                else:
+                    return False
+        else:
+            if equal_p1 > equal_p2:
+                return True
+            elif equal_p2 > equal_p1:
+                return False 
+            else:
+                return False 
+
+
+
 class Lane():
     def __init__(self):
         self.buildings_self = 0

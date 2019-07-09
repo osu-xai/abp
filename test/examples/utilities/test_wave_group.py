@@ -1,10 +1,10 @@
 import sys
 import unittest
 
-sys.path.append('../../../abp/examples/pysc2/tug_of_war/')
+sys.path.append('../../../abp/examples/pysc2/tug_of_war/utilities')
 
-from abp.examples.pysc2.tug_of_war import wave_group
-from abp.examples.pysc2.tug_of_war import wave
+from abp.examples.pysc2.tug_of_war.utilities import wave_group
+from abp.examples.pysc2.tug_of_war.utilities import wave
 import test_wave
 
 
@@ -21,11 +21,9 @@ class TestWaveGroup(unittest.TestCase):
         self.assertEqual(wg.wave_group_size, 5)
         
         for i in range(5):
-            self.assertIsInstance(wg.wave_group[i], wave.Wave)
+            self.assertIsInstance(wg.waves[i], wave.Wave)
 
             
-
-
 
 if __name__ == "__main__":
     unittest.main()
