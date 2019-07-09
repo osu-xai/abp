@@ -18,7 +18,7 @@ layers:
 
       
 input_shape:
-    - 31
+    - 32
 
 output_shape: 1
 

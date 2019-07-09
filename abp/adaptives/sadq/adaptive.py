@@ -83,7 +83,8 @@ class SADQAdaptive(object):
 
         return random.random() < self.epsilon
 
-    def predict(self, state, isGreedy = False):
+    def predict(self, state, isGreedy = False, is_random = False):
+        
         if self.learning:
             self.steps += 1
         # add to experience
