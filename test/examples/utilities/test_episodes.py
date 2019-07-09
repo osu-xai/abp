@@ -80,8 +80,14 @@ class TestEpisodes(unittest.TestCase):
         self.assertEqual(p2_buildings[3], 1438) #winning mar
         self.assertEqual(p2_buildings[4], 1442) #winning bane
         self.assertEqual(p2_buildings[5], 1446) #winning imm
+    
+    def test_get_win_loss_sequence(self):
+        raw_data = test_wave.get_waves_raw_data(20)
+        data_with_episodes = create_episode_boundaries(raw_data)
 
-
-
-if __name__ == "__main__":
-    unittest.main()
+        eps = episodes.Episodes(data_with_episodes, 20, 1)
+        win_loss_sequence = eps.get_win_loss_sequence()
+        
+        self.assertEqual(len(win_loss_sequence), 5)
+        for i in range(4):
+            self.assertEqual(win_loss_sequence[i], (-1*i))
