@@ -102,7 +102,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
     while True:
         if len(privous_result) >= update_wins_waves and \
-        sum(privous_result) / update_wins_waves > 11000 and \
+        sum(privous_result) / update_wins_waves > 10000 and \
         not reinforce_config.is_random_agent_2:
             privous_result = []
             print("replace enemy agent's weight with self agent")
