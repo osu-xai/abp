@@ -13,7 +13,7 @@ class Episodes():
     def convert_to_wave(self, raw_data, raw_data_size):
         wave_list = []
         for d in range(raw_data_size):
-            w = wave.Wave(raw_data[d]) #0 index is to get just the input array we dont need output
+            w = wave.Wave(raw_data[d][0]) #0 index is to get just the input array we dont need output
             wave_list.append(w)
 
         return wave_list
