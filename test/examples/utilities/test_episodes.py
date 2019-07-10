@@ -23,7 +23,6 @@ def create_episode_boundaries(raw_data):
             count = 0
             continue
         count += 1
-    # print(raw_data)
     return raw_data
 
 
@@ -93,10 +92,15 @@ class TestEpisodes(unittest.TestCase):
             self.assertEqual(win_loss_sequence[i], (-1*i))
 
     def test_get_move_set(self):
-        raw_data = test_wave.get_waves_raw_data(5)
+        raw_data = test_wave.get_waves_raw_data(20)
         data_with_episodes = create_episode_boundaries(raw_data)
 
-        eps = episodes.Episodes(data_with_episodes, 5, 1)
+        eps = episodes.Episodes(data_with_episodes, len(data_with_episodes), 1)
+    
+        self.assertDictEqual(eps.get_binned_move_sets()[0], {'Top: 401, 402, 403 Bottom: 404, 405, 406| ': 1, 'Top: 201, 202, 203 Bottom: 204, 205, 206| ': 1, 'Top: 701, 702, 703 Bottom: 704, 705, 706| ': 1, 'Top: 1101, 1102, 1103 Bottom: 1104, 1105, 1106| ': 1})
+        self.assertDictEqual(eps.get_binned_move_sets()[1], {'Top: 100, 100, 100 Bottom: 100, 100, 100| ': 3})
+        self.assertDictEqual(eps.get_binned_move_sets()[2], {'Top: 100, 100, 100 Bottom: 100, 100, 100| ': 2})
+        self.assertDictEqual(eps.get_binned_move_sets()[3], {'Top: 100, 100, 100 Bottom: 100, 100, 100| ': 1})
 
 
 if __name__ == "__main__":

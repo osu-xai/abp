@@ -1,6 +1,7 @@
 from abp.examples.pysc2.tug_of_war.utilities import episode
 from abp.examples.pysc2.tug_of_war.utilities import wave
 import copy
+from collections import Counter
  
 class Episodes():
     def __init__(self, raw_data, raw_data_size, wave_group_size):
@@ -102,15 +103,21 @@ class Episodes():
             count += 1
         return win_loss_sequence.copy()
 
-    def get_move_set(self):
-        move_set = {}
-        for episode in self.episodes:
-            for i in range(len(episode.list_of_action_groups)):
-                current_move = episode.list_of_action_groups[i].get_move_string()
-                if current_move in move_set:
-                    move_set[current_move] += 1
-                else:
-                    move_set.update({current_move : 1})
-        return move_set.copy()
-
+    def merge_dicts(self, dict1, dict2):
+        merged_dict = {x: dict1.get(x, 0) + dict2.get(x, 0) 
+                    for x in set(dict1).union(dict2)} 
+        return merged_dict.copy()
     
+    def get_binned_move_sets(self):
+        move_sets = []
+        for d in range(int(40/self.wave_group_size)):
+            move_sets.append({})
+        for i in range(len(self.episodes)):
+            for j in range(len(self.episodes[i].list_of_action_groups)):
+                curr_move_set = self.episodes[i].list_of_action_groups[j].get_move_set()
+                temp_move_set = move_sets[j].copy()
+
+                move_sets[j] = self.merge_dicts(curr_move_set, temp_move_set)
+
+        return move_sets.copy()
+                    
