@@ -3,7 +3,7 @@ class Wave():
 
         self.economy = Economy()
         self.economy.self_mineral = wave_data[0]
-
+ 
         self.top = Lane()
         self.bottom = Lane()
         self.buildings_self_top          = self.top.buildings_self          = Buildings()
@@ -58,6 +58,7 @@ class Wave():
         self.nexus_self_bottom  = self.bottom.nexus_self  = wave_data[28]
         self.nexus_enemy_top    = self.top.nexus_enemy    = wave_data[29]
         self.nexus_enemy_bottom = self.bottom.nexus_enemy = wave_data[30]
+        self.wave_number                                  = wave_data[31]
 
     def sum_buildings(self):
         total_enemy_top = self.buildings_enemy_top.marine + self.buildings_enemy_top.baneling + self.buildings_enemy_top.immortal 

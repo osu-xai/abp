@@ -6,7 +6,7 @@ sys.path.append('../../../abp/examples/pysc2/tug_of_war/utilities')
 from abp.examples.pysc2.tug_of_war.utilities import episodes
 from abp.examples.pysc2.tug_of_war.utilities import episode
 from abp.examples.pysc2.tug_of_war.utilities import wave
-from abp.examples.pysc2.tug_of_war.utilities import wave_group
+from abp.examples.pysc2.tug_of_war.utilities import action_group
 
 import test_wave
 
@@ -91,3 +91,14 @@ class TestEpisodes(unittest.TestCase):
         self.assertEqual(len(win_loss_sequence), 5)
         for i in range(4):
             self.assertEqual(win_loss_sequence[i], (-1*i))
+
+    def test_get_move_set(self):
+        raw_data = test_wave.get_waves_raw_data(20)
+        data_with_episodes = create_episode_boundaries(raw_data)
+
+        eps = episodes.Episodes(data_with_episodes, 20, 1)
+
+
+if __name__ == "__main__":
+    unittest.main()
+

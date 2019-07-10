@@ -1,7 +1,7 @@
 from abp.examples.pysc2.tug_of_war.utilities import episode
 from abp.examples.pysc2.tug_of_war.utilities import wave
 import copy
-
+ 
 class Episodes():
     def __init__(self, raw_data, raw_data_size, wave_group_size):
         self.raw_data           = raw_data
@@ -12,7 +12,7 @@ class Episodes():
     def convert_to_wave(self, raw_data, raw_data_size):
         wave_list = []
         for d in range(raw_data_size):
-            w = wave.Wave(raw_data[d][0]) #0 index is to get just the input array we dont need output
+            w = wave.Wave(raw_data[d]) #0 index is to get just the input array we dont need output
             wave_list.append(w)
 
         return wave_list
@@ -102,4 +102,15 @@ class Episodes():
             count += 1
         return win_loss_sequence.copy()
 
+    def get_move_set(self):
+        move_set = {}
+        for episode in self.episodes:
+            for i in range(len(episode.list_of_action_groups)):
+                current_move = episode.list_of_action_groups[i].get_move_string()
+                if current_move in move_set:
+                    move_set[current_move] += 1
+                else:
+                    move_set.update({current_move : 1})
+        return move_set.copy()
 
+    

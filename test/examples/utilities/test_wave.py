@@ -56,6 +56,7 @@ nex_self_top = 127
 nex_self_bot = 128
 nex_enemy_top = 129
 nex_enemy_bot = 130
+wave_num      = 0
 
 def get_waves_raw_data(amount_of_waves):
     list_of_waves = []
@@ -77,7 +78,8 @@ def get_waves_raw_data(amount_of_waves):
             nex_self_top + i * 100,
             nex_self_bot + i * 100,
             nex_enemy_top + i * 100,
-            nex_enemy_bot + i * 100
+            nex_enemy_bot + i * 100,
+            wave_num + len(list_of_waves)
             ]
 
         list_of_waves.append(w)
@@ -435,6 +437,7 @@ class TestWave(unittest.TestCase):
         self.assertEqual(w.bottom.nexus_self, nex_self_bot)
         self.assertEqual(w.top.nexus_enemy, nex_enemy_top)
         self.assertEqual(w.bottom.nexus_enemy, nex_enemy_bot)
+        self.assertEqual(w.wave_number, wave_num)
 
 if __name__ == "__main__":
     unittest.main()
