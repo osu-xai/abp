@@ -3,16 +3,12 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
-from abp.examples.pysc2.tug_of_war import episodes
+from abp.examples.pysc2.tug_of_war.utilities import episodes
 
 
-def main():
-    # data_file = input("Please enter the file name you want to load:\t")
-    # data = torch.load(data_file)
-    data = torch.load('../test_random_vs_random_2l.pt')
-    data = np.array(data).tolist()
+def main(data, action_group_length):
     
-    eps = episodes.Episodes(data, len(data), 1)
+    eps = episodes.Episodes(data, len(data), action_group_length)
     total_p1_wins = eps.get_total_p1_wins()
     num_of_eps = eps.get_episode_count()
     total_p2_wins = num_of_eps - total_p1_wins
@@ -46,4 +42,9 @@ def win_percentage_graph(p1_wins, p2_wins):
 
 
 if __name__ == "__main__":
-    main()
+    data_file = input("Please enter the file name you want to load: ")
+    data = torch.load(data_file)
+    data = np.array(data).tolist()
+    action_group_length = input("Please enter the size you would like to group actions by: ")
+    action_group_length = int(action_group_length)
+    main(data,action_group_length)

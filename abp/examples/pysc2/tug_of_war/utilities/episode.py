@@ -7,13 +7,13 @@ import copy
 class Episode():
     def __init__(self, episode_waves, action_group_size):         
         if (not isinstance(episode_waves, list)):
-            raise ValueError("Error: the first argument is not a list for Episode(episode_waves, wave_group_size).")
+            raise TypeError("Error: the first argument is not a list for Episode(episode_waves, wave_group_size).")
         
         if (not isinstance(episode_waves[0], wave.Wave)):
-            raise ValueError("Error: the first argument is not a list of waves for Episode(episode_waves, wave_group_size).")
+            raise TypeError("Error: the first argument is not a list of waves for Episode(episode_waves, wave_group_size).")
         
         if (not isinstance(action_group_size, int)):
-            raise ValueError("Error: the second argument is not an int for Episode(episode_waves, wave_group_size).")
+            raise TypeError("Error: the second argument is not an int for Episode(episode_waves, wave_group_size).")
         
         if (len(episode_waves) < action_group_size):
             raise ValueError("Error: the first argument needs to be larger than the second for Episode(episode_waves, wave_group_size).")
@@ -21,7 +21,7 @@ class Episode():
         if (len(episode_waves) <= 0):
             raise ValueError("Error: the first argument needs to be larger than 0 for Episode(episode_waves, wave_group_size).")
         
-        if ( action_group_size <= 0):
+        if (action_group_size <= 0):
             raise ValueError("Error: the second argument needs to be larger than 0 for Episode(episode_waves, wave_group_size).")
         
 

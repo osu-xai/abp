@@ -27,8 +27,12 @@ class Episodes():
             prev_w = wave_list[w-1]
             curr_w = wave_list[w]
             if(curr_w.is_reset(prev_w, curr_w)):
-                list_of_episodes.append(episode.Episode(episode_waves, self.wave_group_size))
-                episode_waves = []
+                try:
+                    list_of_episodes.append(episode.Episode(episode_waves, self.wave_group_size))
+                    episode_waves = []
+                except ValueError:
+                    print("ommiting this wave...")
+                    episode_waves = []
             else:
                 episode_waves.append(wave_list[w])
 
@@ -121,3 +125,88 @@ class Episodes():
 
         return move_sets.copy()
                     
+    def get_end_building_frequencies(self):
+        marine_dict = {}
+        baneling_dict = {}
+        immortal_dict = {}
+        print(len(self.episodes))
+        for episode in self.episodes:
+            last_wave = episode.get_last_episode_wave()
+
+            tms = "Top Player 1 Marine (" + str(last_wave.top.buildings_self.marine) + ")"
+            tbs = "Top Player 1 Baneling (" + str(last_wave.top.buildings_self.baneling) + ")"
+            tis = "Top Player 1 Immortal (" + str(last_wave.top.buildings_self.immortal) + ")"
+            bms = "Bottom Player 1 Marine (" + str(last_wave.bottom.buildings_self.marine) + ")"
+            bbs = "Bottom Player 1 Baneling (" + str(last_wave.bottom.buildings_self.baneling) + ")"
+            bis = "Bottom Player 1 Immortal (" + str(last_wave.bottom.buildings_self.immortal) + ")"
+
+            tme = "Top Player 2 Marine (" + str(last_wave.top.buildings_enemy.marine) + ")"
+            tbe = "Top Player 2 Baneling (" + str(last_wave.top.buildings_enemy.baneling) + ")"
+            tie = "Top Player 2 Immortal (" + str(last_wave.top.buildings_enemy.immortal) + ")"
+            bme = "Bottom Player 2 Marine (" + str(last_wave.bottom.buildings_enemy.marine) + ")"
+            bbe = "Bottom Player 2 Baneling (" + str(last_wave.bottom.buildings_enemy.baneling) + ")"
+            bie = "Bottom Player 2 Immortal (" + str(last_wave.bottom.buildings_enemy.immortal) + ")"
+
+            if tms in marine_dict:
+                marine_dict[tms] += 1
+            else:
+                marine_dict.update({tms : 1})
+
+            if tbs in baneling_dict:
+                baneling_dict[tbs] += 1
+            else:
+                baneling_dict.update({tbs : 1})
+            
+            if tis in immortal_dict:
+                immortal_dict[tis] += 1
+            else:
+                immortal_dict.update({tis : 1})
+
+            if bms in marine_dict:
+                marine_dict[bms] += 1
+            else:
+                marine_dict.update({bms : 1})
+
+            if bbs in baneling_dict:
+                baneling_dict[bbs] += 1
+            else:
+                baneling_dict.update({bbs : 1})
+            
+            if bis in immortal_dict:
+                immortal_dict[bis] += 1
+            else:
+                immortal_dict.update({bis : 1})
+
+            
+            
+            if tme in marine_dict:
+                marine_dict[tme] += 1
+            else:
+                marine_dict.update({tme : 1})
+
+            if tbe in baneling_dict:
+                baneling_dict[tbe] += 1
+            else:
+                baneling_dict.update({tbe : 1})
+            
+            if tie in immortal_dict:
+                immortal_dict[tie] += 1
+            else:
+                immortal_dict.update({tie : 1})
+
+            if bme in marine_dict:
+                marine_dict[bme] += 1
+            else:
+                marine_dict.update({bme : 1})
+
+            if bbe in baneling_dict:
+                baneling_dict[bbe] += 1
+            else:
+                baneling_dict.update({bbe : 1})
+            
+            if bie in immortal_dict:
+                immortal_dict[bie] += 1
+            else:
+                immortal_dict.update({bie : 1})
+
+        return marine_dict, baneling_dict, immortal_dict

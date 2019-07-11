@@ -17,8 +17,8 @@ def create_episode_boundaries(raw_data):
     inserting = 0
     for d in range(len(raw_data)):
         if count == inserting:
-            for i in range(len(raw_data[d])):
-                raw_data[d][i] = 0
+            for i in range(len(raw_data[d][0])):
+                raw_data[d][0][i] = 0
             inserting = count + 1
             count = 0
             continue
@@ -101,6 +101,16 @@ class TestEpisodes(unittest.TestCase):
         self.assertDictEqual(eps.get_binned_move_sets()[1], {'Top: 100, 100, 100 Bottom: 100, 100, 100| ': 3})
         self.assertDictEqual(eps.get_binned_move_sets()[2], {'Top: 100, 100, 100 Bottom: 100, 100, 100| ': 2})
         self.assertDictEqual(eps.get_binned_move_sets()[3], {'Top: 100, 100, 100 Bottom: 100, 100, 100| ': 1})
+
+    def test_get_end_building_frequencies(self):
+        raw_data = test_wave.get_waves_raw_data(5)
+        data_with_episodes = create_episode_boundaries(raw_data)
+
+        eps = episodes.Episodes(data_with_episodes, len(data_with_episodes), 1)
+        marine_dict, baneling_dict, immortal_dict = eps.get_end_building_frequencies()
+        self.assertDictEqual(marine_dict, {'Top Player 1 Marine (201)' : 1, 'Bottom Player 1 Marine (204)' : 1, 'Top Player 2 Marine (208)' : 1, 'Bottom Player 2 Marine (211)' : 1})
+        self.assertDictEqual(baneling_dict, {'Top Player 1 Baneling (202)' : 1, 'Bottom Player 1 Baneling (205)' : 1, 'Top Player 2 Baneling (209)' : 1, 'Bottom Player 2 Baneling (212)' : 1})
+        self.assertDictEqual(immortal_dict, {'Top Player 1 Immortal (203)' : 1, 'Bottom Player 1 Immortal (206)' : 1, 'Top Player 2 Immortal (210)' : 1, 'Bottom Player 2 Immortal (213)' : 1})
 
 
 if __name__ == "__main__":

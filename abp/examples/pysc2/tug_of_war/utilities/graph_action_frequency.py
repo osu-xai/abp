@@ -9,13 +9,8 @@ import collections
 from abp.examples.pysc2.tug_of_war.utilities import episodes
 
 
-def main():
-    # data_file = input("Please enter the file name you want to load:\t")
-    # data = torch.load(data_file)
-    data = torch.load('../test_random_vs_random_2l.pt')
-    data = np.array(data).tolist()
+def main(data, action_group_length):
 
-    action_group_length = 2
     eps = episodes.Episodes(data, len(data), action_group_length)
     
     move_set = eps.get_binned_move_sets()
@@ -27,6 +22,8 @@ def main():
             print("|================================================= " + "Wave " + str(i) + " - " + str(i+action_group_length-1) + " ================================================|")
             for j in range(len(sorted_move_set[i])):
                 print(sorted_move_set[i][j])
+    
+    input("press enter to continue...")
 
 
 # def graph_frequencies(move_set):
@@ -173,4 +170,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    data_file = input("Please enter the file name you want to load: ")
+    data = torch.load(data_file)
+    data = np.array(data).tolist()
+    action_group_length = input("Please enter the size you would like to group actions by: ")
+    action_group_length = int(action_group_length)
+    main(data,action_group_length)
