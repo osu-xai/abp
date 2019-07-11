@@ -6,13 +6,9 @@ import numpy as np
 from abp.examples.pysc2.tug_of_war.utilities import episodes
 
 
-def main():
-    # data_file = input("Please enter the file name you want to load:\t")
-    # data = torch.load(data_file)
-    data = torch.load('../test_random_vs_random_2l.pt')
-    data = np.array(data).tolist()
-    
-    eps = episodes.Episodes(data, len(data), 1)
+def main(data, action_group_length):
+
+    eps = episodes.Episodes(data, len(data), action_group_length)
     p1_buildings = eps.get_p1_buildings()
     p2_buildings = eps.get_p2_buildings()
     p1_win_total = eps.get_total_p1_wins()
@@ -75,4 +71,9 @@ def average_case_graph(p1_buildings, p2_buildings, p1_win_total, p2_win_total):
 
 
 if __name__ == "__main__":
-    main()
+    data_file = input("Please enter the file name you want to load: ")
+    data = torch.load(data_file)
+    data = np.array(data).tolist()
+    action_group_length = input("Please enter the size you would like to group actions by: ")
+    action_group_length = int(action_group_length)
+    main(data,action_group_length)

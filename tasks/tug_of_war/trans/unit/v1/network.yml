@@ -14,14 +14,15 @@ layers:
 input_shape:
     - 32
 
-output_shape: 4
- 
+output_shape: 12
+
 shared_layers: []
 aggregator: "average"
 
-network_path: "./saved_models/tug_of_war/trans/v1"
-summaries_path: "./tensorflow_summaries/tug_of_war/trans/v1/network_summary"
+network_path: "./saved_models/tug_of_war/trans/unit/v1.ckpt"
+summaries_path: "./tensorflow_summaries/tug_of_war/trans/unit/v1/network_summary"
 summaries_step: 1000
-restore_network: True
+restore_network: False
 learning_rate: 0.0001
-save_steps: 100
+save_steps: 1000
+save_network: True

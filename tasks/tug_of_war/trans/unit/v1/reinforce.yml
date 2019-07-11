@@ -1,0 +1,2 @@
+batch_size: 64
+summaries_path: "./tensorflow_summaries/tug_of_war/trans/unit/v1/reinforce_summary"
