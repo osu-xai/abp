@@ -56,12 +56,13 @@ nex_self_top = 127
 nex_self_bot = 128
 nex_enemy_top = 129
 nex_enemy_bot = 130
+wave_num      = 0
 
 def get_waves_raw_data(amount_of_waves):
     list_of_waves = []
     for i in range(amount_of_waves):
 
-        w = [mineral + i * 100,
+        w = [[mineral + i * 100,
             bst_mar + i * 100,bst_ban + i * 100,bst_imm + i * 100,
             bsb_mar + i * 100,bsb_ban + i * 100,bsb_imm + i * 100,
             pylon_self + i * 100,
@@ -77,9 +78,28 @@ def get_waves_raw_data(amount_of_waves):
             nex_self_top + i * 100,
             nex_self_bot + i * 100,
             nex_enemy_top + i * 100,
-            nex_enemy_bot + i * 100
-            ]
+            nex_enemy_bot + i * 100,
+            wave_num + len(list_of_waves)
+            ],[mineral + i * 100,
+            bst_mar + i * 100,bst_ban + i * 100,bst_imm + i * 100,
+            bsb_mar + i * 100,bsb_ban + i * 100,bsb_imm + i * 100,
+            pylon_self + i * 100,
+            bet_mar + i * 100,bet_ban + i * 100,bet_imm + i * 100,
+            beb_mar + i * 100,beb_ban + i * 100,beb_imm + i * 100,
+            pylon_enemy + i * 100,
 
+            ust_mar + i * 100,ust_ban + i * 100,ust_imm + i * 100,
+            usb_mar + i * 100,usb_ban + i * 100,usb_imm + i * 100,
+
+            ust_mar + i * 100,ust_ban + i * 100,ust_imm + i * 100,
+            usb_mar + i * 100,usb_ban + i * 100,usb_imm + i * 100,
+            nex_self_top + i * 100,
+            nex_self_bot + i * 100,
+            nex_enemy_top + i * 100,
+            nex_enemy_bot + i * 100,
+            wave_num + len(list_of_waves)
+            ]
+        ]
         list_of_waves.append(w)
     return list_of_waves
 
@@ -90,7 +110,7 @@ def get_waves(amount_of_waves):
     list_of_waves = []
     raw_wave_data = get_waves_raw_data(amount_of_waves)
     for d in raw_wave_data:
-        w = wave.Wave(d)
+        w = wave.Wave(d[0])
         list_of_waves.append(w)
     return list_of_waves
 
@@ -435,6 +455,7 @@ class TestWave(unittest.TestCase):
         self.assertEqual(w.bottom.nexus_self, nex_self_bot)
         self.assertEqual(w.top.nexus_enemy, nex_enemy_top)
         self.assertEqual(w.bottom.nexus_enemy, nex_enemy_bot)
+        self.assertEqual(w.wave_number, wave_num)
 
 if __name__ == "__main__":
     unittest.main()
