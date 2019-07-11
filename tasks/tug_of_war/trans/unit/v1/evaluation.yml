@@ -1,0 +1,3 @@
+name: 'tug of war'
+env: "tug_of_war-v1"
+summaries_path: "./tensorflow_summaries/tug_of_war/trans/unit/v1/evaluation_summary"
