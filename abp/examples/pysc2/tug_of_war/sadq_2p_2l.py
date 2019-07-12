@@ -95,10 +95,26 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     all_experiences = []
     
-    
-    
-#     if not reinforce_config.is_random_agent_2:
-#         agent_2.load_model(agent_1.eval_model)
+    exp_save_path = 'abp/examples/pysc2/tug_of_war/rand_v_rand.pt'
+    if reinforce_config.collecting_experience and not reinforce_config.is_random_agent_2:
+        exp_save_path = 'abp/examples/pysc2/tug_of_war/all_experiences.pt'
+        path = './saved_models/tug_of_war/data_collect_2l'
+        files = []
+        # r=root, d=directories, f = files
+        for r, d, f in os.walk(path):
+            for file in f:
+                if '.p' in file:
+                    new_weights = torch.load(path + "/" +file)
+                    new_agent_2 = SADQAdaptive(name = file,
+                    state_length = len(state_1),
+                    network_config = network_config,
+                    reinforce_config = reinforce_config)
+                    new_agent_2.load_weight(new_weights)
+                    new_agent_2.disable_learning(is_save = False)
+                    agents_2.append(new_agent_2)
+                    
+        agent_1.load_model(agents_2[-1].eval_model)
+        
         
     while True:
         if len(privous_result) >= update_wins_waves and \
@@ -258,7 +274,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             else:
                 print(enemy_agent.name)
                 
-            if idx_enemy == 0:
+            if idx_enemy == 0 and not reinforce_config.collecting_experience:
                 test_num = evaluation_config.test_episodes
             else:
                 test_num = 5
@@ -329,16 +345,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     ######
                     if reinforce_config.collecting_experience:
                         if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
-                            previous_state_1[1:7] = previous_state_2[8:14] # Include player 2's action
+                            previous_state_1[8:14] = previous_state_2[1:7] # Include player 2's action
                             previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
-
+                            previous_state_1[-1] += 1
+                            
                             experience = [
                                 previous_state_1,
                                 np.append(state_1, previous_reward_1)
                             ]
                             all_experiences.append(experience)
                             if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
-                                torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/test_random_vs_random_2l.pt')
+                                torch.save(all_experiences, exp_save_path)
 
                         previous_state_1 = deepcopy(combine_states_1[choice_1])
                         previous_state_2 = deepcopy(combine_states_2[choice_2])
@@ -386,16 +403,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     previous_reward_1 = current_reward_1
                 
                 if reinforce_config.collecting_experience:
-                    previous_state_1[1:7] = previous_state_2[8:14] # Include player 2's action
+                    previous_state_1[8:14] = previous_state_2[1:7] # Include player 2's action
                     previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
-
+                    previous_state_1[-1] += 1
+                    
                     experience = [
                         previous_state_1,
                         np.append(state_1, previous_reward_1)
                     ]
                     all_experiences.append(experience)
                     if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
-                        torch.save(all_experiences, 'abp/examples/pysc2/tug_of_war/test_random_vs_random_2l.pt')
+                        torch.save(all_experiences, exp_save_path)
 
                 average_end_state += state_1
 
@@ -434,7 +452,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         f.write(str(tr) + "\n")
         f.close()
         
-        if tied_lose == 0:
+        if tied_lose == 0 and not reinforce_config.is_random_agent_1:
             agent_1.save(force = True, appendix = "_the_best")
             
         if not reinforce_config.is_random_agent_1:

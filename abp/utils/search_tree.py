@@ -2,7 +2,7 @@ class Node():
     def __init__(self, name, state, reward = 0, parent = None, total_reward = 0, parent_action = None):
         self.parent = parent
         self.reward = reward
-        self.total_reward = 0
+        self.accumulate_reward = 0
         self.children = []
         self.action_dict = {}
         self.actions = []
@@ -19,6 +19,7 @@ class Node():
         
     def save(self):
         pass
+    
     def sort_children(self):
         pass
     # Give the node find the worst reward sibling
