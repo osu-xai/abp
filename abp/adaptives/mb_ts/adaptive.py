@@ -17,6 +17,8 @@ from abp.models import DQNModel
 # TODO: Generalize it
 from abp.examples.pysc2.tug_of_war.models_mb.transition_model import TransModel
 from abp.utils.search_tree import Node
+from abp.configs import NetworkConfig, ReinforceConfig, EvaluationConfig
+from abp.models import TransModel
 
 logger = logging.getLogger('root')
 use_cuda = torch.cuda.is_available()
@@ -39,15 +41,12 @@ class MBTSAdaptive(object):
         self.explanation = False
         self.state_length = state_length
         
+        self.init_network()
+        self.load_model(models_path)
         # Global
         self.steps = 0
         self.episode = 0
         # TODO: Generalize it
-        self.transition_model_HP = TransModel(state_length, 4)
-        self.transition_model_unit = TransModel(state_length, 12)
-        
-        self.value_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
-#         self.load_model(models_path)
         self.env = env
         self.player = player
         
@@ -66,7 +65,7 @@ class MBTSAdaptive(object):
                                     50, 40, 20, 50, 40, 20, 
                                     50, 40, 20, 50, 40, 20,
                                     2000, 2000, 2000, 2000, 40])
-        self.look_forward_step = 1
+        self.look_forward_step = 2
         
         # Generalize it 
         self.eval_mode()
@@ -74,7 +73,40 @@ class MBTSAdaptive(object):
 #         self.reset()
         
         
+    def init_network(self):
+        network_trans_unit_path = "./tasks/tug_of_war/trans/unit/v1/network.yml"
+        network_trans_hp_path = "./tasks/tug_of_war/trans/health/v1/network.yml"
+        network_trans_unit = NetworkConfig.load_from_yaml(network_trans_unit_path)
+        network_trans_hp = NetworkConfig.load_from_yaml(network_trans_hp_path)
+        
+        self.transition_model_HP = TransModel("TugOfWar2lNexusHealth",network_trans_hp, use_cuda)
+        
+        self.transition_model_unit = TransModel("TugOfWar2lNexusUnit",network_trans_unit, use_cuda)
+        
+        self.value_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
+        
+    def load_model(self, models_path):
+        HP_state_dict = torch.load(models_path + 'transition_model_hp.pt')
+        unit_state_dict = torch.load(models_path + 'transition_model_unit.pt')
 
+# #         print(HP_state_dict)
+#         new_HP_state_dict = OrderedDict()
+#         new_unit_state_dict = OrderedDict()
+        
+#         for old_key_value_hp, old_key_value_unit in zip(list(HP_state_dict.items()), list(unit_state_dict.items())):
+#             new_key_hp, new_value_hp = "module." + old_key_value_hp[0], old_key_value_hp[1]
+#             new_key_unit, new_value_unit = "module." + old_key_value_unit[0], old_key_value_unit[1]
+# #             print(new_key_hp, new_key_unit)
+# #             print(old_key_hp, old_key_unit)
+#             new_HP_state_dict[new_key_hp] = new_value_hp
+#             new_unit_state_dict[new_key_unit] = new_value_unit
+        
+        
+        self.transition_model_HP.load_weight(HP_state_dict)
+        # TODO: get unit transition model
+        self.transition_model_unit.load_weight(unit_state_dict)
+        self.value_model.load_weight(torch.load(models_path + 'value_model.pt'))
+        
     def player_1_win_condition(self, state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp):
         if min(state_1_T_hp, state_1_B_hp) == min(state_2_T_hp, state_2_B_hp):
             if state_1_T_hp + state_1_B_hp == state_2_T_hp + state_2_B_hp:
@@ -109,30 +141,11 @@ class MBTSAdaptive(object):
         self.value_model.eval_mode()
         self.transition_model_HP.eval_mode()
         self.transition_model_unit.eval_mode()
-        
-    def load_model(self, models_path):
-        HP_state_dict = torch.load(models_path + 'transition_model_HP.pt')
-        unit_state_dict = torch.load(models_path + 'transition_model_unit.pt')
-#         print(HP_state_dict.model)
-        new_HP_state_dict = OrderedDict()
-        new_unit_state_dict = OrderedDict()
-        
-        for old_key_value_hp, old_key_value_unit in zip(list(HP_state_dict.items()), list(unit_state_dict.items())):
-            new_key_hp, new_value_hp = "module." + old_key_value_hp[0], old_key_value_hp[1]
-            new_key_unit, new_value_unit = "module." + old_key_value_unit[0], old_key_value_unit[1]
-#             print(new_key_hp, new_key_unit)
-#             print(old_key_hp, old_key_unit)
-            new_HP_state_dict[new_key_hp] = new_value_hp
-            new_unit_state_dict[new_key_unit] = new_value_unit
-        
-        
-        self.transition_model_HP.load_weight(new_HP_state_dict)
-        # TODO: get unit transition model
-        self.transition_model_unit.load_weight(new_unit_state_dict)
-        self.value_model.load_weight(torch.load(models_path + 'value_model.pt'))
 
         
-    def minimax(self, state, depth = 1, previous_reward = 0):
+    def minimax(self, state, depth = 1, previous_reward = FloatTensor(0)):
+#         print("20---------------------------")
+#         print(state)
         actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
 #         print("3---------------------------")
 #         print(actions_self)
@@ -156,32 +169,46 @@ class MBTSAdaptive(object):
         
         max_value = float("-inf")
         for a_self in top_k_action_self:
-            print("9---------------------------")
-            print(a_self)
-            print("10---------------------------")
-            print(top_k_action_enemy)
+#             print("9---------------------------")
+#             print(a_self)
+#             print("10---------------------------")
+#             print(top_k_action_enemy)
             next_states = self.get_next_states(state, a_self, top_k_action_enemy)
-            print("11---------------------------")
-            print(next_states)
+#             print("11---------------------------")
+#             print(next_states)
             next_reward = self.reward_func(state, next_states)
-            print("12---------------------------")
-            print(next_reward)
+#             print("12---------------------------")
+#             print(next_reward)
         
             if depth == self.look_forward_step:
                 min_values = self.rollout(next_states)
             else:
                 min_values = torch.zeros(len(next_states))
-                for i, (n_s, n_r) in enumerate(zip(next_reward, next_states)):
+                for i, (n_s, n_r) in enumerate(zip(next_states, next_reward)):
                     min_values[i], _ = self.minimax(n_s, depth = depth + 1, previous_reward = previous_reward + n_r)
-#             print(min_values.shape, next_reward.shape, previous_reward)    
+#             print(min_values.shape, next_reward.shape, previous_reward)
+#             print("13---------------------------")
+#             print(min_values)
             min_values = min_values.view(-1)
+#             print("21---------------------------")
+#             print(type(next_reward), type(previous_reward))
             min_values += (next_reward + previous_reward)
+#             print("14---------------------------")
+#             print(next_reward)
+#             print("15---------------------------")
+#             print(previous_reward)
+#             print("16---------------------------")
+#             print(min_values)
             min_value = min_values.min(0)[0].item()
-        
+#             print("17---------------------------")
+#             print(min_value)
             if max_value < min_value:
                 max_value = min_value
                 best_action = a_self
-                
+#             print("18---------------------------")
+#             print(max_value)
+#             print("19---------------------------")
+#             print(best_action)
         return max_value, best_action
 
     def predict(self, state, minerals_enemy):
@@ -192,7 +219,7 @@ class MBTSAdaptive(object):
 #         print(state)
         
         max_value, best_action = self.minimax(state)
-        input()
+#         input()
         return best_action
     
     def normalization(self, state):
