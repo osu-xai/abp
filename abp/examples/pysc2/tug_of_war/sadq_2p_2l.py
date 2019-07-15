@@ -11,7 +11,8 @@ from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.tug_of_war_2L_self_play import TugOfWar
-from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
+from sc2env.environments.tug_of_war_2L_self_play import action_component_names
+from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
 from tqdm import tqdm
 from copy import deepcopy
 from random import randint
@@ -134,7 +135,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("Now have {} enemy".format(len(agents_2)))
         
         for idx_enemy, enemy_agent in enumerate(agents_2[::-1]):
-            # break
+            break
             if reinforce_config.collecting_experience:
                 break
             if enemy_agent == "random":
@@ -274,20 +275,24 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 previous_action_1 = None
                 previous_action_2 = None 
                 if evaluation_config.generate_xai_replay:
-                    recorder = XaiReplayRecorder(env.sc2_env, episode, evaluation_config.env, env.reward_dict, replay_dimension)
+                    recorder = XaiReplayRecorder2LaneNexus(env.sc2_env, episode, evaluation_config.env, action_component_names, replay_dimension)
            
-    #             print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Starting episode%%%%%%%%%%%%%%%%%%%%%%%%%")
-
+                print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Starting episode%%%%%%%%%%%%%%%%%%%%%%%%%")
+                print(f"reinforce_config.collecting_experience {reinforce_config.collecting_experience}")
                 while skiping:
+                    print("about to call env.step() during skip")
     #                 start_time = time.time()
                     state_1, state_2, done, dp = env.step([], 0)
                     if evaluation_config.generate_xai_replay:
-                        recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                        recorder.save_jpg()
+                        #recorder.record_game_clock_tick(env.decomposed_reward_dict)
                     if dp or done:
     #                     print(time.time() - start_time)
                         break
-    #             input("done stepping to finish prior action")
+                input(f"dp is {dp} done is {done}")
+                print("done stepping to finish prior action")
                 while not done and steps < max_episode_steps:
+                    input(f"not done and steps == {steps} < {max_episode_steps}")
                     steps += 1
     #                 # Decision point
     #                 print('state:')
@@ -320,13 +325,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         combine_states_2 = combine_sa(state_2, actions_2)
                         choice_2 = randint(0, len(actions_2) - 1)
 
+                    input("record dp if engaged")
                     if evaluation_config.generate_xai_replay:
-                        recorder.record_decision_point(actions_1[choice_1], actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
+                        recorder.save_jpg()
+                        #recorder.record_decision_point(actions_1[choice_1], actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
                     
     #                 input('stepped with command 2')
                     #######
                     #experience collecting
                     ######
+                    input("collect experience if configured so")
                     if reinforce_config.collecting_experience:
                         if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
                             previous_state_1[1:7] = previous_state_2[8:14] # Include player 2's action
@@ -346,21 +354,27 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         previous_action_1 = deepcopy(actions_1[choice_1])
                         previous_action_2 = deepcopy(actions_2[choice_2])
                     
+                    input(f"step p1 with {list(actions_1[choice_1])}")
                     env.step(list(actions_1[choice_1]), 1)
+
+                    input(f"step p2 with {list(actions_2[choice_2])}")
                     env.step(list(actions_2[choice_2]), 2)
 
                     while skiping:
     #                     print("Get actions time:")
     #                     start_time = time.time()
+                        input("step to move the game along and send the wave")
                         state_1, state_2, done, dp = env.step([], 0)
                         if evaluation_config.generate_xai_replay:
-                            recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                            recorder.save_jpg()
+                            #recorder.record_game_clock_tick(env.decomposed_reward_dict)
                         #input(' step wating for done signal')
                         if dp or done:
     #                         print(time.time() - start_time)
                             break
     #                 input('done stepping after collecting experience')
     #                 current_reward_1 = 0
+                    input(f"dp is {dp} done is {done}")
 
                     if steps == max_episode_steps or done:
                         win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
@@ -369,7 +383,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             env.decomposed_rewards[4] = 10000
                         elif win_lose == -1:
                             env.decomposed_rewards[5] = 10000
-
+                    input("separate rewards...")
                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
     #                 print(env.decomposed_rewards)
     #                 print(reward_1, reward_2)
@@ -384,7 +398,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     #                 if total_reward_1 > 14000 or total_reward_1 < -14000:
     #                     input()
                     previous_reward_1 = current_reward_1
-                
+                print("collect experience again if configured so")
                 if reinforce_config.collecting_experience:
                     previous_state_1[1:7] = previous_state_2[8:14] # Include player 2's action
                     previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
@@ -408,6 +422,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     #             break
             #print(test.size())
     #         print(total_rewwards_list)
+            print("should be done with episode...")
             total_rewards_list_np = np.array(total_rewwards_list)
 
             tied = np.sum(total_rewards_list_np[-test_num:] == 0)
