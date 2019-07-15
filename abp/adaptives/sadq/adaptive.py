@@ -294,3 +294,6 @@ class SADQAdaptive(object):
             
     def load_model(self, model):
         self.eval_model.replace(model)
+        
+    def load_weight(self, weight_dict):
+        self.eval_model.load_weight(weight_dict)
