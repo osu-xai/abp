@@ -74,13 +74,13 @@ def load_data(tensor_dataset, indices, batch_size):
 
 def run_task(evaluation_config, network_config, reinforce_config):
 
-    trans_model = TransAdaptive(name= "TugOfWar2lNexusHealth",
+    trans_model = TransAdaptive(name= "TugOfWar2lUnitsOnField",
                                 network_config=network_config,
                                 reinforce_config = reinforce_config)
 
     np.set_printoptions(suppress=True)
 
-    data = torch.load('test_random_vs_random_2l.pt')
+    data = torch.load('all_experiences_100000.pt')
 
     output_indexes = [15,16,17,18,19,20,21,22,23,24,25,26]
 
@@ -93,9 +93,10 @@ def run_task(evaluation_config, network_config, reinforce_config):
     train_dl = load_data(tensor_dataset, train_indices, reinforce_config.batch_size)
     valid_dl = load_data(tensor_dataset, val_indices, reinforce_config.batch_size)
 
-    device = get_default_device()
+    # device = get_default_device()
+    device = torch.device('cuda')
 
-    # trans_model = nn.DataParallel(trans_model.trans_model.model, device_ids=[0,1,2])
+    # trans_model.trans_model.model = nn.DataParallel(trans_model.trans_model.model, device_ids=[5])
 
     train_dl = DeviceDataLoader(train_dl, device)
     valid_dl = DeviceDataLoader(valid_dl, device) 

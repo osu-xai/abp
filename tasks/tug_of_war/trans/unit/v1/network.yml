@@ -2,14 +2,8 @@ layers:
   - type: "FC"
     neurons: 512
 
-  - type: "BatchNorm1d"
-    size: 512
-
   - type: "FC"
     neurons: 128
-
-  - type: "BatchNorm1d"
-    size: 128
 
 input_shape:
     - 32
@@ -23,6 +17,6 @@ network_path: "./saved_models/tug_of_war/trans/unit/v1.ckpt"
 summaries_path: "./tensorflow_summaries/tug_of_war/trans/unit/v1/network_summary"
 summaries_step: 1000
 restore_network: False
-learning_rate: 0.0001
+learning_rate: 0.00005
 save_steps: 1000
 save_network: True

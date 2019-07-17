@@ -80,7 +80,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     np.set_printoptions(suppress=True)
 
-    data = torch.load('test_random_vs_random_2l.pt')
+    data = torch.load('all_experiences_100000.pt')
 
     output_indexes = [27,28,29,30]
 
@@ -95,7 +95,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
 
     device = get_default_device()
 
-    # trans_model = nn.DataParallel(trans_model.trans_model.model, device_ids=[0,1,2])
+    # trans_model.trans_model.model = nn.DataParallel(trans_model.trans_model.model, device_ids=[0])
 
     train_dl = DeviceDataLoader(train_dl, device)
     valid_dl = DeviceDataLoader(valid_dl, device) 
