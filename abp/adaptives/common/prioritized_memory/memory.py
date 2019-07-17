@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import pickle
+import os
 
 from baselines.common.segment_tree import SumSegmentTree, MinSegmentTree
 
@@ -70,6 +72,38 @@ class ReplayBuffer(object):
         idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
         return self._encode_sample(idxes)
 
+    def saveReplayBuffer(self, path, name=""):
+        """Save the memory in case of crash
+        Parameters
+        ----------
+        path: str
+            The network path inside the yaml file of the model where the model is being saved
+        name: str
+            The name you wish to call the saved file default is nothing
+        """
+        info = {
+            "storage": self._storage,
+            "maxsize": self._maxsize,
+            "next_idx": self._next_idx
+        }
+        with open(path + "/adaptive_memory.info", "wb") as file:
+                    pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def loadReplayBuffer(self, path):
+        """ Load the parameters of a saved off memory file
+        Parameters
+        ----------
+        path: str
+            The path of where the saved off file exists
+        """
+        restore_path = path + "/adaptive_memory.info"
+        if os.path.exists(restore_path):
+            with open(restore_path, "rb") as file:
+                info = pickle.load(file)
+
+            self._storage = info["storage"]
+            self._maxsize = info["maxsize"]
+            self._next_idx = info["next_idx"]
 
 class PrioritizedReplayBuffer(ReplayBuffer):
     def __init__(self, size, alpha):
@@ -183,3 +217,42 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             self._it_min[idx] = priority ** self._alpha
 
             self._max_priority = max(self._max_priority, priority)
+
+    def save(self, path):
+        """Save the priority memory in case of crash
+        Parameters
+        ----------
+        path: str
+            The network path inside the yaml file of the model where the model is being saved
+        """
+        info = {
+            "alpha": self._alpha,
+            "it_sum": self._it_sum,
+            "it_min": self._it_min,
+            "max_priority": self._max_priority,
+            "next_idx": self._next_idx,
+            "storage": self._storage,
+            "maxsize": self._maxsize
+        }
+        with open(path + "/adaptive_memory.info", "wb") as file:
+                    pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def load(self, path):
+        """ Load the parameters of a saved off memory file
+        Parameters
+        ----------
+        path: str
+            The path of where the saved off file exists
+        """
+        restore_path = path + "/adaptive_memory.info"
+        if os.path.exists(restore_path):
+            with open(restore_path, "rb") as file:
+                info = pickle.load(file)
+
+            self._alpha = info["alpha"]
+            self._it_sum = info["it_sum"]
+            self._it_min = info["it_min"]
+            self._max_priority = info["max_priority"]
+            self._next_idx = info["next_idx"]
+            self._storage = info["storage"]
+            self._maxsize = info["maxsize"]
