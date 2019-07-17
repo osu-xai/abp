@@ -31,7 +31,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("|     NOT USING CUDA     |")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
     flags.FLAGS(sys.argv[:1])
-
     max_episode_steps = 40
     
     #pdx_explanation = PDX()
@@ -98,8 +97,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     exp_save_path = 'abp/examples/pysc2/tug_of_war/rand_v_rand.pt'
     if reinforce_config.collecting_experience and not reinforce_config.is_random_agent_2:
+        agent_1_model = "TugOfWar_eval.pupdate_240"
         exp_save_path = 'abp/examples/pysc2/tug_of_war/all_experiences.pt'
-        path = './saved_models/tug_of_war/data_collect_2l'
+        path = './saved_models/tug_of_war/agents/'
         files = []
         # r=root, d=directories, f = files
         for r, d, f in os.walk(path):
@@ -114,7 +114,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     new_agent_2.disable_learning(is_save = False)
                     agents_2.append(new_agent_2)
                     
-        agent_1.load_model(agents_2[-1].eval_model)
+                    if agent_1_model == file:
+                        print("********agent_1_model", file)
+                        agent_1.load_model(new_agent_2.eval_model)
         
         
     while True:
@@ -243,8 +245,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     # print(state_1[27], state_1[28], state_1[29], state_1[30])
                     # print(reward_1)
                     # print(reward_2)
-                    if steps == max_episode_steps or done:
-                        input()
+#                     if steps == max_episode_steps or done:
+#                         input()
 
                     if not reinforce_config.is_random_agent_1:
                         agent_1.reward(sum(reward_1))
@@ -373,9 +375,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     
                     input(f"step p1 with {list(actions_1[choice_1])}")
                     env.step(list(actions_1[choice_1]), 1)
-
                     input(f"step p2 with {list(actions_2[choice_2])}")
                     env.step(list(actions_2[choice_2]), 2)
+#                     # human play
+#                     pretty_print(state_2, text = "state:")
+#                     env.step(list(get_human_action()), 2)
+#                     reinforce_config.collecting_experience = False
+
 
                     while skiping:
     #                     print("Get actions time:")
@@ -512,3 +518,12 @@ def pretty_print(state,  text = ""):
     print("Hit_Point")
     print("S_T:{:^5},S_B{:^5},E_T{:^5},E_B:{:^5}".format(
         state[27],state[28],state[29],state[30]))
+    
+def get_human_action():
+    action = np.zeros(7)
+    action_input = input("Input your action:")
+    for a in action_input:
+        action[int(a) - 1] += 1
+    print("your acions : ", action)
+    return action
+            

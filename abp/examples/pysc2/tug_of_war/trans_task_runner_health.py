@@ -105,7 +105,7 @@ def run_task(evaluation_config, network_config, reinforce_config):
     optimizer = Adam(trans_model.trans_model.model.parameters(), lr = 0.0001)
     loss_fn = nn.MSELoss(reduction='mean')
 
-    losses, metrics = trans_model.train(10000, loss_fn, train_dl, valid_dl, accuracy, optimizer, "nexus-HP-transition-model-report/test_loss_2l.txt")
+    losses, metrics = trans_model.train(10000, loss_fn, train_dl, valid_dl, accuracy, optimizer, "test_loss_2l.txt")
 
 def accuracy(outputs, ground_true):
     preds = torch.sum( torch.eq( outputs, ground_true), dim=1 )

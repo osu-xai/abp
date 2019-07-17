@@ -1,2 +1,6 @@
 batch_size: 512
+<<<<<<< HEAD
 summaries_path: "./tensorflow_summaries/tug_of_war/trans/health/v1/reinforce_summary"
+=======
+summaries_path: "./tensorflow_summaries/tug_of_war/trans/health/v1/reinforce_summary"
+>>>>>>> 44c32fa1a6d930a7fd6b69c1741eae32ae7f6515
