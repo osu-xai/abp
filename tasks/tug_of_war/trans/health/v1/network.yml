@@ -2,14 +2,14 @@ layers:
   - type: "FC"
     neurons: 512
 
-  - type: "BatchNorm1d"
-    size: 512
+    #  - type: "BatchNorm1d"
+    #size: 512
 
   - type: "FC"
     neurons: 128
 
-  - type: "BatchNorm1d"
-    size: 128
+    #- type: "BatchNorm1d"
+    #size: 128
 
 input_shape:
     - 32

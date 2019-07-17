@@ -1,2 +1,2 @@
-batch_size: 64
+batch_size: 512
 summaries_path: "./tensorflow_summaries/tug_of_war/trans/health/v1/reinforce_summary"

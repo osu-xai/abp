@@ -86,7 +86,7 @@ class MBTSAdaptive(object):
         self.value_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
         
     def load_model(self, models_path):
-        HP_state_dict = torch.load(models_path + 'transition_model_hp.pt')
+#         HP_state_dict = torch.load(models_path + 'transition_model_hp.pt')
         unit_state_dict = torch.load(models_path + 'transition_model_unit.pt')
 
 # #         print(HP_state_dict)
@@ -102,7 +102,7 @@ class MBTSAdaptive(object):
 #             new_unit_state_dict[new_key_unit] = new_value_unit
         
         
-        self.transition_model_HP.load_weight(HP_state_dict)
+#         self.transition_model_HP.load_weight(HP_state_dict)
         # TODO: get unit transition model
         self.transition_model_unit.load_weight(unit_state_dict)
         self.value_model.load_weight(torch.load(models_path + 'value_model.pt'))
