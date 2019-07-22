@@ -19,6 +19,7 @@ from abp.examples.pysc2.tug_of_war.models_mb.transition_model import TransModel
 from abp.utils.search_tree import Node
 from abp.configs import NetworkConfig, ReinforceConfig, EvaluationConfig
 from abp.models import TransModel
+from tqdm import tqdm
 
 logger = logging.getLogger('root')
 use_cuda = torch.cuda.is_available()
@@ -59,13 +60,22 @@ class MBTSAdaptive(object):
         self.mineral_index_self = self.env.miner_index
         self.mineral_index_enemy = state_length
         self.maker_cost_np = FloatTensor(self.env.maker_cost_np)
+        self.index_waves = 31
         
-        self.normalization_array = FloatTensor([700, 50, 40, 20, 50, 40, 20, 3,
-                                    50, 40, 20, 50, 40, 20, 3,
-                                    50, 40, 20, 50, 40, 20, 
-                                    50, 40, 20, 50, 40, 20,
-                                    2000, 2000, 2000, 2000, 40])
+#         self.norm_vector_vf = FloatTensor([700, 50, 40, 20, 50, 40, 20, 3,
+#                                     50, 40, 20, 50, 40, 20, 3,
+#                                     50, 40, 20, 50, 40, 20, 
+#                                     50, 40, 20, 50, 40, 20,
+#                                     2000, 2000, 2000, 2000, 40])
+        
+        self.norm_vector_unitandhp = FloatTensor([1500, # p1 minerals
+                        30, 30, 10, 30, 30, 10, 3, # p1 top and bottom lane buildings
+                        30, 30, 10, 30, 30, 10, 3, # p2 top and bottom lane buildings
+                        30, 30, 10, 30, 30, 10, # p1 top and bottom lane units
+                        30, 30, 10, 30, 30, 10, # p1 top and bottom lane units
+                        2000, 2000, 2000, 2000, 40])
         self.look_forward_step = 2
+        self.ranking_topk = 10#float('inf')
         
         # Generalize it 
         self.eval_mode()
@@ -84,28 +94,41 @@ class MBTSAdaptive(object):
         self.transition_model_unit = TransModel("TugOfWar2lNexusUnit",network_trans_unit, use_cuda)
         
         self.value_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
+        self.q_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
         
     def load_model(self, models_path):
-#         HP_state_dict = torch.load(models_path + 'transition_model_hp.pt')
+        HP_state_dict = torch.load(models_path + 'transition_model_hp.pt')
         unit_state_dict = torch.load(models_path + 'transition_model_unit.pt')
+        value_state_dict = torch.load(models_path + 'value_model.pt')
 
-# #         print(HP_state_dict)
-#         new_HP_state_dict = OrderedDict()
-#         new_unit_state_dict = OrderedDict()
+#         print(HP_state_dict)
+        new_HP_state_dict = OrderedDict()
+        new_unit_state_dict = OrderedDict()
+        new_value_state_dict = OrderedDict()
         
-#         for old_key_value_hp, old_key_value_unit in zip(list(HP_state_dict.items()), list(unit_state_dict.items())):
-#             new_key_hp, new_value_hp = "module." + old_key_value_hp[0], old_key_value_hp[1]
-#             new_key_unit, new_value_unit = "module." + old_key_value_unit[0], old_key_value_unit[1]
-# #             print(new_key_hp, new_key_unit)
-# #             print(old_key_hp, old_key_unit)
-#             new_HP_state_dict[new_key_hp] = new_value_hp
-#             new_unit_state_dict[new_key_unit] = new_value_unit
+        the_HP_weight = list(HP_state_dict.values())
+        the_unit_weight = list(unit_state_dict.values())
+        the_value_weight = list(value_state_dict.values())
         
+        the_HP_keys = list(self.transition_model_HP.model.state_dict().keys())
+        the_unit_keys = list(self.transition_model_unit.model.state_dict().keys())
+        the_value_keys = list(self.value_model.model.state_dict().keys())
         
-#         self.transition_model_HP.load_weight(HP_state_dict)
-        # TODO: get unit transition model
-        self.transition_model_unit.load_weight(unit_state_dict)
-        self.value_model.load_weight(torch.load(models_path + 'value_model.pt'))
+#         print(the_HP_keys)
+#         print(the_unit_keys)
+#         print(the_value_keys)
+#         print("*************")
+        for i in range(len(the_HP_weight)):
+            new_HP_state_dict[the_HP_keys[i]] = the_HP_weight[i]
+        for i in range(len(the_HP_weight)):
+            new_unit_state_dict[the_unit_keys[i]] = the_unit_weight[i]
+        for i in range(len(the_HP_weight)):
+            new_value_state_dict[the_value_keys[i]] = the_value_weight[i]
+            
+        self.transition_model_HP.load_weight(new_HP_state_dict)
+        self.transition_model_unit.load_weight(new_unit_state_dict)
+#         self.value_model.load_weight(new_value_state_dict)
+        self.q_model.load_weight(torch.load(models_path + 'q_model.pt'))
         
     def player_1_win_condition(self, state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp):
         if min(state_1_T_hp, state_1_B_hp) == min(state_2_T_hp, state_2_B_hp):
@@ -123,7 +146,7 @@ class MBTSAdaptive(object):
             
     def reward_func(self, state, next_states):
         # TODO
-        rewards = FloatTensor((next_states - state.reshape(-1,))[:, self.index_hp].detach())
+        rewards = FloatTensor((next_states - state.reshape(-1,))[:, self.index_hp].clone())
         
 #         print(rewards)
         rewards[rewards > 0] = 0
@@ -132,18 +155,28 @@ class MBTSAdaptive(object):
 #         print(rewards)
 #         print(rewards)
         rewards = torch.sum(rewards, dim = 1)
-#         print(rewards)
-#         input()
+        min_s, index = next_states[:, self.index_hp].min(1)
+        win = ((min_s < 10) & (index > 1)).float()
+        lose = ((min_s < 10) & (index <= 1)).float()
+        
+        rewards += win * 10000
+        rewards -= lose * 10000
+#         if sum(win) > 0 or sum(lose) > 0:
+#             print(min_s, index)
+#             print(win, lose)
+#             print(rewards)
+#             input()
         return rewards
     
     
     def eval_mode(self):
-        self.value_model.eval_mode()
+#         self.value_model.eval_mode()
         self.transition_model_HP.eval_mode()
         self.transition_model_unit.eval_mode()
+        self.q_model.eval_mode()
 
         
-    def minimax(self, state, depth = 1, previous_reward = FloatTensor(0)):
+    def minimax(self, state, depth = 1, previous_reward = 0.0):
 #         print("20---------------------------")
 #         print(state)
         actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
@@ -158,9 +191,11 @@ class MBTSAdaptive(object):
         
         actions_enemy = self.env.get_big_A(state[self.mineral_index_enemy].item(), state[self.pylon_index_enemy].item())
 #         print("6---------------------------")
-#         print(actions_enemy)
+#         print(state[self.mineral_index_enemy].item(), actions_enemy)
         # action ranking here
-        com_states = self.combine_sa(state, actions_enemy, is_enemy = True)
+#         print(state)
+        com_states = self.combine_sa(self.switch_state_to_enemy(state), actions_enemy, is_enemy = False)
+#         print(state)
 #         print("7---------------------------")
 #         print(com_states)
         top_k_action_enemy = self.action_ranking(com_states, actions_enemy)
@@ -168,7 +203,7 @@ class MBTSAdaptive(object):
 #         print(top_k_action_enemy)
         
         max_value = float("-inf")
-        for a_self in top_k_action_self:
+        for a_self in tqdm(top_k_action_self, desc = "Making decision depth = " + str(depth)):
 #             print("9---------------------------")
 #             print(a_self)
 #             print("10---------------------------")
@@ -183,15 +218,19 @@ class MBTSAdaptive(object):
             if depth == self.look_forward_step:
                 min_values = self.rollout(next_states)
             else:
-                min_values = torch.zeros(len(next_states))
+                min_values = FloatTensor(np.zeros(len(next_states)))
                 for i, (n_s, n_r) in enumerate(zip(next_states, next_reward)):
+                    if abs(n_r) >= 10000:
+                        continue
                     min_values[i], _ = self.minimax(n_s, depth = depth + 1, previous_reward = previous_reward + n_r)
-#             print(min_values.shape, next_reward.shape, previous_reward)
+            
 #             print("13---------------------------")
 #             print(min_values)
             min_values = min_values.view(-1)
+            previous_reward = FloatTensor([previous_reward])
 #             print("21---------------------------")
-#             print(type(next_reward), type(previous_reward))
+#             print(next_reward.is_cuda, previous_reward.is_cuda, previous_reward.is_cuda)
+#             print(min_values.size(), next_reward.size(), previous_reward)
             min_values += (next_reward + previous_reward)
 #             print("14---------------------------")
 #             print(next_reward)
@@ -209,6 +248,7 @@ class MBTSAdaptive(object):
 #             print(max_value)
 #             print("19---------------------------")
 #             print(best_action)
+#             input()
         return max_value, best_action
 
     def predict(self, state, minerals_enemy):
@@ -217,25 +257,78 @@ class MBTSAdaptive(object):
         state = FloatTensor(np.append(state, minerals_enemy))
 #         print("2---------------------------")
 #         print(state)
-        
-        max_value, best_action = self.minimax(state)
+        if self.look_forward_step > 0:
+            max_value, best_action = self.minimax(state)
+        else:
+            pass
+#         print(state)
 #         input()
+
         return best_action
     
-    def normalization(self, state):
-        return state[:, :-1] / self.normalization_array
+    def normalization(self, state, is_vf = False):
+        if not is_vf:
+            return state[:, :-1] / self.norm_vector_unitandhp
+        else:
+            return state[:, :-1] / self.norm_vector_unitandhp
     
     def rollout(self, states):
-        return self.value_model.predict_batch(FloatTensor(self.normalization(states)))[1]
+#         return self.value_model.predict_batch(FloatTensor(self.normalization(states, is_vf = True)))[1]
+
+        values = FloatTensor(np.zeros(len(states)))
+        for i, state in enumerate(states):
+            actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
+
+            com_states = self.combine_sa(state, actions_self, is_enemy = False)
+            
+            values[i] = self.q_model.predict_batch(FloatTensor(self.normalization(states, is_vf = True)))[1].max(0)[0]
+        return values
     
-    def action_ranking(self, q_state, action, k = 10):
-        # TODO
-        return action[np.array(range(0, len(q_state)))]    
+    def action_ranking(self, after_states, action, ):
+#         action = FloatTensor(action)
+#         print(len(after_states), len(action))
+        if self.ranking_topk >= len(after_states):
+            return action[np.array(range(len(after_states)))]
+        q_values = self.value_model.predict_batch(FloatTensor(self.normalization(after_states, is_vf = True)))[1]
+        q_values = q_values.view(-1)
+        topk_q, indices = torch.topk(q_values, self.ranking_topk)
+        
+#         print(topk_q)
+#         print(indices)
+#         input()
+        return action[indices.cpu().clone().numpy()]
+    
+    def switch_state_to_enemy(self, states):
+        enemy_states = states.clone()
+#         print(enemy_states)
+        mineral_index_self = LongTensor(range(0, 1))
+        mineral_index_enemy = LongTensor(range(32, 33))
+        buliding_index_self = self.index_building_self
+        buliding_index_enemy = self.index_building_enemy
+        unit_index_self = LongTensor(range(15, 21))
+        unit_index_enemy = LongTensor(range(21, 27))
+        index_hp_self = LongTensor(range(27, 29))
+        index_hp_enemy = LongTensor(range(29, 31))
+        
+        enemy_states[mineral_index_self], enemy_states[mineral_index_enemy], \
+        enemy_states[buliding_index_self], enemy_states[buliding_index_enemy], \
+        enemy_states[unit_index_self], enemy_states[unit_index_enemy], \
+        enemy_states[index_hp_self], enemy_states[index_hp_enemy] \
+        = \
+        enemy_states[mineral_index_enemy], enemy_states[mineral_index_self], \
+        enemy_states[buliding_index_enemy], enemy_states[buliding_index_self], \
+        enemy_states[unit_index_enemy], enemy_states[unit_index_self], \
+        enemy_states[index_hp_enemy], enemy_states[index_hp_self]
+        
+#         print(enemy_states)
+        
+#         input()
+        return enemy_states
     
     def get_next_states(self, state, a_self, top_k_action_enemy):
         after_states = self.get_after_states(state, a_self, top_k_action_enemy)
         
-        next_states = deepcopy(after_states)
+        next_states = after_states.clone()
 #         print(next_states.shape)
         next_HPs = self.transition_model_HP.predict_batch(FloatTensor(self.normalization(next_states)))
         next_units = self.transition_model_unit.predict_batch(FloatTensor(self.normalization(next_states)))
@@ -243,6 +336,7 @@ class MBTSAdaptive(object):
 #         print(next_units.shape)
         next_states[:, self.index_hp] = next_HPs
         next_states[:, self.index_units] = next_units.round()
+        next_states[:, self.index_waves] += 1
 
         return next_states
 
@@ -267,7 +361,7 @@ class MBTSAdaptive(object):
             mineral_index = self.mineral_index_enemy
             pylon_index =  self.pylon_index_enemy
             
-        state = state.detach()
+        state = state.clone()
         com_state = state.repeat((len(actions), 1))
         actions = FloatTensor(actions)
         
@@ -281,7 +375,8 @@ class MBTSAdaptive(object):
         num_of_pylon = com_state[index_has_pylon, pylon_index]
         com_state[index_has_pylon, mineral_index] -= (self.env.pylon_cost + (num_of_pylon - 1) * 100)
         
-        assert torch.sum(com_state[:, mineral_index] >= 0) == len(com_state), print("com_state, error")
+        
+        assert torch.sum(com_state[:, mineral_index] >= 0) == len(com_state), print(com_state)
 
         return com_state
     
