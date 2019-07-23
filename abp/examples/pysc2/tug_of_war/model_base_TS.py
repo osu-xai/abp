@@ -128,7 +128,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
                     if win_lose == 1:
                         env.decomposed_rewards[4] = 10000
+                        env.decomposed_rewards[5] = 0
                     elif win_lose == -1:
+                        env.decomposed_rewards[4] = 0
                         env.decomposed_rewards[5] = 10000
                 reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
                 total_reward_1 += sum(reward_1)

@@ -62,11 +62,11 @@ class MBTSAdaptive(object):
         self.maker_cost_np = FloatTensor(self.env.maker_cost_np)
         self.index_waves = 31
         
-#         self.norm_vector_vf = FloatTensor([700, 50, 40, 20, 50, 40, 20, 3,
-#                                     50, 40, 20, 50, 40, 20, 3,
-#                                     50, 40, 20, 50, 40, 20, 
-#                                     50, 40, 20, 50, 40, 20,
-#                                     2000, 2000, 2000, 2000, 40])
+        self.norm_vector_vf = FloatTensor([700, 50, 40, 20, 50, 40, 20, 3,
+                                    50, 40, 20, 50, 40, 20, 3,
+                                    50, 40, 20, 50, 40, 20, 
+                                    50, 40, 20, 50, 40, 20,
+                                    2000, 2000, 2000, 2000, 40])
         
         self.norm_vector_unitandhp = FloatTensor([1500, # p1 minerals
                         30, 30, 10, 30, 30, 10, 3, # p1 top and bottom lane buildings
@@ -74,8 +74,8 @@ class MBTSAdaptive(object):
                         30, 30, 10, 30, 30, 10, # p1 top and bottom lane units
                         30, 30, 10, 30, 30, 10, # p1 top and bottom lane units
                         2000, 2000, 2000, 2000, 40])
-        self.look_forward_step = 2
-        self.ranking_topk = 10#float('inf')
+        self.look_forward_step = 1
+        self.ranking_topk = float('inf')
         
         # Generalize it 
         self.eval_mode()
@@ -270,7 +270,7 @@ class MBTSAdaptive(object):
         if not is_vf:
             return state[:, :-1] / self.norm_vector_unitandhp
         else:
-            return state[:, :-1] / self.norm_vector_unitandhp
+            return state[:, :-1] / self.norm_vector_vf
     
     def rollout(self, states):
 #         return self.value_model.predict_batch(FloatTensor(self.normalization(states, is_vf = True)))[1]

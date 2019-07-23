@@ -96,10 +96,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     all_experiences = []
     
     exp_save_path = 'abp/examples/pysc2/tug_of_war/rand_v_rand.pt'
+    path = './saved_models/tug_of_war/agents/'
     if reinforce_config.collecting_experience and not reinforce_config.is_random_agent_2:
         agent_1_model = "TugOfWar_eval.pupdate_429"
         exp_save_path = 'abp/examples/pysc2/tug_of_war/all_experiences.pt'
-        path = './saved_models/tug_of_war/agents/'
         files = []
         # r=root, d=directories, f = files
         for r, d, f in os.walk(path):
@@ -118,6 +118,22 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         print("********agent_1_model", file)
                         agent_1.load_model(new_agent_2.eval_model)
         
+    if evaluation_config.generate_xai_replay:
+        agent_1_model = "TugOfWar_eval.pupdate_240"
+        agent_2_model = "TugOfWar_eval.pupdate_429_one_agent_top"
+        
+        agents_2 = []
+        weights_1 = torch.load(path + "/" + agent_1_model)
+        weights_2 = torch.load(path + "/" + agent_2_model)
+        
+        new_agent_2 = SADQAdaptive(name = "record",
+                    state_length = len(state_1),
+                    network_config = network_config,
+                    reinforce_config = reinforce_config)
+        agent_1.load_weight(weights_1)
+        new_agent_2.load_weight(weights_2)
+        new_agent_2.disable_learning(is_save = False)
+        agents_2.append(new_agent_2)
         
     while True:
         if len(privous_result) >= update_wins_waves and \
@@ -237,7 +253,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
                         if win_lose == 1:
                             env.decomposed_rewards[4] = 10000
+                            env.decomposed_rewards[5] = 0
                         elif win_lose == -1:
+                            env.decomposed_rewards[4] = 0
                             env.decomposed_rewards[5] = 10000
 
                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
@@ -411,7 +429,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
                         if win_lose == 1:
                             env.decomposed_rewards[4] = 10000
+                            env.decomposed_rewards[5] = 0
                         elif win_lose == -1:
+                            env.decomposed_rewards[4] = 0
                             env.decomposed_rewards[5] = 10000
 
                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)

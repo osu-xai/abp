@@ -1,4 +1,5 @@
 layers:
+  - type: "FC"
     neurons: 1024
 
   - type: "FC"
