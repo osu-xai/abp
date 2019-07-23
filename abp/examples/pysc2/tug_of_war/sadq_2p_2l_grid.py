@@ -398,8 +398,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     #                 input('done stepping after collecting experience')
     #                 current_reward_1 = 0
                     input(f"dp is {dp} done is {done}")
-                    pretty_print(state_1, text="state_1")
-                    pretty_print(state_2, text="state_2")
 
                     if steps == max_episode_steps or done:
                         win_lose = player_1_win_condition(state_1[63], state_1[64], state_1[65], state_1[66])
