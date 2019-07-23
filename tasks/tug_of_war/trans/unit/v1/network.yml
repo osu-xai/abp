@@ -1,10 +1,12 @@
 layers:
+    neurons: 1024
+
   - type: "FC"
     neurons: 512
 
   - type: "FC"
-    neurons: 128
-
+    neurons: 256
+    
 input_shape:
     - 32
 
