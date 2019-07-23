@@ -126,7 +126,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             privous_result = []
             print("replace enemy agent's weight with self agent")
 #             random_enemy = False
-            f = open("result_self_play_2l.txt", "a+")
+            f = open("result_self_play_2l_grid.txt", "a+")
             f.write("Update agent\n")
             f.close()
             
@@ -471,7 +471,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         if len(privous_result) > update_wins_waves:
             del privous_result[0]
-        f = open("result_self_play_2l.txt", "a+")
+        f = open("result_self_play_2l_grid.txt", "a+")
         f.write(str(tr) + "\n")
         f.close()
         
