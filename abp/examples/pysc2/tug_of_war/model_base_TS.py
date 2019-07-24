@@ -43,112 +43,140 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     models_path = "abp/examples/pysc2/tug_of_war/models_mb/"
     agent_1 = MBTSAdaptive(name = "TugOfWar", state_length = len(state_1),
                         network_config = network_config, reinforce_config = reinforce_config,
-                          models_path = models_path, env = env)
+                          models_path = models_path, depth = 1, action_ranking = float('inf'), env = env)
     
-    if not reinforce_config.is_random_agent_2:
-        agent_2 = SADQAdaptive(name = "TugOfWar",
-                            state_length = len(state_2),
-                            network_config = network_config,
-                            reinforce_config = reinforce_config)
-        agent_2.eval_model.replace(agent_1.q_model)
-        print("sadq agent 2")
-    else:
-        print("random agent 2")
+#     if not reinforce_config.is_random_agent_2:
+#         agent_2 = SADQAdaptive(name = "TugOfWar",
+#                             state_length = len(state_2),
+#                             network_config = network_config,
+#                             reinforce_config = reinforce_config,)
+#         agent_2.eval_model.replace(agent_1.q_model)
+#         print("sadq agent 2")
+#     else:
+#         print("random agent 2")
         
+    path = './saved_models/tug_of_war/agents/'
+    
+    agents_2 = []
+    if not reinforce_config.is_random_agent_2:
+        files = []
+        # r=root, d=directories, f = files
+        for r, d, f in os.walk(path):
+            for file in f:
+                if '.p' in file:
+                    new_weights = torch.load(path + "/" +file)
+                    new_agent_2 = SADQAdaptive(name = file,
+                    state_length = len(state_1),
+                    network_config = network_config,
+                    reinforce_config = reinforce_config)
+                    new_agent_2.load_weight(new_weights)
+                    new_agent_2.disable_learning(is_save = False)
+                    agents_2.append(new_agent_2)
+                        
     test_summaries_path = evaluation_config.summaries_path + "/test"
     clear_summary_path(test_summaries_path)
     test_summary_writer = SummaryWriter(test_summaries_path)
     random_enemy = False
     while True:
-        if not reinforce_config.is_random_agent_2:
-            agent_2.disable_learning()
+#         if not reinforce_config.is_random_agent_2:
+#             agent_2.disable_learning()
 
-        total_rewwards_list = []
+        
         # Test Episodes
         print("======================================================================")
         print("===============================Now testing============================")
         print("======================================================================")
-                
-        for episode in tqdm(range(evaluation_config.test_episodes)):
-            state = env.reset()
-            total_reward_1 = 0
-            done = False
-            skiping = True
-            steps = 0
-            
-            while skiping:
-                state_1, state_2, done, dp = env.step([], 0)
-                
-                if dp or done:
-                    break
-#             input("done stepping to finish prior action")
-            while not done and steps < max_episode_steps:
-                steps += 1
-#                 # Decision point
-#                 print('state:')
-#                 print(list(env.denormalization(state_1)))
-#                 print(list(env.denormalization(state_2)))
-                actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
-                actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
-                
-#                 choice_1 = agent_1.predict(env.denormalization(state_1), env.denormalization(state_2)[env.miner_index])
-#                 print(state_1)
-                actions_1111111 = agent_1.predict(state_1, state_2[env.miner_index])
-                
-#                 print(actions_1111111)
-#                 input()
-                
-#                 input("state_1 checked")
-                combine_states_2 = combine_sa(state_2, actions_2)
-                if not reinforce_config.is_random_agent_2 and not random_enemy:
-                    choice_2, _ = agent_2.predict(env.normalization(combine_states_2))
-                else:
-                    choice_2 = randint(0, len(actions_2) - 1)
-                    
-#                 env.step(list(actions_1[choice_1]), 1)
+        print("There are {} enemies".format(len(agents_2)))
+        
+        for agent_2 in agents_2:
+            print(agent_2.name)
+            average_state = np.zeros(len(state_1))
+            total_rewwards_list = []  
+            for episode in tqdm(range(evaluation_config.test_episodes)):
+                state = env.reset()
+                total_reward_1 = 0
+                done = False
+                skiping = True
+                steps = 0
 
-#                 print(actions_2[choice_2])
-#                 pretty_print(state_2, text = "state:")
-                env.step(list(actions_1111111), 1)
-                
-                env.step(list(actions_2[choice_2]), 2)
-                # human play
-                
-#                 env.step(list(get_human_action()), 2)
-#                 print(actions_1111111)
-                
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
-                    #input(' step wating for done signal')
+
                     if dp or done:
                         break
-                        
-                if steps == max_episode_steps or done:
-                    win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
+    #             input("done stepping to finish prior action")
+                while not done and steps < max_episode_steps:
+                    steps += 1
+    #                 # Decision point
+    #                 print('state:')
+    #                 print(list(env.denormalization(state_1)))
+    #                 print(list(env.denormalization(state_2)))
+                    actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
+                    actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
 
-                    if win_lose == 1:
-                        env.decomposed_rewards[4] = 10000
-                        env.decomposed_rewards[5] = 0
-                    elif win_lose == -1:
-                        env.decomposed_rewards[4] = 0
-                        env.decomposed_rewards[5] = 10000
-                reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
-                total_reward_1 += sum(reward_1)
+    #                 choice_1 = agent_1.predict(env.denormalization(state_1), env.denormalization(state_2)[env.miner_index])
+    #                 print(state_1)
+                    actions_1111111 = agent_1.predict(state_1, state_2[env.miner_index])
+
+    #                 print(actions_1111111)
+    #                 input()
+
+    #                 input("state_1 checked")
+                    combine_states_2 = combine_sa(state_2, actions_2)
+                    if not reinforce_config.is_random_agent_2 and not random_enemy:
+                        choice_2, _ = agent_2.predict(env.normalization(combine_states_2))
+                    else:
+                        choice_2 = randint(0, len(actions_2) - 1)
+
+    #                 env.step(list(actions_1[choice_1]), 1)
+
+    #                 print(actions_2[choice_2])
+    #                 pretty_print(state_2, text = "state:")
+    #                 input()
+                    env.step(list(actions_1111111), 1)
+
+                    env.step(list(actions_2[choice_2]), 2)
+                    # human play
+
+    #                 env.step(list(get_human_action()), 2)
+    #                 print(actions_1111111)
+
+                    while skiping:
+                        state_1, state_2, done, dp = env.step([], 0)
+                        #input(' step wating for done signal')
+                        if dp or done:
+                            break
+
+                    if steps == max_episode_steps or done:
+                        win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
+
+                        if win_lose == 1:
+                            env.decomposed_rewards[4] = 10000
+                            env.decomposed_rewards[5] = 0
+                        elif win_lose == -1:
+                            env.decomposed_rewards[4] = 0
+                            env.decomposed_rewards[5] = 10000
+                    reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
+                    total_reward_1 += sum(reward_1)
+                    
+                average_state += state_1
+                total_rewwards_list.append(total_reward_1)
+#                 print(total_rewwards_list)
+                test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
+                                               global_step=episode + 1)
+                test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
+                                               global_step=episode + 1)
+
+            tr = sum(total_rewwards_list) / evaluation_config.test_episodes
+            print("total reward:")
+            print(tr)
+
+            f = open("result_model_based_v1.txt", "a+")
+            f.write(agent_2.name + "\n")
+            f.write(str(tr) + "\n")
+            f.write(np.array2string(average_state / evaluation_config.test_episodes, precision=2, separator=',', suppress_small=True) + "\n")
             
-            total_rewwards_list.append(total_reward_1)
-            print(total_rewwards_list)
-            test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
-                                           global_step=episode + 1)
-            test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
-                                           global_step=episode + 1)
-
-        tr = sum(total_rewwards_list) / evaluation_config.test_episodes
-        print("total reward:")
-        print(tr)
-        
-        f = open("result_model_based.txt", "a+")
-        f.write(str(tr) + "\n")
-        f.close()
+            f.close()
         
 def pretty_print(state,  text = ""):
     state_list = state.copy().tolist()
