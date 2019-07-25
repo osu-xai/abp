@@ -33,7 +33,8 @@ torch.set_printoptions(sci_mode=False)
 class MBTSAdaptive(object):
     """Adaptive which uses the Model base Tree search algorithm"""
 
-    def __init__(self, name, state_length, network_config, reinforce_config, models_path, env, player = 1):
+    def __init__(self, name, state_length, network_config, reinforce_config, 
+                 models_path, env, depth, action_ranking, player = 1):
         super(MBTSAdaptive, self).__init__()
         self.name = name
         #self.choices = choices
@@ -74,8 +75,8 @@ class MBTSAdaptive(object):
                         30, 30, 10, 30, 30, 10, # p1 top and bottom lane units
                         30, 30, 10, 30, 30, 10, # p1 top and bottom lane units
                         2000, 2000, 2000, 2000, 40])
-        self.look_forward_step = 1
-        self.ranking_topk = float('inf')
+        self.look_forward_step = depth
+        self.ranking_topk = action_ranking#float('inf')
         
         # Generalize it 
         self.eval_mode()
@@ -276,12 +277,13 @@ class MBTSAdaptive(object):
 #         return self.value_model.predict_batch(FloatTensor(self.normalization(states, is_vf = True)))[1]
 
         values = FloatTensor(np.zeros(len(states)))
-        for i, state in enumerate(states):
-            actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
+        with torch.no_grad():
+            for i, state in enumerate(states):
+                actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
 
-            com_states = self.combine_sa(state, actions_self, is_enemy = False)
-            
-            values[i] = self.q_model.predict_batch(FloatTensor(self.normalization(states, is_vf = True)))[1].max(0)[0]
+                com_states = self.combine_sa(state, actions_self, is_enemy = False)
+
+                values[i] = self.q_model.predict_batch(FloatTensor(self.normalization(states, is_vf = True)))[1].max(0)[0]
         return values
     
     def action_ranking(self, after_states, action, ):
@@ -289,9 +291,10 @@ class MBTSAdaptive(object):
 #         print(len(after_states), len(action))
         if self.ranking_topk >= len(after_states):
             return action[np.array(range(len(after_states)))]
-        q_values = self.value_model.predict_batch(FloatTensor(self.normalization(after_states, is_vf = True)))[1]
-        q_values = q_values.view(-1)
-        topk_q, indices = torch.topk(q_values, self.ranking_topk)
+        with torch.no_grad():
+            q_values = self.value_model.predict_batch(FloatTensor(self.normalization(after_states, is_vf = True)))[1]
+            q_values = q_values.view(-1)
+            topk_q, indices = torch.topk(q_values, self.ranking_topk)
         
 #         print(topk_q)
 #         print(indices)
@@ -330,8 +333,9 @@ class MBTSAdaptive(object):
         
         next_states = after_states.clone()
 #         print(next_states.shape)
-        next_HPs = self.transition_model_HP.predict_batch(FloatTensor(self.normalization(next_states)))
-        next_units = self.transition_model_unit.predict_batch(FloatTensor(self.normalization(next_states)))
+        with torch.no_grad():
+            next_HPs = self.transition_model_HP.predict_batch(FloatTensor(self.normalization(next_states)))
+            next_units = self.transition_model_unit.predict_batch(FloatTensor(self.normalization(next_states)))
 #         print(next_HPs.shape)
 #         print(next_units.shape)
         next_states[:, self.index_hp] = next_HPs

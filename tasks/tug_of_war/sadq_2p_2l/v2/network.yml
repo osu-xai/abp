@@ -1,17 +1,17 @@
 layers:
     - type: "FC"
-      neurons: 1024
+      neurons: 2048
 #     - type: "BatchNorm1d"
 #       size: 1024
       
     - type: "FC"
-      neurons: 512
+      neurons: 1024
       
 #     - type: "BatchNorm1d"
 #       size: 512
       
     - type: "FC"
-      neurons: 128  
+      neurons: 512  
       
 #     - type: "BatchNorm1d"
 #       size: 128

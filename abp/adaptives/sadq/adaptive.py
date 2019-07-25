@@ -218,6 +218,7 @@ class SADQAdaptive(object):
             self.best_reward_mean = info["best_reward_mean"]
             self.episode = info["episode"]
             self.memory.load(self.network_config.network_path)
+            print("lenght of memeory: ", len(self.memory))
 
     def save(self, force=False, appendix=""):
         info = {
@@ -239,9 +240,12 @@ class SADQAdaptive(object):
                 logger.info("Saving network. Found new best reward (%.2f)" % total_reward)
                 self.eval_model.save_network(appendix = appendix)
                 self.target_model.save_network(appendix = appendix)
+                self.eval_model.save_network()
+                self.target_model.save_network()
                 with open(self.network_config.network_path + "/adaptive.info", "wb") as file:
                     pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
                 self.memory.save(self.network_config.network_path)
+                print("lenght of memeory: ", len(self.memory))
             else:
                 logger.info("The best reward is still %.2f. Not saving" % self.best_reward_mean)
 
