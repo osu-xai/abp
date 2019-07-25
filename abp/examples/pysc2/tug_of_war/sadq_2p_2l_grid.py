@@ -186,8 +186,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     # pretty_print(state_1, text = "state 1")
                     # pretty_print(state_2, text = "state 2")
 
-                    actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = True)
-                    actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = True)
+                    actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = 1)
+                    actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = 1)
                     assert state_1[-1] == state_2[-1] == steps, print(state_1, state_2, steps)
                     if not reinforce_config.is_random_agent_1:
                         combine_states_1 = combine_sa(state_1, actions_1)
@@ -329,7 +329,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         combine_states_1 = combine_sa(state_1, actions_1)
                         choice_1, _ = agent_1.predict(env.normalization(combine_states_1))
                     else:
-                        actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = True)
+                        actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = 1)
                         combine_states_1 = combine_sa(state_1, actions_1)
                         choice_1 = randint(0, len(actions_1) - 1)
 
@@ -339,7 +339,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         combine_states_2 = combine_sa(state_2, actions_2)
                         choice_2, _ = enemy_agent.predict(env.normalization(combine_states_2))
                     else:
-                        actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = True)
+                        actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = 1)
                         combine_states_2 = combine_sa(state_2, actions_2)
                         choice_2 = randint(0, len(actions_2) - 1)
 
