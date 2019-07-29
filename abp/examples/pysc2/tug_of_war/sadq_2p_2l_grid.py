@@ -15,7 +15,7 @@ from sc2env.environments.tug_of_war_2L_self_play_4grid import action_component_n
 from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
 from tqdm import tqdm
 from copy import deepcopy
-from random import randint
+from random import randint, random
 
 # np.set_printoptions(precision = 2)
 use_cuda = torch.cuda.is_available()
@@ -87,7 +87,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #     agents_2.append(new_agent_2)
     ######################################
 #     random_enemy = True
-    
+#     stage = 2
+    stage = 1
+    if stage == 2:
+        agents_2 = ["random_2"]
+        agent_1.steps = reinforce_config.epsilon_timesteps + 4001
+        
     round_num = 0
     
     privous_result = []
@@ -100,8 +105,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         agent_1_model = "TugOfWar_eval.pupdate_240"
         exp_save_path = 'abp/examples/pysc2/tug_of_war/all_experiences.pt'
         path = './saved_models/tug_of_war/agents/'
-        files = []
-        # r=root, d=directories, f = files
         for r, d, f in os.walk(path):
             for file in f:
                 if '.p' in file:
@@ -117,16 +120,31 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     if agent_1_model == file:
                         print("********agent_1_model", file)
                         agent_1.load_model(new_agent_2.eval_model)
-        
-        
+                        
+    elif network_config.restore_network:
+        path = network_config.network_path
+        for r, d, f in os.walk(path):
+            for file in f:
+                if 'eval.pupdate' in file or 'eval.p_the_best' in file:
+                    new_weights = torch.load(path + "/" +file)
+                    new_agent_2 = SADQAdaptive(name = file,
+                    state_length = len(state_1),
+                    network_config = network_config,
+                    reinforce_config = reinforce_config)
+                    new_agent_2.load_weight(new_weights)
+                    new_agent_2.disable_learning(is_save = False)
+                    agents_2.append(new_agent_2)
+                    print("loaded agent:", file)
+
     while True:
+        
         if len(privous_result) >= update_wins_waves and \
-        sum(privous_result) / update_wins_waves > 10000 and \
+        sum(privous_result) / update_wins_waves > 11000 and \
         not reinforce_config.is_random_agent_2:
             privous_result = []
             print("replace enemy agent's weight with self agent")
 #             random_enemy = False
-            f = open("result_self_play_2l_grid.txt", "a+")
+            f = open(evaluation_config.result_path, "a+")
             f.write("Update agent\n")
             f.close()
             
@@ -138,8 +156,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             new_agent_2.load_model(agent_1.eval_model)
             new_agent_2.disable_learning(is_save = False)
             agents_2.append(new_agent_2)
-            
-            agent_1.steps = reinforce_config.epsilon_timesteps / 2
+            if stage == 2:
+                agent_1.steps = reinforce_config.epsilon_timesteps + 4001
+            else:
+                agent_1.steps = reinforce_config.epsilon_timesteps / 2
             agent_1.best_reward_mean = 0
             agent_1.save(force = True, appendix = "update_" + str(round_num))
             
@@ -152,7 +172,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         print("Now have {} enemy".format(len(agents_2)))
         
-        for idx_enemy, enemy_agent in enumerate(agents_2[::-1]):
+        for idx_enemy, enemy_agent in enumerate(agents_2):
 #             break
             if reinforce_config.collecting_experience:
                 break
@@ -160,12 +180,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 print(enemy_agent)
             else:
                 print(enemy_agent.name)
-                
-            if idx_enemy == 0:
+            
+            if idx_enemy == len(agents_2) - 1:
                 training_num = evaluation_config.training_episodes
             else:
                 training_num = 10
-                
+#             if stage == 2:
+#                 training_num = 10
             for episode in tqdm(range(training_num)):
                 state_1, state_2 = env.reset()
                 total_reward = 0
@@ -188,6 +209,28 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
                     actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = 1)
                     actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = 1)
+                
+                    if stage == 2:
+                        actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
+                        actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
+                        if state_1[env.pylon_index] < 3:
+                            mineral_diff = state_1[env.miner_index] - 200 - (state_1[env.pylon_index] * 25)
+    #                         print("mineral diff")
+    #                         print(mineral_diff)
+                            save_prob = 0.7
+                            if state_1[env.pylon_index] == 1:
+                                save_prob = 0.9
+                            if state_1[env.pylon_index] == 2:
+                                save_prob = 0.95
+                                
+                            if mineral_diff >= 0 and mineral_diff < 100 + (75 * state_1[env.pylon_index]) and random() > save_prob:
+                                actions_1 = env.get_big_A(mineral_diff, state_1[env.pylon_index])
+    #                             print(actions_1)
+
+                            if mineral_diff >= 100 + (75 * state_1[env.pylon_index]) and random() > (0.4 + (state_1[env.pylon_index] * 0.25)):
+                                actions_1 = actions_1[actions_1[:, 6] > 0]
+    #                             print(actions_1)
+    #                         input()
 
                     assert state_1[-1] == state_2[-1] == steps, print(state_1, state_2, steps)
                     if not reinforce_config.is_random_agent_1:
@@ -210,6 +253,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         if enemy_agent == "random_2":
                             actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
                         choice_2 = randint(0, len(actions_2) - 1)
+
+                           
     #                 print("action list:")
     #                 print(actions_1)
     #                 print(actions_2)
@@ -224,6 +269,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     input('pause')
                     env.step(list(actions_1[choice_1]), 1)
                     env.step(list(actions_2[choice_2]), 2)
+        
+                    reward_shape = 0
+#                     reward_shape = reward_shaping(combine_states_1[choice_1])
     #                 if steps == 1:
     #                     env.step((1,0,0,0,0,0,0), 1)
     #                     env.step((1,0,0,0,0,0,0), 2)
@@ -255,6 +303,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
                     if not reinforce_config.is_random_agent_1:
                         agent_1.reward(sum(reward_1))
+                        agent_1.reward(reward_shape)
 
                 if not reinforce_config.is_random_agent_1:
                     agent_1.end_episode(state_1)
@@ -275,17 +324,20 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("======================================================================")
         
         tied_lose = 0
-        for idx_enemy, enemy_agent in enumerate(agents_2[::-1]):
+        for idx_enemy, enemy_agent in enumerate(agents_2):
             average_end_state = np.zeros(len(state_1))
             if type(enemy_agent) == type("random"):
                 print(enemy_agent)
             else:
                 print(enemy_agent.name)
                 
-            if idx_enemy == 0 and not reinforce_config.collecting_experience:
+            if idx_enemy == len(agents_2) - 1 and not reinforce_config.collecting_experience:
                 test_num = evaluation_config.test_episodes
             else:
                 test_num = 5
+                
+#             if stage == 2:
+#                 test_num = 5
                 
             for episode in tqdm(range(test_num)):
                 env.reset()
@@ -479,7 +531,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         if len(privous_result) > update_wins_waves:
             del privous_result[0]
-        f = open("result_self_play_2l_grid.txt", "a+")
+        f = open(evaluation_config.result_path, "a+")
         f.write(str(tr) + "\n")
         f.close()
         
@@ -582,4 +634,15 @@ def get_human_action():
         action[int(a) - 1] += 1
     print("your acions : ", action)
     return action
-            
+
+def reward_shaping(state_self):
+    penalty_hp = 0
+    if sum(state_self[39:42]) - sum(state_self[15:18]) > 3 and state_self[63] < 500:
+        penalty_hp += -1500
+        
+    if sum(state_self[51:54]) - sum(state_self[27:30]) > 3 and state_self[64] < 500:
+        penalty_hp += -1500
+        
+    pylon_reward = state_self[7] * 200
+    
+    return penalty_hp + pylon_reward

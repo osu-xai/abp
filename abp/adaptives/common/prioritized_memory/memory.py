@@ -72,7 +72,7 @@ class ReplayBuffer(object):
         idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
         return self._encode_sample(idxes)
 
-    def saveReplayBuffer(self, path, name=""):
+    def save(self, path, name=""):
         """Save the memory in case of crash
         Parameters
         ----------
@@ -89,7 +89,7 @@ class ReplayBuffer(object):
         with open(path + "/adaptive_memory.info", "wb") as file:
                     pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
 
-    def loadReplayBuffer(self, path):
+    def load(self, path):
         """ Load the parameters of a saved off memory file
         Parameters
         ----------

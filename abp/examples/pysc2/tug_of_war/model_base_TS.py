@@ -171,12 +171,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             print("total reward:")
             print(tr)
 
-            f = open("result_model_based_v1.txt", "a+")
+            f = open("result_model_based_v3.txt", "a+")
             f.write(agent_2.name + "\n")
             f.write(str(tr) + "\n")
             f.write(np.array2string(average_state / evaluation_config.test_episodes, precision=2, separator=',', suppress_small=True) + "\n")
             
             f.close()
+        break
         
 def pretty_print(state,  text = ""):
     state_list = state.copy().tolist()

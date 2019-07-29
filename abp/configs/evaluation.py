@@ -10,7 +10,8 @@ default_evaluation_config = {
     "contrastive": False,
     "sleep": 1,
     "generate_xai_replay": False,
-    "xai_replay_dimension": 256
+    "xai_replay_dimension": 256,
+    "result_path": "result_default.txt"
 }
 
 
@@ -50,4 +51,7 @@ class EvaluationConfig(BaseConfig):
 
     xai_replay_dimension = property(BaseConfig.get_property("xai_replay_dimension"),
                      BaseConfig.set_property("xai_replay_dimension"))
+    
+    result_path = property(BaseConfig.get_property("result_path"),
+                     BaseConfig.set_property("result_path"))
 
