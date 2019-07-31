@@ -1,6 +1,6 @@
 import numpy as np
 import random
-import pickle
+import _pickle as pickle
 import os
 
 from baselines.common.segment_tree import SumSegmentTree, MinSegmentTree
@@ -87,8 +87,12 @@ class ReplayBuffer(object):
             "next_idx": self._next_idx
         }
         with open(path + "/adaptive_memory.info", "wb") as file:
-                    pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
-
+#             pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
+            p = pickle.Pickler(file) 
+            p.fast = True 
+            p.dump(info)
+            p.memo.clear()
+            
     def load(self, path):
         """ Load the parameters of a saved off memory file
         Parameters
@@ -99,7 +103,10 @@ class ReplayBuffer(object):
         restore_path = path + "/adaptive_memory.info"
         if os.path.exists(restore_path):
             with open(restore_path, "rb") as file:
-                info = pickle.load(file)
+#                 info = pickle.load(file)
+                p = pickle.Unpickler(file) 
+#                 p.fast = True 
+                info = p.load()
 
             self._storage = info["storage"]
             self._maxsize = info["maxsize"]
@@ -235,7 +242,10 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             "maxsize": self._maxsize
         }
         with open(path + "/adaptive_memory.info", "wb") as file:
-                    pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
+            p = pickle.Pickler(file) 
+            p.fast = True 
+            p.dump(info)
+            p.memo.clear()
 
     def load(self, path):
         """ Load the parameters of a saved off memory file
@@ -247,7 +257,8 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         restore_path = path + "/adaptive_memory.info"
         if os.path.exists(restore_path):
             with open(restore_path, "rb") as file:
-                info = pickle.load(file)
+                p = pickle.Unpickler(file) 
+                info = p.load()
 
             self._alpha = info["alpha"]
             self._it_sum = info["it_sum"]
