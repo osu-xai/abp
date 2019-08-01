@@ -375,7 +375,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     print("about to call env.step() during skip")
     #                 start_time = time.time()
                     state_1, state_2, done, dp = env.step([], 0)
-                    if evaluation_config.generate_xai_replay
+                    if evaluation_config.generate_xai_replay:
                         #recorder.save_jpg()
                         recorder.record_game_clock_tick(env.decomposed_reward_dict)
                     if dp or done:
