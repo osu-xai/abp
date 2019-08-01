@@ -124,6 +124,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     elif network_config.restore_network:
         path = network_config.network_path
         for r, d, f in os.walk(path):
+            f = sorted(f)
             for file in f:
                 if 'eval.pupdate' in file or 'eval.p_the_best' in file:
                     new_weights = torch.load(path + "/" +file)
@@ -137,9 +138,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     print("loaded agent:", file)
 
     while True:
-        
+        print(sum(np.array(privous_result) > 10000))
         if len(privous_result) >= update_wins_waves and \
-        sum(privous_result) / update_wins_waves > 11000 and \
+        sum(np.array(privous_result) > 10000) >= update_wins_waves and \
         not reinforce_config.is_random_agent_2:
             privous_result = []
             print("replace enemy agent's weight with self agent")
@@ -217,17 +218,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             mineral_diff = state_1[env.miner_index] - 200 - (state_1[env.pylon_index] * 25)
     #                         print("mineral diff")
     #                         print(mineral_diff)
-                            save_prob = 0.7
-                            if state_1[env.pylon_index] == 1:
-                                save_prob = 0.9
-                            if state_1[env.pylon_index] == 2:
-                                save_prob = 0.95
+#                             save_prob = 0.85
+#                             if state_1[env.pylon_index] == 1:
+#                                 save_prob = 0.9
+#                             if state_1[env.pylon_index] == 2:
+#                                 save_prob = 0.95
                                 
-                            if mineral_diff >= 0 and mineral_diff < 100 + (75 * state_1[env.pylon_index]) and random() > save_prob:
-                                actions_1 = env.get_big_A(mineral_diff, state_1[env.pylon_index])
-    #                             print(actions_1)
+#                             if mineral_diff >= 0 and mineral_diff < 100 + (75 * state_1[env.pylon_index]) and random() > save_prob:
+#                                 actions_1 = env.get_big_A(mineral_diff, state_1[env.pylon_index])
+#     #                             print(actions_1)
 
-                            if mineral_diff >= 100 + (75 * state_1[env.pylon_index]) and random() > (0.4 + (state_1[env.pylon_index] * 0.25)):
+                            if mineral_diff >= 100 + (75 * state_1[env.pylon_index]) and random() > 0.96:
                                 actions_1 = actions_1[actions_1[:, 6] > 0]
     #                             print(actions_1)
     #                         input()
@@ -638,12 +639,12 @@ def get_human_action():
 
 def reward_shaping(state_self):
     penalty_hp = 0
-    if sum(state_self[39:42]) - sum(state_self[15:18]) > 3 and state_self[63] < 500:
-        penalty_hp += -1500
+#     if sum(state_self[39:42]) - sum(state_self[15:18]) > 3 and state_self[63] < 500:
+#         penalty_hp += -1500
         
-    if sum(state_self[51:54]) - sum(state_self[27:30]) > 3 and state_self[64] < 500:
-        penalty_hp += -1500
+#     if sum(state_self[51:54]) - sum(state_self[27:30]) > 3 and state_self[64] < 500:
+#         penalty_hp += -1500
         
-    pylon_reward = state_self[7] * 200
+    pylon_reward = state_self[7] * 75
     
     return penalty_hp + pylon_reward
