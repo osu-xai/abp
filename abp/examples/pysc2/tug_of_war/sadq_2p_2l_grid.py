@@ -99,12 +99,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     update_wins_waves = 10
     
     all_experiences = []
-    
+    path = './saved_models/tug_of_war/agents/grid'
     exp_save_path = 'abp/examples/pysc2/tug_of_war/rand_v_rand.pt'
     if reinforce_config.collecting_experience and not reinforce_config.is_random_agent_2:
         agent_1_model = "TugOfWar_eval.pupdate_240"
         exp_save_path = 'abp/examples/pysc2/tug_of_war/all_experiences.pt'
-        path = './saved_models/tug_of_war/agents/'
         for r, d, f in os.walk(path):
             for file in f:
                 if '.p' in file:
@@ -136,7 +135,24 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     new_agent_2.disable_learning(is_save = False)
                     agents_2.append(new_agent_2)
                     print("loaded agent:", file)
-
+                    
+    if evaluation_config.generate_xai_replay:
+        agent_1_model = "TugOfWar_eval.pupdate_600"
+        agent_2_model = "TugOfWar_eval.pupdate_560"
+        
+        agents_2 = []
+        weights_1 = torch.load(path + "/" + agent_1_model)
+        weights_2 = torch.load(path + "/" + agent_2_model)
+        
+        new_agent_2 = SADQAdaptive(name = "record",
+                    state_length = len(state_1),
+                    network_config = network_config,
+                    reinforce_config = reinforce_config)
+        agent_1.load_weight(weights_1)
+        new_agent_2.load_weight(weights_2)
+        new_agent_2.disable_learning(is_save = False)
+        agents_2.append(new_agent_2)
+        
     while True:
         print(sum(np.array(privous_result) > 10000))
         if len(privous_result) >= update_wins_waves and \
@@ -315,7 +331,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                 global_step = episode + 1)
         
         if not reinforce_config.is_random_agent_1:
-            agent_1.disable_learning(is_save = not reinforce_config.collecting_experience)
+            agent_1.disable_learning(is_save = not reinforce_config.collecting_experience and not evaluation_config.generate_xai_replay)
 
         total_rewwards_list = []
             
