@@ -358,9 +358,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     print("about to call env.step() during skip")
     #                 start_time = time.time()
                     state_1, state_2, done, dp = env.step([], 0)
-                    if evaluation_config.generate_xai_replay:
-                        recorder.save_jpg()
-                        #recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                    if evaluation_config.generate_xai_replay
+                        #recorder.save_jpg()
+                        recorder.record_game_clock_tick(env.decomposed_reward_dict)
                     if dp or done:
     #                     print(time.time() - start_time)
                         break
@@ -405,8 +405,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
 #                     input("record dp if engaged")
                     if evaluation_config.generate_xai_replay:
-                        recorder.save_jpg()
-                        #recorder.record_decision_point(actions_1[choice_1], actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
+                        #recorder.save_jpg()
+                        recorder.record_decision_point(actions_1[choice_1], actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
                     
     #                 input('stepped with command 2')
                     #######
@@ -449,8 +449,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                         input("step to move the game along and send the wave")
                         state_1, state_2, done, dp = env.step([], 0)
                         if evaluation_config.generate_xai_replay:
-                            recorder.save_jpg()
-                            #recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                            #recorder.save_jpg()
+                            recorder.record_game_clock_tick(env.decomposed_reward_dict)
                         #input(' step wating for done signal')
                         if dp or done:
     #                         print(time.time() - start_time)
@@ -460,6 +460,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     input(f"dp is {dp} done is {done}")
 
                     if steps == max_episode_steps or done:
+                        recorder.done_recording()
                         win_lose = player_1_win_condition(state_1[63], state_1[64], state_1[65], state_1[66])
 
                         if win_lose == 1:
