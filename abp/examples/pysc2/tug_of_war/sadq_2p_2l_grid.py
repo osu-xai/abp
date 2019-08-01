@@ -121,12 +121,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         agent_1.load_model(new_agent_2.eval_model)
                         
     elif network_config.restore_network:
-        path = network_config.network_path
-        for r, d, f in os.walk(path):
+        restore_path = network_config.network_path
+        for r, d, f in os.walk(restore_path):
             f = sorted(f)
             for file in f:
                 if 'eval.pupdate' in file or 'eval.p_the_best' in file:
-                    new_weights = torch.load(path + "/" +file)
+                    new_weights = torch.load(restore_path + "/" +file)
                     new_agent_2 = SADQAdaptive(name = file,
                     state_length = len(state_1),
                     network_config = network_config,
@@ -137,12 +137,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     print("loaded agent:", file)
                     
     if evaluation_config.generate_xai_replay:
+
         agent_1_model = "TugOfWar_eval.pupdate_600"
         agent_2_model = "TugOfWar_eval.pupdate_560"
         
         agents_2 = []
-        weights_1 = torch.load(path + "/" + agent_1_model)
-        weights_2 = torch.load(path + "/" + agent_2_model)
+        if use_cuda:
+            weights_1 = torch.load(path + "/" + agent_1_model)
+            weights_2 = torch.load(path + "/" + agent_2_model)
+        else:
+            weights_1 = torch.load(path + "/" + agent_1_model, map_location=lambda storage, loc:storage)
+            weights_2 = torch.load(path + "/" + agent_2_model, map_location=lambda storage, loc:storage)
         
         new_agent_2 = SADQAdaptive(name = "record",
                     state_length = len(state_1),
