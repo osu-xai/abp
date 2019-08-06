@@ -107,6 +107,7 @@ class ReplayBuffer(object):
                 p = pickle.Unpickler(file) 
 #                 p.fast = True 
                 info = p.load()
+                p.memo.clear()
 
             self._storage = info["storage"]
             self._maxsize = info["maxsize"]
@@ -259,6 +260,7 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             with open(restore_path, "rb") as file:
                 p = pickle.Unpickler(file) 
                 info = p.load()
+                p.memo.clear()
 
             self._alpha = info["alpha"]
             self._it_sum = info["it_sum"]

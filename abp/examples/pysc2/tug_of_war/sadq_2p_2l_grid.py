@@ -482,7 +482,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     input(f"dp is {dp} done is {done}")
 
                     if steps == max_episode_steps or done:
-                        recorder.done_recording()
+                        if evaluation_config.generate_xai_replay:
+                            recorder.done_recording()
                         win_lose = player_1_win_condition(state_1[63], state_1[64], state_1[65], state_1[66])
 
                         if win_lose == 1:
