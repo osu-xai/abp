@@ -11,7 +11,8 @@ from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.tug_of_war_2L_self_play import TugOfWar
-from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
+from sc2env.environments.tug_of_war_2L_self_play import action_component_names
+from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
 from tqdm import tqdm
 from copy import deepcopy
 from random import randint
@@ -101,9 +102,14 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 done = False
                 skiping = True
                 steps = 0
+                if evaluation_config.generate_xai_replay:
+                    recorder = XaiReplayRecorder2LaneNexus(env.sc2_env, episode, evaluation_config.env, action_component_names, replay_dimension)
 
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
+                    if evaluation_config.generate_xai_replay:
+                        #recorder.save_jpg()
+                        recorder.record_game_clock_tick(env.decomposed_reward_dict)
 
                     if dp or done:
                         break
@@ -131,6 +137,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     else:
                         choice_2 = randint(0, len(actions_2) - 1)
 
+                    if evaluation_config.generate_xai_replay:
+                        #recorder.save_jpg()
+                        recorder.record_decision_point(actions_1[choice_1], actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
+    
     #                 env.step(list(actions_1[choice_1]), 1)
 
     #                 print(actions_2[choice_2])
@@ -147,10 +157,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     while skiping:
                         state_1, state_2, done, dp = env.step([], 0)
                         #input(' step wating for done signal')
+                        if evaluation_config.generate_xai_replay:
+                            #recorder.save_jpg()
+                            recorder.record_game_clock_tick(env.decomposed_reward_dict)
+
                         if dp or done:
                             break
 
                     if steps == max_episode_steps or done:
+                        if evaluation_config.generate_xai_replay:
+                            recorder.done_recording()
+
                         win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
 
                         if win_lose == 1:
