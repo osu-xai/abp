@@ -14,6 +14,7 @@ from copy import deepcopy
 
 from abp.utils import clear_summary_path
 from abp.models import DQNModel
+from abp.utils.search_tree import Node
 # TODO: Generalize it
 from abp.examples.pysc2.tug_of_war.models_mb.transition_model import TransModel
 from abp.utils.search_tree import Node
@@ -94,13 +95,13 @@ class MBTSAdaptive(object):
         
         self.transition_model_unit = TransModel("TugOfWar2lNexusUnit",network_trans_unit, use_cuda)
         
-        self.value_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
-        self.q_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
+#         self.value_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
+        self.q_model = DQNModel(self.name + "_eval", self.network_config, use_cuda, is_sigmoid = True)
         
     def load_model(self, models_path):
         HP_state_dict = torch.load(models_path + 'transition_model_hp.pt')
         unit_state_dict = torch.load(models_path + 'transition_model_unit.pt')
-        value_state_dict = torch.load(models_path + 'value_model.pt')
+#         value_state_dict = torch.load(models_path + 'value_model.pt')
 
 #         print(HP_state_dict)
         new_HP_state_dict = OrderedDict()
@@ -109,11 +110,11 @@ class MBTSAdaptive(object):
         
         the_HP_weight = list(HP_state_dict.values())
         the_unit_weight = list(unit_state_dict.values())
-        the_value_weight = list(value_state_dict.values())
+#         the_value_weight = list(value_state_dict.values())
         
         the_HP_keys = list(self.transition_model_HP.model.state_dict().keys())
         the_unit_keys = list(self.transition_model_unit.model.state_dict().keys())
-        the_value_keys = list(self.value_model.model.state_dict().keys())
+#         the_value_keys = list(self.value_model.model.state_dict().keys())
         
 #         print(the_HP_keys)
 #         print(the_unit_keys)
@@ -123,13 +124,13 @@ class MBTSAdaptive(object):
             new_HP_state_dict[the_HP_keys[i]] = the_HP_weight[i]
         for i in range(len(the_HP_weight)):
             new_unit_state_dict[the_unit_keys[i]] = the_unit_weight[i]
-        for i in range(len(the_HP_weight)):
-            new_value_state_dict[the_value_keys[i]] = the_value_weight[i]
+#         for i in range(len(the_HP_weight)):
+#             new_value_state_dict[the_value_keys[i]] = the_value_weight[i]
             
         self.transition_model_HP.load_weight(new_HP_state_dict)
         self.transition_model_unit.load_weight(new_unit_state_dict)
 #         self.value_model.load_weight(new_value_state_dict)
-        self.q_model.load_weight(torch.load(models_path + 'q_model.pt'))
+        self.q_model.load_weight(torch.load(models_path + 'q_model_win_prob.pt'))
         
     def player_1_win_condition(self, state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp):
         if min(state_1_T_hp, state_1_B_hp) == min(state_2_T_hp, state_2_B_hp):
@@ -145,30 +146,23 @@ class MBTSAdaptive(object):
             else:
                 return -1
             
-    def reward_func(self, state, next_states):
-        # TODO
-        rewards = FloatTensor((next_states - state.reshape(-1,))[:, self.index_hp].clone())
+    def reward_func_win_prob(self, state, next_states):
         
-#         print(rewards)
-        rewards[rewards > 0] = 0
-#         print(rewards)
-        rewards[:, 2:] *= -1
-#         print(rewards)
-#         print(rewards)
-        rewards = torch.sum(rewards, dim = 1)
+        rewards = FloatTensor((torch.ones(next_states.size()[0], dtype=torch.float) * -1).tolist())
+#         print(type(rewards))
         min_s, index = next_states[:, self.index_hp].min(1)
-        win = ((min_s < 10) & (index > 1)).float()
-        lose = ((min_s < 10) & (index <= 1)).float()
-        
-        rewards += win * 10000
-        rewards -= lose * 10000
+#         print(min_s.size(), index.size())
+        win = ((min_s.round() <= 0) & (index > 1)).float()
+        lose = ((min_s.round() <= 0) & (index <= 1)).float()
+#         print(win.size())
+        rewards += win * 2
+        rewards += lose * 1
 #         if sum(win) > 0 or sum(lose) > 0:
 #             print(min_s, index)
 #             print(win, lose)
 #             print(rewards)
 #             input()
-        return rewards
-    
+        return rewards   
     
     def eval_mode(self):
 #         self.value_model.eval_mode()
@@ -177,7 +171,7 @@ class MBTSAdaptive(object):
         self.q_model.eval_mode()
 
         
-    def minimax(self, state, depth = 1, previous_reward = 0.0):
+    def minimax(self, state, depth = 1, par_node = None):
 #         print("20---------------------------")
 #         print(state)
         actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
@@ -212,33 +206,27 @@ class MBTSAdaptive(object):
             next_states = self.get_next_states(state, a_self, top_k_action_enemy)
 #             print("11---------------------------")
 #             print(next_states)
-            next_reward = self.reward_func(state, next_states)
+            next_reward = self.reward_func_win_prob(state, next_states)
 #             print("12---------------------------")
 #             print(next_reward)
         
             if depth == self.look_forward_step:
                 min_values = self.rollout(next_states)
+                
+#                 min_values[next_reward == 1] = 1
+#                 min_values[next_reward == 0] = 0
+                
             else:
                 min_values = FloatTensor(np.zeros(len(next_states)))
                 for i, (n_s, n_r) in enumerate(zip(next_states, next_reward)):
-                    if abs(n_r) >= 10000:
-                        continue
-                    min_values[i], _ = self.minimax(n_s, depth = depth + 1, previous_reward = previous_reward + n_r)
+#                     if n_r == 1 or n_r == 0:
+# #                         min_values[i] = n_r
+#                         continue
+                    min_values[i], _ = self.minimax(n_s, depth = depth + 1)
             
 #             print("13---------------------------")
 #             print(min_values)
             min_values = min_values.view(-1)
-            previous_reward = FloatTensor([previous_reward])
-#             print("21---------------------------")
-#             print(next_reward.is_cuda, previous_reward.is_cuda, previous_reward.is_cuda)
-#             print(min_values.size(), next_reward.size(), previous_reward)
-            min_values += (next_reward + previous_reward)
-#             print("14---------------------------")
-#             print(next_reward)
-#             print("15---------------------------")
-#             print(previous_reward)
-#             print("16---------------------------")
-#             print(min_values)
             min_value = min_values.min(0)[0].item()
 #             print("17---------------------------")
 #             print(min_value)
@@ -252,19 +240,25 @@ class MBTSAdaptive(object):
 #             input()
         return max_value, best_action
 
-    def predict(self, state, minerals_enemy):
+    def predict(self, state, minerals_enemy, dp = 0):
 #         print("1---------------------------")
 #         print(state)
+        root_node = Node("dp_" + str(dp) + "root", state)
         state = FloatTensor(np.append(state, minerals_enemy))
 #         print("2---------------------------")
 #         print(state)
         if self.look_forward_step > 0:
-            max_value, best_action = self.minimax(state)
+            max_value, best_action = self.minimax(state, par_node = root_node)
         else:
             pass
 #         print(state)
 #         input()
-
+#         print()
+#         print()
+#         print()
+#         print()
+#         print(max_value)
+#         input()
         return best_action
     
     def normalization(self, state, is_vf = False):
@@ -292,7 +286,7 @@ class MBTSAdaptive(object):
         if self.ranking_topk >= len(after_states):
             return action[np.array(range(len(after_states)))]
         with torch.no_grad():
-            q_values = self.value_model.predict_batch(FloatTensor(self.normalization(after_states, is_vf = True)))[1]
+            q_values = self.q_model.predict_batch(FloatTensor(self.normalization(after_states, is_vf = True)))[1]
             q_values = q_values.view(-1)
             topk_q, indices = torch.topk(q_values, self.ranking_topk)
         
@@ -383,221 +377,3 @@ class MBTSAdaptive(object):
         assert torch.sum(com_state[:, mineral_index] >= 0) == len(com_state), print(com_state)
 
         return com_state
-    
-    
-    
-    
-#     def predict(self, state, minerals_enemy):
-#         # Get actions of self
-#         root = Node('root', state)
-#         parents = [root]
-        
-#         leaf_node = []
-#         leaf_node_states = []
-#         leaf_fifo = []
-        
-        
-# #         for i in range(self.look_forward_step):
-# #             for n in parents:
-# #                 next_states, next_fifo_self, length_enemy_action = self.expand_node(n, minerals_enemy, fifo_self, fifo_enemy)
-# #                 if i == (self.look_forward_step - 1):
-# #                     next_states = self.same_self_action_block(next_states, length_enemy_action)
-# #                     children = self.same_self_action_block(np.array(n.children), length_enemy_action)
-# #                     leaf_node_states.append(next_states)
-# #                     leaf_fifo.append(next_fifo_self)
-# #                     leaf_node.append(children)
-                
-        
-# #         print(len(leaf_node_states[0]), len(leaf_fifo[0]), len(leaf_node[0]))
-# #         input()
-# #         if self.look_forward_step == 0:
-# #             self.rollout_root([parents[0].state], parents, [fifo_self])
-# #         else:
-# #             for lns, ln, ff in zip(leaf_node_states, leaf_node, leaf_fifo):
-# #                 self.rollout(lns, ln, ff)
-        
-# #         print(root.best_reward)
-# #         action, _ = self.value_model.predict(state, 0, False)
-# #         print(root.best_action)
-#         return root.best_action
-
-#     def same_self_action_block(self, states_or_nodes, length_enemy_action):
-#         return np.array(np.split(states_or_nodes, length_enemy_action))
-    
-#     def rollout(self, states, nodes, ffs):
-#         all_min_q_value = []
-#         for s_block, n_block, ff in zip(states, nodes, ffs):
-# #             print(s.tolist(),n.parent.best_reward,ff)
-# #             input()
-#             s_b = []
-#             for s in s_block:
-#                 actions_self = self.env.get_big_A(s[self.env.miner_index])
-#                 com_s, _ = self.combine_sa(s, actions_self, ff, is_enemy = False)
-#     #             for cs in com_s:
-#     #                 print(cs.tolist())
-#     #             input()
-#     #             com_s_old, _ = self.combine_sa_old(s, actions_self, ff, is_enemy = False)
-#     #             assert sum(sum(com_s_old == com_s)) == com_s_old.shape[0] * com_s_old.shape[1], print(com_s_old == com_s)
-#                 com_s = self.env.normalization(com_s)
-#                 s_b.append(com_s)
-#             s_b = np.vstack(s_b)
-# #             print(s_b.shape)
-# #             input()
-#             q_values_block = FloatTensor(self.value_model.predict_batch(Tensor(s_b))[1]).view(-1)
-# #             print(q_values)
-# #             input()
-#             min_q_value, _ = q_values_block.min(0)
-#             all_min_q_value.append(min_q_value)
-# #         print(all_min_q_value)
-#         max_q_value, choice = FloatTensor(all_min_q_value).max(0)
-#         if nodes[0][0].parent is not None:
-#             parent = nodes[0][0].parent
-#         else:
-#             parent = nodes[0][0]
-#         parent.best_reward = parent.reward + max_q_value
-#         parent.best_action = self.env.get_big_A(parent.state[self.env.miner_index])[choice]
-#         self.reward_brack_prop(parent)
-# #         print("mbts:")
-# #         print(parent.best_reward)
-# #         print(parent.best_action)
-# #         input()
-        
-#     def rollout_root(self, states, nodes, ffs):
-#         for s, n, ff in zip(states, nodes, ffs):
-#             actions_self = self.env.get_big_A(s[self.env.miner_index])
-#             com_s, _ = self.combine_sa(s, actions_self, ff, is_enemy = False)
-#             com_s = self.env.normalization(com_s)
-#             q_values = FloatTensor(self.value_model.predict_batch(Tensor(com_s))[1]).view(-1)
-#             max_q_value, choice = q_values.max(0)
-#             n.best_reward = n.reward + max_q_value
-#             n.best_action = actions_self[choice]
-# #             print("sadq:")
-# #             print(n.reward + max_q_value)
-# #             print(actions_self[choice])
-# #             input()
-#     def normalization(self, state):
-#         return state / self.normalization_array
-    
-#     def expand_node(self, parent, mineral_enemy, fifo_self, fifo_enemy):
-#         # TODO: check the state change or not ,if yes deepcopy for the reward func state
-#         state = deepcopy(parent.state)
-#         parent_name = parent.name
-#         actions_self = self.env.get_big_A(state[self.env.miner_index])
-#         actions_enemy = self.env.get_big_A(mineral_enemy)
-        
-#         after_states, after_fifo_self, after_state_actions_self = self.get_after_states(state, actions_self, actions_enemy, fifo_self, fifo_enemy)
-#         next_states = self.get_next_states(after_states)
-        
-#         rewards = self.reward_func(state, next_states)
-        
-#         all_sub_nodes = []
-#         best_reward = float('-inf')
-#         best_node = None
-#         best_action = None
-# #         print(after_state_actions_self)
-#         for i, (n_s, reward, action) in enumerate(zip(next_states, rewards, after_state_actions_self)):
-# #             print(n_s.tolist(), reward, action)
-# #             input()
-#             child = Node(parent_name + '_' + str(i + 1), n_s, reward = reward, parent = parent, parent_action = action)
-#             parent.add_child(child, action) 
-            
-#             if best_reward < reward:
-#                 best_reward = reward
-#                 best_node = child
-#                 best_action = action
-#         parent.best_action = best_action
-#         self.reward_brack_prop(best_node)
-    
-#         return next_states, after_fifo_self, len(actions_self)
-    
-#     def reward_brack_prop(self, node):
-#         if node.name == "root":
-#             return
-#         parent = node.parent
-#         if node.best_reward > parent.best_reward:
-#             parent.best_child = node
-#             parent.best_reward = node.best_reward
-#             parent.best_action = node.parent_action
-#             self.reward_brack_prop(parent)
-#         return
-    
-#     def action_ranking(self, q_state, k = 10):
-#         # TODO
-#         return np.array(range(0, len(q_state)))
-    
-#     def reset(self):
-#         self.current_reward = 0
-#         self.total_reward = 0
-
-#     def get_next_states(self, after_state):
-#         next_HPs = self.transition_model_HP.predict_batch(FloatTensor(self.normalization(after_state)))
-#         next_units = self.transition_model_unit.predict_batch(FloatTensor(self.normalization(after_state)))
-        
-#         after_state[:, self.index_hp] = next_HPs.cpu().detach().numpy()
-#         after_state[:, self.index_units] = next_units.round().cpu().detach().numpy()
-        
-#         return after_state
-        
-#     def get_after_states(self, state, actions_self, actions_enemy, fifo_self, fifo_enemy):
-#         # Faster combination way
-        
-#         after_states_self, after_fifo_self = self.combine_sa(state, actions_self, fifo_self, is_enemy = False)
-# #         print(len(actions_self), len(after_fifo_self))
-# #         after_states_self = self.imply_mineral_by_action(after_states_self, actions_self)
-# #         for af, ff in zip(after_states_self, after_fifo_self):
-# #             print(af.tolist(), ff)
-#         after_states = np.zeros((len(actions_self) * len(actions_enemy), after_states_self.shape[1]))
-# #         print(after_states.shape)
-# #         idx = 0
-#         after_state_actions_self = np.zeros((len(actions_self) * len(actions_enemy), actions_self.shape[1]))
-# #         after_state_fifo_self = []
-#         for i, a_s_s in enumerate(after_states_self):
-#             a_s, _ = self.combine_sa(a_s_s, actions_enemy, fifo_enemy, is_enemy = True)
-# #             print(a_s.shape)
-#             after_states[i * len(actions_enemy) : (i + 1)* len(actions_enemy)] = a_s
-    
-#             after_state_actions_self[i * len(actions_enemy) : (i + 1)* len(actions_enemy)] = np.repeat(actions_self[i].reshape((1,-1)), len(actions_enemy), axis = 0).copy()
-# #             for _ in range(len(actions_enemy)):
-# #                 after_state_fifo_self.append(deepcopy(after_fifo_self[i]))
-# #         print(after_states[:, building_types['Pylon']])
-# #         print("*********")
-# #         print(len(after_states), len(after_fifo_self), len(actions_enemy))
-#         after_states[:, self.env.miner_index] += after_states[:, building_types['Pylon']] * 50 + 100
-# #             idx += 1
-# #         print(idx)
-# #         for a_s in after_states:
-# #             print(a_s.tolist())
-        
-#         return after_states, after_fifo_self, after_state_actions_self
-
-#     def combine_sa(self, de_s, actions, fifo, is_enemy):
-#         if not is_enemy:
-#             building_index = list(range(0, 4))
-#         else:
-#             building_index = list(range(5, 9))
-#         fifo_list = []
-#         for _ in range(len(actions)):
-#             fifo_list.append(deepcopy(fifo))
-#         s = np.repeat(de_s.reshape((1,-1)), len(actions), axis = 0)
-#         actions = actions.reshape(-1, 4)
-#         for idx_a, action in enumerate(actions):
-# #             print(action)
-#             for a, num in enumerate(action):
-#                 for _ in range(int(num)):
-#                     s[idx_a][building_index[a]] += 1
-#                     fifo_list[idx_a].append(building_index[a])
-#                     if len(fifo_list[idx_a]) > 30:
-#                         s[idx_a][building_index[fifo_list[idx_a][0]]] -= 1
-#                         del fifo_list[idx_a][0]
-#         if not is_enemy:    
-#             s[:, self.env.miner_index] -= np.sum(self.env.maker_cost_np * actions, axis = 1)
-#         return s, fifo_list
-    
-#     def imply_mineral_by_action(self, mineral, action):
-#         mineral -= np.sum(self.env.maker_cost_np * action)
-#         return mineral
-        
-#     def imply_after_mineral(self, state):
-#         state[env.miner_index] += state[building_types['Pylon']] * 50 + 100
-#         return state
-

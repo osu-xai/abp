@@ -26,7 +26,7 @@ Tensor = FloatTensor
 class SADQAdaptive(object):
     """Adaptive which uses the SADQ algorithm"""
 
-    def __init__(self, name, state_length, network_config, reinforce_config):
+    def __init__(self, name, state_length, network_config, reinforce_config, is_sigmoid = False, memory_resotre = True):
         super(SADQAdaptive, self).__init__()
         self.name = name
         #self.choices = choices
@@ -49,18 +49,18 @@ class SADQAdaptive(object):
         self.episode = 0
 
         self.reset()
-
+        self.memory_resotre = memory_resotre
         reinforce_summary_path = self.reinforce_config.summaries_path + "/" + self.name
 
         if not self.network_config.restore_network:
             clear_summary_path(reinforce_summary_path)
         else:
             self.restore_state()
-
+        
         self.summary = SummaryWriter(log_dir=reinforce_summary_path)
 
-        self.target_model = DQNModel(self.name + "_target", self.network_config, use_cuda)
-        self.eval_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
+        self.target_model = DQNModel(self.name + "_target", self.network_config, use_cuda, is_sigmoid = is_sigmoid)
+        self.eval_model = DQNModel(self.name + "_eval", self.network_config, use_cuda, is_sigmoid = is_sigmoid)
 #         self.target_model.eval_mode()
 
         self.beta_schedule = LinearSchedule(self.reinforce_config.beta_timesteps,
@@ -114,7 +114,7 @@ class SADQAdaptive(object):
 #                                                    self.steps,
 #                                                    self.learning)[1] for s in state])
 #             self.eval_model.eval_mode()
-            state = np.unique(state, axis=0)
+#             state = np.unique(state, axis=0)
             with torch.no_grad():
                 q_values = FloatTensor(self.eval_model.predict_batch(Tensor(state))[1]).view(-1)
 #             print(q_values)
@@ -126,7 +126,7 @@ class SADQAdaptive(object):
 #             print(choice, choice_2)
 #             input()
             action = choice
-            self.prediction_time += time.time()
+#             self.prediction_time += time.time()
             
         if self.learning and self.steps % self.reinforce_config.replace_frequency == 0:
             logger.debug("Replacing target model for %s" % self.name)
@@ -208,14 +208,14 @@ class SADQAdaptive(object):
 
     def restore_state(self):
         restore_path = self.network_config.network_path + "/adaptive.info"
-        if self.network_config.network_path and os.path.exists(restore_path):
+        if self.network_config.network_path and os.path.exists(restore_path) and self.memory_resotre:
             logger.info("Restoring state from %s" % self.network_config.network_path)
 
             with open(restore_path, "rb") as file:
                 info = pickle.load(file)
 
             self.steps = info["steps"]
-            self.best_reward_mean = info["best_reward_mean"]
+#             self.best_reward_mean = info["best_reward_mean"]
             self.episode = info["episode"]
             self.memory.load(self.network_config.network_path)
             print("lenght of memeory: ", len(self.memory))
@@ -233,7 +233,7 @@ class SADQAdaptive(object):
             total_reward = sum(self.reward_history[-self.network_config.save_steps:])
             current_reward_mean = total_reward / self.network_config.save_steps
 
-            if current_reward_mean >= self.best_reward_mean or force:
+            if force: #or current_reward_mean >= self.best_reward_mean:
                 print("*************saved*****************", current_reward_mean, self.best_reward_mean)
                 if not force:
                     self.best_reward_mean = current_reward_mean

@@ -43,35 +43,38 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     models_path = "abp/examples/pysc2/tug_of_war/models_mb/"
     agent_1 = MBTSAdaptive(name = "TugOfWar", state_length = len(state_1),
                         network_config = network_config, reinforce_config = reinforce_config,
-                          models_path = models_path, depth = 1, action_ranking = float('inf'), env = env)
+                          models_path = models_path, depth = 2, action_ranking = 4, env = env)
     
-#     if not reinforce_config.is_random_agent_2:
-#         agent_2 = SADQAdaptive(name = "TugOfWar",
-#                             state_length = len(state_2),
-#                             network_config = network_config,
-#                             reinforce_config = reinforce_config,)
-#         agent_2.eval_model.replace(agent_1.q_model)
-#         print("sadq agent 2")
-#     else:
-#         print("random agent 2")
+    if not reinforce_config.is_random_agent_2:
+        agent_2 = SADQAdaptive(name = "TugOfWar",
+                            state_length = len(state_2),
+                            network_config = network_config,
+                            reinforce_config = reinforce_config, is_sigmoid = True, memory_resotre = False)
+        agent_2.eval_model.replace(agent_1.q_model)
+        print("sadq agent 2")
+    else:
+        print("random agent 2")
         
-    path = './saved_models/tug_of_war/agents/'
+    path = './saved_models/tug_of_war/agents'
     
     agents_2 = []
+#     agents_2.append(agent_2)
     if not reinforce_config.is_random_agent_2:
         files = []
         # r=root, d=directories, f = files
         for r, d, f in os.walk(path):
-            for file in f:
-                if '.p' in file:
-                    new_weights = torch.load(path + "/" +file)
-                    new_agent_2 = SADQAdaptive(name = file,
-                    state_length = len(state_1),
-                    network_config = network_config,
-                    reinforce_config = reinforce_config)
-                    new_agent_2.load_weight(new_weights)
-                    new_agent_2.disable_learning(is_save = False)
-                    agents_2.append(new_agent_2)
+            print(d)
+            if len(d) == 3:
+                for file in f:
+                    if '.p' in file:
+                        new_weights = torch.load(path + "/" +file)
+                        new_agent_2 = SADQAdaptive(name = file,
+                        state_length = len(state_1),
+                        network_config = network_config,
+                        reinforce_config = reinforce_config)
+                        new_agent_2.load_weight(new_weights)
+                        new_agent_2.disable_learning(is_save = False)
+                        agents_2.append(new_agent_2)
                         
     test_summaries_path = evaluation_config.summaries_path + "/test"
     clear_summary_path(test_summaries_path)
@@ -92,7 +95,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             print(agent_2.name)
             average_state = np.zeros(len(state_1))
             total_rewwards_list = []  
-            for episode in tqdm(range(evaluation_config.test_episodes)):
+            for episode in tqdm(range(10)):
                 state = env.reset()
                 total_reward_1 = 0
                 done = False

@@ -1,14 +1,15 @@
 class Node():
-    def __init__(self, name, state, reward = 0, parent = None, total_reward = 0, parent_action = None):
+    def __init__(self, name, state = None, reward = 0, parent = None, q_value_after_state = 0, parent_action = None):
         self.parent = parent
-        self.reward = reward
-        self.accumulate_reward = 0
+        self.q_value_after_state = 0
+        self.best_q_value = 0
+#         self.reward = reward
+#         self.accumulate_reward = 0
         self.children = []
         self.action_dict = {}
         self.actions = []
         self.state = state
         self.name = name
-        self.best_reward = 0
         self.best_child = None
         self.best_action = None
         self.parent_action = parent_action
