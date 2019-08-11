@@ -64,7 +64,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         files = []
         # r=root, d=directories, f = files
         for r, d, f in os.walk(path):
-            print(d)
+#             print(d)
             if len(d) == 3:
                 for file in f:
                     if '.p' in file:
@@ -125,8 +125,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
     #                 choice_1 = agent_1.predict(env.denormalization(state_1), env.denormalization(state_2)[env.miner_index])
     #                 print(state_1)
-                    actions_1111111 = agent_1.predict(state_1, state_2[env.miner_index])
-
+                    actions_1111111, node = agent_1.predict(state_1, state_2[env.miner_index], dp = steps)
+                    print()
+                    print()
+                    print()
+#                     node.print_tree(p_best_q_value = True, p_action = True, p_after_q_value = True)
+                    node.save_into_json(dp = steps)
+                    input()
     #                 print(actions_1111111)
     #                 input()
 
