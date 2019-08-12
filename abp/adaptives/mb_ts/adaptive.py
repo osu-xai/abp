@@ -218,9 +218,6 @@ class MBTSAdaptive(object):
                 action_node_mins.append(node_min)
                 node_min.parent.add_child(node_min)
                 
-              
-#             print("11---------------------------")
-#             print(next_states)
             next_reward = self.reward_func_win_prob(state, next_states)
 #             print("12---------------------------")
 #             print(next_reward)

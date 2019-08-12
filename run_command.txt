@@ -12,3 +12,6 @@ python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p_2l/v2/ -tk task_2p
 
 # Human vs agent, no training, model:TugOfWar_eval.pupdate_429_one_agent_top
 python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p_2l_hp/v1/ -tk task_2p_2l_hp --model TugOfWar_eval.pupdate_429_one_agent_top -t
+
+# SADQ agent self-play on tug_of_way 2 lanes 4 grid decomposed version
+python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p_2l_decom/v1_4/ -tk task_2p_2l_grid_decomposed
