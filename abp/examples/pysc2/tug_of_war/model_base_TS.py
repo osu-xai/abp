@@ -44,7 +44,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     models_path = "abp/examples/pysc2/tug_of_war/models_mb/"
     agent_1 = MBTSAdaptive(name = "TugOfWar", state_length = len(state_1),
                         network_config = network_config, reinforce_config = reinforce_config,
-                          models_path = models_path, depth = 2, action_ranking = 4, env = env)
+                          models_path = models_path, depth = 1, action_ranking = 100000, env = env)
     
     if not reinforce_config.is_random_agent_2:
         agent_2 = SADQAdaptive(name = "TugOfWar",
@@ -59,8 +59,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     path = './saved_models/tug_of_war/agents'
     
     agents_2 = []
-#     agents_2.append(agent_2)
-    if not reinforce_config.is_random_agent_2:
+    agents_2.append(agent_2)
+    if evaluation_config.generate_xai_replay and not reinforce_config.is_random_agent_2:
         files = []
         # r=root, d=directories, f = files
         for r, d, f in os.walk(path):
@@ -130,10 +130,23 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     print()
 #                     print()
 # #                     node.print_tree(p_best_q_value = True, p_action = True, p_after_q_value = True)
-#                     node.save_into_json(dp = steps)
+                    if evaluation_config.generate_xai_replay: 
+                        path_whole_tree = recorder.json_pathname[:-5] + "_whole_tree/"
+                        print(path_whole_tree)
+                        path_partial_tree = recorder.json_pathname[:-5] + "_partial_tree/"
+                        print(path_partial_tree)
+                        
+                        if not os.path.exists(path_whole_tree):
+                            os.mkdir(path_whole_tree)
+                        if not os.path.exists(path_partial_tree):
+                            os.mkdir(path_partial_tree)
+                            
+                        node.save_into_json(path = path_whole_tree, dp = steps)   
+                        node.save_into_json(path = path_partial_tree, dp = steps, is_partial = True)
+                        
 #                     input()
     #                 print(actions_1111111)
-    #                 input()
+#                     input()
 
     #                 input("state_1 checked")
                     combine_states_2 = combine_sa(state_2, actions_2)
@@ -144,7 +157,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
                     if evaluation_config.generate_xai_replay:
                         #recorder.save_jpg()
-                        recorder.record_decision_point(actions_1[choice_1], actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
+                        recorder.record_decision_point(actions_1111111, actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
     
     #                 env.step(list(actions_1[choice_1]), 1)
 
@@ -202,7 +215,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             f.write(np.array2string(average_state / evaluation_config.test_episodes, precision=2, separator=',', suppress_small=True) + "\n")
             
             f.close()
-        break
+#         break
         
 def pretty_print(state,  text = ""):
     state_list = state.copy().tolist()

@@ -53,8 +53,8 @@ class MBTSAdaptive(object):
         self.env = env
         self.player = player
         
-        self.index_hp = LongTensor(range(27, 31))
-        self.index_units = LongTensor(range(15, 27))
+        self.index_hp = LongTensor(range(63, 67))
+        self.index_units = LongTensor(range(15, 63))
         self.index_building_self = LongTensor(range(1, 8))
         self.index_building_enemy = LongTensor(range(8, 15))
         self.pylon_index_self = self.env.pylon_index
@@ -62,28 +62,50 @@ class MBTSAdaptive(object):
         self.mineral_index_self = self.env.miner_index
         self.mineral_index_enemy = state_length
         self.maker_cost_np = FloatTensor(self.env.maker_cost_np)
-        self.index_waves = 31
+        self.index_waves = 67
         
-        self.norm_vector_vf = FloatTensor([700, 50, 40, 20, 50, 40, 20, 3,
-                                    50, 40, 20, 50, 40, 20, 3,
-                                    50, 40, 20, 50, 40, 20, 
-                                    50, 40, 20, 50, 40, 20,
-                                    2000, 2000, 2000, 2000, 40])
+        if network_config.output_shape == 4:
+            self.reward_num = 4
+            self.combine_decomposed_func = combine_decomposed_func_4
+            self.player_1_end_vector = player_1_end_vector_4
+
+        if network_config.output_shape == 8:
+            self.reward_num = 8
+            self.combine_decomposed_func = combine_decomposed_func_8
+            self.player_1_end_vector = player_1_end_vector_8
+            
+        self.norm_vector = FloatTensor([1500,           # Player 1 unspent minerals
+                                    30, 30, 10,     # Player 1 top lane building
+                                    30, 30, 10,     # Player 1 bottom lane building
+                                    3,              # Player 1 pylons
+                                    30, 30, 10,     # Player 2 top lane building
+                                    30, 30, 10,     # Player 2 bottom lane building
+                                    3,              # Player 2 pylons
+                                    30, 30, 10,     # Player 1 units top lane grid 1
+                                    30, 30, 10,     # Player 1 units top lane grid 2 
+                                    30, 30, 10,     # Player 1 units top lane grid 3
+                                    30, 30, 10,     # Player 1 units top lane grid 4
+                                    30, 30, 10,     # Player 1 units bottom lane grid 1
+                                    30, 30, 10,     # Player 1 units bottom lane grid 2 
+                                    30, 30, 10,     # Player 1 units bottom lane grid 3
+                                    30, 30, 10,     # Player 1 units bottom lane grid 4
+                                    30, 30, 10,     # Player 2 units top lane grid 1
+                                    30, 30, 10,     # Player 2 units top lane grid 2 
+                                    30, 30, 10,     # Player 2 units top lane grid 3
+                                    30, 30, 10,     # Player 2 units top lane grid 4
+                                    30, 30, 10,     # Player 2 units bottom lane grid 1
+                                    30, 30, 10,     # Player 2 units bottom lane grid 2 
+                                    30, 30, 10,     # Player 2 units bottom lane grid 3
+                                    30, 30, 10,     # Player 2 units bottom lane grid 4
+                                    2000, 2000,     # Player 1 Nexus HP (top, bottom)
+                                    2000, 2000,     # Player 2 Nexus HP (top, bottom)
+                                    40])              # Wave Number)
         
-        self.norm_vector_unitandhp = FloatTensor([1500, # p1 minerals
-                        30, 30, 10, 30, 30, 10, 3, # p1 top and bottom lane buildings
-                        30, 30, 10, 30, 30, 10, 3, # p2 top and bottom lane buildings
-                        30, 30, 10, 30, 30, 10, # p1 top and bottom lane units
-                        30, 30, 10, 30, 30, 10, # p1 top and bottom lane units
-                        2000, 2000, 2000, 2000, 40])
         self.look_forward_step = depth
         self.ranking_topk = action_ranking#float('inf')
         
         # Generalize it 
         self.eval_mode()
-
-#         self.reset()
-        
         
     def init_network(self):
         network_trans_unit_path = "./tasks/tug_of_war/trans/unit/v1/network.yml"
@@ -131,20 +153,6 @@ class MBTSAdaptive(object):
         self.transition_model_unit.load_weight(new_unit_state_dict)
 #         self.value_model.load_weight(new_value_state_dict)
         self.q_model.load_weight(torch.load(models_path + 'q_model_win_prob.pt'))
-        
-    def player_1_win_condition(self, state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp):
-        if min(state_1_T_hp, state_1_B_hp) == min(state_2_T_hp, state_2_B_hp):
-            if state_1_T_hp + state_1_B_hp == state_2_T_hp + state_2_B_hp:
-                return 0
-            elif state_1_T_hp + state_1_B_hp > state_2_T_hp + state_2_B_hp:
-                return 1
-            else:
-                return -1
-        else:
-            if min(state_1_T_hp, state_1_B_hp) > min(state_2_T_hp, state_2_B_hp):
-                return 1
-            else:
-                return -1
             
     def reward_func_win_prob(self, state, next_states):
         
@@ -299,15 +307,13 @@ class MBTSAdaptive(object):
         return best_action, root
     
     def normalization(self, state, is_vf = False):
-        if not is_vf:
-            return state[:, :-1] / self.norm_vector_unitandhp
-        else:
-            return state[:, :-1] / self.norm_vector_vf
+        return state[:, :-1] / self.norm_vector
     
     def rollout(self, states):
 #         return self.value_model.predict_batch(FloatTensor(self.normalization(states, is_vf = True)))[1]
 
-        values = FloatTensor(np.zeros(len(states)))
+        com_values = FloatTensor(np.zeros(len(states)))
+        values = FloatTensor(np.zeros(len(states), self.reward_num))
         with torch.no_grad():
             for i, state in enumerate(states):
                 actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
@@ -315,25 +321,32 @@ class MBTSAdaptive(object):
                 com_states = self.combine_sa(state, actions_self, is_enemy = False)
 
                 values[i] = self.q_model.predict_batch(FloatTensor(self.normalization(com_states, is_vf = True)))[1].max(0)[0]
-        return values
+                
+                com_values[i] = self.combine_decomposed_func(values[i])
+        return values, com_values
     
     def action_ranking(self, after_states, action):
-        
+#         action = FloatTensor(action)
+#         print(len(after_states), len(action))
         ranking_topk = self.ranking_topk
         if ranking_topk >= len(after_states):
               ranking_topk = len(after_states)
-                
+#             return action[np.array(range(len(after_states)))], after_states[np.array(range(len(after_states)))]
+#         print(ranking_topk)
         with torch.no_grad():
             q_values = self.q_model.predict_batch(FloatTensor(self.normalization(after_states, is_vf = True)))[1]
-            q_values = q_values.view(-1)
-            topk_q, indices = torch.topk(q_values, ranking_topk)
-        
+            com_q_values = self.combine_decomposed_func(q_values)
+            com_q_values = com_q_values.view(-1)
+            com_topk_q, indices = torch.topk(com_q_values, ranking_topk)
+            topk_q = q_values[indices]
 #         print(topk_q)
 #         print(indices)
 #         input()
-        return action[indices.cpu().clone().numpy()], after_states[indices.cpu().clone().numpy()], topk_q
+        return action[indices.cpu().clone().numpy()], after_states[indices.cpu().clone().numpy()], topk_q, com_topk_q
     
     def switch_state_to_enemy(self, states):
+        
+        # Switch need to re-implement
         enemy_states = states.clone()
 #         print(enemy_states)
         mineral_index_self = LongTensor(range(0, 1))
@@ -365,6 +378,8 @@ class MBTSAdaptive(object):
         
         next_states = after_states.clone()
 #         print(next_states.shape)
+
+        # TODO: transition function have to be implenment if need 
         with torch.no_grad():
             next_HPs = self.transition_model_HP.predict_batch(FloatTensor(self.normalization(next_states)))
             next_units = self.transition_model_unit.predict_batch(FloatTensor(self.normalization(next_states)))
@@ -390,6 +405,7 @@ class MBTSAdaptive(object):
         return after_states
 
     def combine_sa(self, state, actions, is_enemy):
+        # TODO: need to check
         if not is_enemy:
             building_index = self.index_building_self
             mineral_index = self.mineral_index_self
@@ -420,3 +436,55 @@ class MBTSAdaptive(object):
         
         assert torch.sum(com_state[:, mineral_index] >= 0) == len(com_state), print(com_state)
         return com_state
+  
+    
+def combine_decomposed_func_4(q_values):
+#     print(q_values)
+#     print(q_values[:, :1].size())
+    q_values = torch.sum(q_values[:, 2:], dim = 1)
+#     print(q_values)
+#     input("combine")
+    return q_values
+
+def combine_decomposed_func_8(q_values):
+#     print(q_values)
+#     print(q_values[:, :1].size())
+    q_values = torch.sum(q_values[:, [2, 3, 6, 7]], dim = 1)
+#     print(q_values)
+#     input("combine")
+    return q_values
+            
+def player_1_end_vector_4(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, is_done = False):
+    hp_vector = np.array([state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp])
+    min_value, idx = np.min(hp_vector), np.argmin(hp_vector)
+    
+    if min_value == 2000:
+        reward_vector = [0.25] * 4
+    else:
+        reward_vector = [0] * 4
+        reward_vector[idx] = 1
+#     print(hp_vector)
+#     print(reward_vector)
+#     input("reward_vector")
+    return reward_vector
+
+def player_1_end_vector_8(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, is_done = False):
+    
+    hp_vector = np.array([state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp])
+    min_value, idx = np.min(hp_vector), np.argmin(hp_vector)
+    
+    if not is_done:
+        if min_value == 2000:
+            reward_vector = [0] * 4 + [0.25] * 4
+        else:
+            reward_vector = [0] * 8
+            reward_vector[idx + 4] = 1
+    else:
+        reward_vector = [0] * 8
+        reward_vector[idx] = 1
+        
+#     print(hp_vector)
+#     print(reward_vector)
+#     input("reward_vector")
+
+    return reward_vector

@@ -289,7 +289,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         
                     reward = [0] * reward_num
                     if steps == max_episode_steps or done:
-                        reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], wave = steps)
+                        reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
                         
 #                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
 #                     print('reward:')
@@ -438,25 +438,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         if dp or done:
     #                         print(time.time() - start_time)
                             break
-    #                 input('done stepping after collecting experience')
-    #                 current_reward_1 = 0
-#                     input(f"dp is {dp} done is {done}")
-
-#                     if steps == max_episode_steps or done:
-#                         if evaluation_config.generate_xai_replay:
-#                             recorder.done_recording()
-#                         win_lose = player_1_win_condition(state_1[63], state_1[64], state_1[65], state_1[66])
-
-#                         if win_lose == 1:
-#                             env.decomposed_rewards[4] = 10000
-#                             env.decomposed_rewards[5] = 0
-#                         elif win_lose == -1:
-#                             env.decomposed_rewards[4] = 0
-#                             env.decomposed_rewards[5] = 10000
 
                     reward = [0] * reward_num
                     if steps == max_episode_steps or done:
-                        reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], wave = steps)
+                        reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
                             
 #                     input("separate rewards...")
 #                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
@@ -478,18 +463,18 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     #                     input()
                     previous_reward_1 = current_reward_1
 #                 print("collect experience again if configured so")
-#                 if reinforce_config.collecting_experience:
-#                     previous_state_1[8:14] = previous_state_2[1:7] # Include player 2's action
-#                     previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
-#                     previous_state_1[-1] += 1
+                if reinforce_config.collecting_experience:
+                    previous_state_1[8:14] = previous_state_2[1:7] # Include player 2's action
+                    previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
+                    previous_state_1[-1] += 1
                     
-#                     experience = [
-#                         previous_state_1,
-#                         np.append(state_1, previous_reward_1)
-#                     ]
-#                     all_experiences.append(experience)
-#                     if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
-#                         torch.save(all_experiences, exp_save_path)
+                    experience = [
+                        previous_state_1,
+                        np.append(state_1, previous_reward_1)
+                    ]
+                    all_experiences.append(experience)
+                    if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
+                        torch.save(all_experiences, exp_save_path)
 
                 average_end_state += state_1
 
@@ -631,7 +616,7 @@ def combine_decomposed_func_8(q_values):
 #     input("combine")
     return q_values
             
-def player_1_end_vector_4(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, wave = 0):
+def player_1_end_vector_4(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, is_done = False):
     hp_vector = np.array([state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp])
     min_value, idx = np.min(hp_vector), np.argmin(hp_vector)
     
@@ -645,12 +630,12 @@ def player_1_end_vector_4(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp
 #     input("reward_vector")
     return reward_vector
 
-def player_1_end_vector_8(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, wave = 0):
+def player_1_end_vector_8(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, is_done = False):
     
     hp_vector = np.array([state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp])
     min_value, idx = np.min(hp_vector), np.argmin(hp_vector)
     
-    if wave == 40:
+    if not is_done:
         if min_value == 2000:
             reward_vector = [0] * 4 + [0.25] * 4
         else:

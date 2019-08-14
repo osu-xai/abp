@@ -51,7 +51,8 @@ class Node():
                          "BOT Banelings" : self.state[5],
                          "TOP Banelings" : self.state[2],
                          "BOT Immortals" : self.state[6],
-                         "TOP Immortals" : self.state[3]
+                         "TOP Immortals" : self.state[3],
+                         "state": self.state 
                         }
         					
 #         return {"state": self.state}
@@ -66,7 +67,7 @@ class Node():
                 action_str += str(int(a))
         return {"action" : action_str}
     
-    def tree_dict(self, best_child = None, new_name = None, tree_number = ""):
+    def tree_dict(self, best_child = None, new_name = None, tree_number = "", is_partial = False, is_expand = True):
         if new_name is not None:
             self.name = new_name
         t_dict = {}
@@ -82,25 +83,45 @@ class Node():
         t_dict["tree path"] = self.tree_num
 #         t_dict["best_child"] = str(self.best_child)
         j = 0
+        t_dict["children"] = [[]]
         
-        for i, child in enumerate(self.children):
-            sub_tree_number = tree_number + str(i)
-            if child == best_child:
-                new_name = "{}_{}(best)".format(child.name, sub_tree_number)
-                c_t_dict = child.tree_dict(best_child = child.best_child, new_name = new_name, tree_number =sub_tree_number)
-                t_dict[new_name] = c_t_dict
-            else:
-                new_name = "{}_{}".format(child.name, sub_tree_number)
-                c_t_dict = child.tree_dict(new_name = new_name, tree_number = sub_tree_number)
-                t_dict[new_name] = c_t_dict
+        if is_partial and is_expand:
+            for i, child in enumerate(self.children):
+                sub_tree_number = tree_number + str(i)
+                if child == best_child:
+                    new_name = "{}_{}(best)".format(child.name, sub_tree_number)
+                    c_t_dict = child.tree_dict(best_child = child.best_child, new_name = new_name, tree_number = sub_tree_number,
+                                              is_partial = is_partial, is_expand = True)
+                else:
+                    new_name = "{}_{}".format(child.name, sub_tree_number)
+                    c_t_dict = child.tree_dict(new_name = new_name, tree_number = sub_tree_number,
+                                              is_partial = is_partial, is_expand = False)
+                t_dict["children"][0].append(c_t_dict)
+        elif not is_partial:
+            for i, child in enumerate(self.children):
+                sub_tree_number = tree_number + str(i)
+                if child == best_child:
+                    new_name = "{}_{}(best)".format(child.name, sub_tree_number)
+                    c_t_dict = child.tree_dict(best_child = child.best_child, new_name = new_name, tree_number = sub_tree_number,
+                                              is_partial = False, is_expand = False)
+                else:
+                    new_name = "{}_{}".format(child.name, sub_tree_number)
+                    c_t_dict = child.tree_dict(new_name = new_name, tree_number = sub_tree_number,
+                                              is_partial = False, is_expand = False)
+                t_dict["children"][0].append(c_t_dict)
         return t_dict
         
-    def save_into_json(self, path = "", dp = 0):
-        t_dict = self.tree_dict(self.best_child)
+    def save_into_json(self, path = "", dp = 0, is_partial = False):
+        t_dict = self.tree_dict(self.best_child, is_partial = is_partial)
         t_json = json.dumps(t_dict, indent=4)
 #         print(t_json)
-        with open(path + "decision_point_" + str(dp) + ".json", 'w') as outfile:
-            outfile.write(t_json)
+        if is_partial:
+            with open(path + "partial_decision_point_" + str(dp) + ".json", 'w') as outfile:
+                outfile.write(t_json)
+        else:
+            with open(path + "whole_decision_point_" + str(dp) + ".json", 'w') as outfile:
+                outfile.write(t_json)
+            
         
     # Give the node find the worst reward sibling
     # add child (sort by reward)
