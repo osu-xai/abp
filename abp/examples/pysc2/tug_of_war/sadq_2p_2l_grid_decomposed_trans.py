@@ -6,6 +6,7 @@ import sys, os
 import torch
 
 from abp.adaptives.sadq.adaptive_decom import SADQAdaptive
+from abp.adaptives.mb_ts.adaptive_trans_both import TransAdaptive
 from abp.utils import clear_summary_path
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
@@ -52,6 +53,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         combine_decomposed_func = combine_decomposed_func_8
         player_1_end_vector = player_1_end_vector_8
     
+    trans_model = TransAdaptive("Tug_of_war", network_config = network_config, reinforce_config = reinforce_config)
+    
     training_summaries_path = evaluation_config.summaries_path + "/train"
     clear_summary_path(training_summaries_path)
     train_summary_writer = SummaryWriter(training_summaries_path)
@@ -60,8 +63,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     clear_summary_path(test_summaries_path)
     test_summary_writer = SummaryWriter(test_summaries_path)
     
-    agents_1 = []
-    agents_2 = []
+    agents_1 = ["random", "random_2"]
+    agents_2 = ["random", "random_2"]
         
     round_num = 0
     
@@ -176,26 +179,32 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         #######
                         #experience collecting
                         ######
-                        if reinforce_config.collecting_experience:
-                            if previous_state_1 is not None and previous_state_2 is not None:
-                                previous_state_1[8:15] = previous_state_2[1:8].copy() # Include player 2's action
+                        if previous_state_1 is not None and previous_state_2 is not None:
+                            previous_state_1[8:15] = previous_state_2[1:8].copy() # Include player 2's action
+
+                            previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
+                            if previous_state_1[env.miner_index] > 1500:
+                                previous_state_1[env.miner_index] = 1500
+                            previous_state_1[-1] += 1
+
+                            if np.sum(previous_state_1[0:15] == state_1[0:15]) != 15:
+
+                                print(1)
+                                pretty_print(previous_state_1, text = "previous state")
+                                pretty_print(state_1, text = "current state")
+                                input()
+                            if np.sum(previous_state_1[-1] == state_1[-1]) != 1:
+                                print(2)
+                                pretty_print(previous_state_1, text = "previous state")
+                                pretty_print(state_1, text = "current state")
+                                input()
                                 
-                                previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
-                                if previous_state_1[env.miner_index] > 1500:
-                                    previous_state_1[env.miner_index] = 1500
-                                previous_state_1[-1] += 1
-                                
-                                if np.sum(previous_state_1[0:15] == state_1[0:15]) != 15:
-                                    
-                                    print(1)
-                                    pretty_print(previous_state_1, text = "previous state")
-                                    pretty_print(state_1, text = "current state")
-                                    input()
-                                if np.sum(previous_state_1[-1] == state_1[-1]) != 1:
-                                    print(2)
-                                    pretty_print(previous_state_1, text = "previous state")
-                                    pretty_print(state_1, text = "current state")
-                                    input()
+#                             pretty_print(previous_state_1, text = "previous state")
+#                             pretty_print(state_1, text = "current state")
+                            
+                            trans_model.add_memory(previous_state_1, state_1)
+#                             input()
+                            if reinforce_config.collecting_experience:
                                 experience = [
                                     previous_state_1,
                                     state_1
@@ -204,8 +213,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                 if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
                                     torch.save(all_experiences, exp_save_path)
 
-                            previous_state_1 = combine_states_1[choice_1].copy()
-                            previous_state_2 = combine_states_2[choice_2].copy()
+                        previous_state_1 = combine_states_1[choice_1].copy()
+                        previous_state_2 = combine_states_2[choice_2].copy()
 
                         env.step(list(actions_1[choice_1]), 1)
                         env.step(list(actions_2[choice_2]), 2)
@@ -219,11 +228,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             state_1, state_2, done, dp = env.step([], 0)
                             if dp or done:
                                 break
-
-                        reward = [0] * reward_num
+                            
                         if steps == max_episode_steps or done:
                             reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
 
+                        reward = [0] * reward_num
                         if reward_num == 4:
                             current_reward_1 = sum(reward[2:])
                         elif reward_num == 8:
@@ -231,28 +240,22 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             
                         total_reward_1 += current_reward_1
 
-                    if reinforce_config.collecting_experience:
+                    if previous_state_1 is not None and previous_state_2 is not None:
                         previous_state_1[8:15] = previous_state_2[1:8].copy() # Include player 2's action
+
+                        previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
                         if previous_state_1[env.miner_index] > 1500:
                             previous_state_1[env.miner_index] = 1500
                         previous_state_1[-1] += 1
-#                         if np.sum(previous_state_1[1:15] == state_1[1:15]) != 15:
-#                             print(1)
-#                             pretty_print(previous_state_1, text = "previous state")
-#                             pretty_print(state_1, text = "current state")
-#                             input()
-#                         if np.sum(previous_state_1[-1] == state_1[-1]) != 1:
-#                             print(2)
-#                             pretty_print(previous_state_1, text = "previous state")
-#                             pretty_print(state_1, text = "current state")
-#                             input()
-                        experience = [
-                            previous_state_1,
-                            state_1
-                        ]
-                        all_experiences.append(experience)
-                        if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
-                            torch.save(all_experiences, exp_save_path)
+
+                        if reinforce_config.collecting_experience:
+                            experience = [
+                                previous_state_1,
+                                state_1
+                            ]
+                            all_experiences.append(experience)
+                            if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
+                                torch.save(all_experiences, exp_save_path)
 
                     average_end_state += state_1
 

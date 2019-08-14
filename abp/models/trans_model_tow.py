@@ -20,32 +20,49 @@ def weights_initialize(module):
 class _TransModel(nn.Module):
     """ Model for Transition Function """
 
-    def __init__(self, network_config):
+    def __init__(self, input_len, output_len):
         super(_TransModel, self).__init__()
 
-        layer_modules, input_shape = generate_layers(network_config.input_shape,
-                                                     network_config.layers)
-
-        layer_modules["OutputLayer"] = nn.Linear(int(np.prod(input_shape)),
-                                                 network_config.output_shape)
-
-        self.layers = nn.Sequential(layer_modules)
-        self.layers.apply(weights_initialize)
-
+        self.fc1 = nn.Sequential(
+            torch.nn.Linear(input_len, 512),
+#             torch.nn.BatchNorm1d(1024),
+            torch.nn.Dropout(0.5),
+            nn.ReLU()
+        )
+        self.fc1.apply(weights_initialize)
+        
+        self.fc2 = nn.Sequential(
+            torch.nn.Linear(512, 256),
+#             torch.nn.BatchNorm1d(512),
+            torch.nn.Dropout(0.5),
+            nn.ReLU()
+        )
+        self.fc2.apply(weights_initialize)
+        
+        self.fc3 = nn.Sequential(
+            torch.nn.Linear(256, 128),
+#             torch.nn.BatchNorm1d(256),
+            nn.ReLU()
+        )
+        self.fc3.apply(weights_initialize)
+        
+        self.output_layer = nn.Sequential(
+            torch.nn.Linear(128, output_len)
+        )
+        self.output_layer.apply(weights_initialize)
+        
     def forward(self, input):
-        x = input
-        for layer in self.layers:
-            # if type(layer) == nn.Linear:
-                # x = x.view(-1, int(np.prod(x.shape[1:])))
-            x = layer(x)
-        return x
+        x = self.fc1(input)
+        x = self.fc2(x)
+        x = self.fc3(x)
+        return self.output_layer(x)
 
 class TransModel(Model):
 
-    def __init__(self, name, network_config, use_cuda, restore=True, learning_rate=0.0005):
+    def __init__(self, name, input_len, output_len, network_config, use_cuda, restore=True, learning_rate=0.0005):
         self.name = name
-        model = _TransModel(network_config)
-#         model = nn.DataParallel(model)
+        model = _TransModel(input_len, output_len)
+        
         self.use_cuda = use_cuda
 
         if use_cuda:

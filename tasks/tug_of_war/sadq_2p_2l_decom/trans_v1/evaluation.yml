@@ -1,6 +1,6 @@
 name: "tug of war sadq_2p_2l_decom"
-env: "tug_of_war_sadq_2p_2l_decom-experience_collect"
-summaries_path: "./tensorflow_summaries/tug_of_war/sadq_2p_2l_decom/experience_collect/evaluation_summary"
+env: "tug_of_war_sadq_2p_2l_decom-trans_v1"
+summaries_path: "./tensorflow_summaries/tug_of_war/sadq_2p_2l_decom/trans_v1/evaluation_summary"
 test_episodes: 10
 training_episodes: 0
 render: False
