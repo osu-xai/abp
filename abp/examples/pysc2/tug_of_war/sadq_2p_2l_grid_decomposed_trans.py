@@ -202,7 +202,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                             pretty_print(previous_state_1, text = "previous state")
 #                             pretty_print(state_1, text = "current state")
                             
-                            trans_model.add_memory(previous_state_1, state_1)
+                            trans_model.add_memory(env.normalization(previous_state_1), env.normalization(state_1))
 #                             input()
                             if reinforce_config.collecting_experience:
                                 experience = [

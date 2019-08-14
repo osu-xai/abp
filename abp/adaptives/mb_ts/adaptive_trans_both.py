@@ -39,10 +39,18 @@ class TransAdaptive(object):
 
         reinforce_summary_path = self.reinforce_config.summaries_path + "/" + self.name
 
-#         if self.network_config.restore_network:
-#             self.restore_state()
-#         else:
-#             clear_summary_path(reinforce_summary_path)
+        if self.network_config.restore_network:
+            restore_path = self.network_config.network_path + "/adaptive.info"
+            self.memory.load(self.network_config.network_path)
+            print("memory length:", len(self.memory))
+            
+            if os.path.exists(restore_path):
+                with open(restore_path, "rb") as file:
+                    info = pickle.load(file)
+                self.steps = info["steps"]
+                print(self.steps)
+            else:
+                print("no restore steps")
 
         self.summary = SummaryWriter(log_dir=reinforce_summary_path)
         
@@ -70,7 +78,7 @@ class TransAdaptive(object):
             
         if self.steps % 10 == 0:
             self.update()
-        if self.steps % 10 == 0:
+        if self.steps % 1000 == 0:
             self.save()
     
     def save(self, appendix = ""):
@@ -127,23 +135,23 @@ class TransAdaptive(object):
 #         print(self_buildings_top.shape, enemy_buildings_top.shape, self_units_top.shape, enemy_units_top.shape, self_hp_top.shape)
 #         print(self_buildings_bottom.shape, enemy_buildings_bottom.shape, self_units_bottom.shape, enemy_units_bottom.shape, self_hp_bottom.shape)
         if is_pre:
-            input_1 = np.concatenate((self_buildings_top, enemy_buildings_top, self_units_top, enemy_units_top, self_hp_top))
+            input_1 = np.concatenate((self_buildings_top, enemy_buildings_top, self_units_top, enemy_units_top, self_hp_top, np.array([1])))
 
-            input_2 = np.concatenate((self_buildings_bottom, enemy_buildings_bottom, self_units_bottom, enemy_units_bottom, self_hp_bottom))
+            input_2 = np.concatenate((self_buildings_bottom, enemy_buildings_bottom, self_units_bottom, enemy_units_bottom, self_hp_bottom, np.array([2])))
 
-            input_3 = np.concatenate((enemy_buildings_top, self_buildings_top, enemy_units_top_reversed, self_units_top_reversed, enemy_hp_top))
+            input_3 = np.concatenate((enemy_buildings_top, self_buildings_top, enemy_units_top_reversed, self_units_top_reversed, enemy_hp_top, np.array([3])))
 
-            input_4 = np.concatenate((enemy_buildings_bottom, self_buildings_bottom, enemy_units_bottom_reversed, self_units_bottom_reversed, enemy_hp_bottom))
+            input_4 = np.concatenate((enemy_buildings_bottom, self_buildings_bottom, enemy_units_bottom_reversed, self_units_bottom_reversed, enemy_hp_bottom, np.array([4])))
             
             return [input_1, input_2, input_3, input_4]
         else:
-            ground_truth_1 = np.concatenate((self_units_top, enemy_units_top, self_hp_top))
+            ground_truth_1 = np.concatenate((self_units_top, enemy_units_top, self_hp_top, np.array([1])))
             
-            ground_truth_2 = np.concatenate((self_units_bottom, enemy_units_bottom, self_hp_bottom))
+            ground_truth_2 = np.concatenate((self_units_bottom, enemy_units_bottom, self_hp_bottom, np.array([2])))
             
-            ground_truth_3 = np.concatenate((enemy_units_top_reversed, self_units_top_reversed, enemy_hp_top))
+            ground_truth_3 = np.concatenate((enemy_units_top_reversed, self_units_top_reversed, enemy_hp_top, np.array([3])))
             
-            ground_truth_4 = np.concatenate((enemy_units_bottom_reversed, self_units_bottom_reversed, enemy_hp_bottom))
+            ground_truth_4 = np.concatenate((enemy_units_bottom_reversed, self_units_bottom_reversed, enemy_hp_bottom, np.array([4])))
             
             return [ground_truth_1, ground_truth_2, ground_truth_3, ground_truth_4]
     def update(self):
@@ -153,11 +161,17 @@ class TransAdaptive(object):
         batch = self.memory.sample(self.reinforce_config.batch_size)
         (inputs, _, _, ground_truths, _) = batch
         
-        inputs_units = FloatTensor(inputs[:, :-1])
-        inputs_hp = FloatTensor(inputs)
+        assert np.sum(inputs[:, -1] == ground_truths[:, -1]) == len(ground_truths[:, -1]),print(inputs[:, -1], ground_truths[:, -1])
+#         if self.steps == 40:
+#             print(inputs[:, -1])
+#             print(ground_truths[:, -1])
+#             input()
         
-        gt_units = FloatTensor(ground_truths[:, : -1])
-        gt_hps = FloatTensor(ground_truths[:, -1])
+        inputs_units = FloatTensor(inputs[:, :-2])
+        inputs_hp = FloatTensor(inputs[:, :-1])
+        
+        gt_units = FloatTensor(ground_truths[:, : -2])
+        gt_hps = FloatTensor(ground_truths[:, -2])
         
         outputs_unit = self.trans_model_units.predict_batch(inputs_units)
         outputs_hp = self.trans_model_hp.predict_batch(inputs_hp)
