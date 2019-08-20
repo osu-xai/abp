@@ -1,0 +1,24 @@
+layers:
+  - type: "FCwithBN"
+    neurons: 512
+    size: 512
+
+  - type: "FCwithBN"
+    neurons: 256
+    size: 256
+
+input_shape:
+    - 68
+
+output_shape: 48
+
+shared_layers: []
+aggregator: "average"
+
+network_path: "./saved_models/tug_of_war/trans/unit/v2_grid_all.ckpt"
+summaries_path: "./tensorflow_summaries/tug_of_war/trans/unit/v2_grid_all/network_summary"
+summaries_step: 100000000
+restore_network: False
+learning_rate: 0.00005
+save_steps: 1000000000
+save_network: True

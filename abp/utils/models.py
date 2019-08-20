@@ -16,7 +16,13 @@ def generate_layers(input_shape, layers):
             layer_modules[layer_name] = nn.Linear(int(np.prod(input_shape)), layer["neurons"])
             input_shape = [layer["neurons"]]
             layer_modules[layer_name + "relu"] = nn.ReLU()
-
+            
+        elif layer_type == "FCwithBN":
+            layer_modules[layer_name] = nn.Linear(int(np.prod(input_shape)), layer["neurons"])
+            input_shape = [layer["neurons"]]
+            layer_modules[layer_name + "BN"] = nn.BatchNorm1d(layer["size"])
+            layer_modules[layer_name + "relu"] = nn.ReLU()
+            
         elif layer_type == "CNN":
             kernel_size = layer["kernel_size"]
             padding = layer["padding"]

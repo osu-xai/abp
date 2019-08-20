@@ -211,7 +211,10 @@ class MBTSAdaptive(object):
             action_node_max.parent.add_child(action_node_max, action = action_node_max.parent_action)
     
             action_node_mins = []
+#             print(len(top_k_action_enemy))
+#             start_time = time.time()
             next_states = self.get_next_states(state, a_self, top_k_action_enemy)
+#             print(time.time() - start_time)
             for tk_a, tk_a_s_e, tk_q_v_e, n_s in zip(top_k_action_enemy, top_k_state_enemy, topk_q_enemy, next_states):
                 node_min = Node("dp{}_level{}_action_min".format(dp, depth), self.switch_state_to_enemy(tk_a_s_e)[:-1].tolist(),
                                       parent = action_node_max, q_value_after_state = tk_q_v_e.item(), parent_action = tk_a.tolist())

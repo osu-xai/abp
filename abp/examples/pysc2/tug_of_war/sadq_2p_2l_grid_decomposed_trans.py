@@ -228,11 +228,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             state_1, state_2, done, dp = env.step([], 0)
                             if dp or done:
                                 break
-                            
+                        reward = [0] * reward_num  
                         if steps == max_episode_steps or done:
                             reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
 
-                        reward = [0] * reward_num
+                        
                         if reward_num == 4:
                             current_reward_1 = sum(reward[2:])
                         elif reward_num == 8:
@@ -262,7 +262,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     total_rewwards_list.append(total_reward_1)
 
                 total_rewards_list_np = np.array(total_rewwards_list)
-
+                print(total_rewards_list_np)
                 tied = np.sum(total_rewards_list_np[-evaluation_config.test_episodes:] == 0)
                 wins = np.sum(total_rewards_list_np[-evaluation_config.test_episodes:] > 0)
                 lose = np.sum(total_rewards_list_np[-evaluation_config.test_episodes:] <= 0)
