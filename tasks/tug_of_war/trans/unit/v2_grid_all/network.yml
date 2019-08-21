@@ -6,6 +6,10 @@ layers:
   - type: "FCwithBN"
     neurons: 256
     size: 256
+    
+  - type: "FCwithBN"
+    neurons: 128
+    size: 128
 
 input_shape:
     - 68

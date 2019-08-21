@@ -44,7 +44,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     models_path = "abp/examples/pysc2/tug_of_war/models_mb/"
     agent_1 = MBTSAdaptive(name = "TugOfWar", state_length = len(state_1),
                         network_config = network_config, reinforce_config = reinforce_config,
-                          models_path = models_path, depth = 1, action_ranking = 100000, env = env)
+                          models_path = models_path, depth = 2, action_ranking = 4, env = env)
     
     if not reinforce_config.is_random_agent_2:
         agent_2 = SADQAdaptive(name = "TugOfWar",

@@ -186,7 +186,7 @@ class MBTSAdaptive(object):
 #         print("*************")
         for i in range(len(the_HP_weight)):
             new_HP_state_dict[the_HP_keys[i]] = the_HP_weight[i]
-        for i in range(len(the_HP_weight)):
+        for i in range(len(the_unit_weight)):
             new_unit_state_dict[the_unit_keys[i]] = the_unit_weight[i]
 #         for i in range(len(the_HP_weight)):
 #             new_value_state_dict[the_value_keys[i]] = the_value_weight[i]
@@ -429,13 +429,16 @@ class MBTSAdaptive(object):
             else:
                 input_hps = torch.cat((input_hp_1_idx, input_hp_2_idx, input_hp_3_idx, input_hp_4_idx))
                 next_HPs = self.transition_model_HP.predict_batch(input_hps).round()
-
-                    
+                
+            next_units[next_units < 0] = 0
+            next_HPs[next_HPs < 0] = 0
+            next_HPs[next_HPs > 2000] = 2000
+                     
             if self.is_F_all_unit:
-                next_states[:, self.index_units] = next_units.round()
+                next_states[:, self.index_units] = next_units
             else:
-                next_states[:, self.index_units_top] = (next_units[: len_n_s] * self.norm_vector[self.index_units_top])
-                next_states[:, self.index_units_bottom] = (next_units[len_n_s : ] * self.norm_vector[self.index_units_bottom])             
+                next_states[:, self.index_units_top] = next_units[: len_n_s]
+                next_states[:, self.index_units_bottom] = next_units[len_n_s : ]            
             
             if self.is_F_all_HP:
                 next_states[:, self.index_hp] = next_HPs
