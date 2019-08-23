@@ -60,6 +60,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     agent_2.load_weight(agent_2_model_weights)
     
     agent_2.disable_learning(is_save = False)
+    
+    
     while True:
         
         print("=======================================================================")
@@ -72,7 +74,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             skiping = True
             done = False
             steps = 0
-            
+#             break
             while skiping:
                 state_1, state_2, done, dp = env.step([], 0)
                 if dp or done:
@@ -106,15 +108,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         exp_reward.append(1)
                     elif win_lose == -1:
                         exp_reward.append(0)
-                    else:
-                        exp_reward.append(0.5)
                         
                 agent_1.reward(sum(exp_reward))
 
             agent_1.end_episode(env.normalization(state_1))
             
-            if (episode + 1) % 500 == 0:
-                agent_1.save()
+#             if (episode + 1) % 500 == 0:
+#                 agent_1.save()
 
         agent_1.disable_learning(is_save = True)
         
@@ -125,7 +125,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
         tied_lose = 0
         total_rewwards_list = []
-
+        average_end_state = np.zeros(len(state_1))
         for episode in tqdm(range(evaluation_config.test_episodes)):
             env.reset()
             total_reward_1 = 0
@@ -157,7 +157,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     state_1, state_2, done, dp = env.step([], 0)
                     if dp or done:
                         break
-                        
+                exp_reward = []
                 if steps == max_episode_steps or done:
                     win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
 
@@ -165,9 +165,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         exp_reward = [1]
                     elif win_lose == -1:
                         exp_reward = [0]
-                    else:
-                        exp_reward = [0.5]
-        
+                        
                 current_reward_1 = sum(exp_reward)
             
                 total_reward_1 += current_reward_1
@@ -178,14 +176,14 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
         total_rewards_list_np = np.array(total_rewwards_list)
 
-        tied = np.sum(total_rewards_list_np[-evaluation_config.test_episodes:] == 0)
+#         tied = np.sum(total_rewards_list_np[-evaluation_config.test_episodes:] == 0)
         wins = np.sum(total_rewards_list_np[-evaluation_config.test_episodes:] > 0)
-        lose = np.sum(total_rewards_list_np[-evaluation_config.test_episodes:] < 0)
+        lose = np.sum(total_rewards_list_np[-evaluation_config.test_episodes:] <= 0)
 
         print("wins/lose/tied")
-        print(str(wins / test_num * 100) + "% \t",
-             str(lose / test_num * 100) + "% \t",
-             str(tied / test_num * 100) + "% \t")
+        print(str(wins / evaluation_config.test_episodes * 100) + "% \t",
+             str(lose / evaluation_config.test_episodes * 100) + "% \t",)
+#              str(tied / evaluation_config.test_episodes * 100) + "% \t")
         pretty_print(average_end_state / evaluation_config.test_episodes)
 
         tr = sum(total_rewwards_list) / len(total_rewwards_list)

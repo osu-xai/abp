@@ -42,10 +42,10 @@ class _TransModel(nn.Module):
 
 class TransModel(Model):
 
-    def __init__(self, name, network_config, use_cuda, restore=True, learning_rate=0.001):
+    def __init__(self, name, network_config, use_cuda, restore=True, learning_rate=0.0005):
         self.name = name
         model = _TransModel(network_config)
-        model = nn.DataParallel(model)
+#         model = nn.DataParallel(model)
         self.use_cuda = use_cuda
 
         if use_cuda:

@@ -1,6 +1,6 @@
 decay_steps: 300
 starting_epsilon: 1
-discount_factor: 0.99
+discount_factor: 0.9999
 batch_size: 32
 memory_size: 50000
 summaries_path: "./tensorflow_summaries/tug_of_war/sadq_2p_2l/v3/reinforce_summary"

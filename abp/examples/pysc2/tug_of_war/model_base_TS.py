@@ -11,7 +11,8 @@ from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.tug_of_war_2L_self_play import TugOfWar
-from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
+from sc2env.environments.tug_of_war_2L_self_play import action_component_names
+from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
 from tqdm import tqdm
 from copy import deepcopy
 from random import randint
@@ -43,35 +44,38 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     models_path = "abp/examples/pysc2/tug_of_war/models_mb/"
     agent_1 = MBTSAdaptive(name = "TugOfWar", state_length = len(state_1),
                         network_config = network_config, reinforce_config = reinforce_config,
-                          models_path = models_path, depth = 1, action_ranking = float('inf'), env = env)
+                          models_path = models_path, depth = 2, action_ranking = 4, env = env)
     
-#     if not reinforce_config.is_random_agent_2:
-#         agent_2 = SADQAdaptive(name = "TugOfWar",
-#                             state_length = len(state_2),
-#                             network_config = network_config,
-#                             reinforce_config = reinforce_config,)
-#         agent_2.eval_model.replace(agent_1.q_model)
-#         print("sadq agent 2")
-#     else:
-#         print("random agent 2")
+    if not reinforce_config.is_random_agent_2:
+        agent_2 = SADQAdaptive(name = "TugOfWar",
+                            state_length = len(state_2),
+                            network_config = network_config,
+                            reinforce_config = reinforce_config, is_sigmoid = True, memory_resotre = False)
+        agent_2.eval_model.replace(agent_1.q_model)
+        print("sadq agent 2")
+    else:
+        print("random agent 2")
         
-    path = './saved_models/tug_of_war/agents/'
+    path = './saved_models/tug_of_war/agents'
     
     agents_2 = []
-    if not reinforce_config.is_random_agent_2:
+    agents_2.append(agent_2)
+    if evaluation_config.generate_xai_replay and not reinforce_config.is_random_agent_2:
         files = []
         # r=root, d=directories, f = files
         for r, d, f in os.walk(path):
-            for file in f:
-                if '.p' in file:
-                    new_weights = torch.load(path + "/" +file)
-                    new_agent_2 = SADQAdaptive(name = file,
-                    state_length = len(state_1),
-                    network_config = network_config,
-                    reinforce_config = reinforce_config)
-                    new_agent_2.load_weight(new_weights)
-                    new_agent_2.disable_learning(is_save = False)
-                    agents_2.append(new_agent_2)
+#             print(d)
+            if len(d) == 3:
+                for file in f:
+                    if '.p' in file:
+                        new_weights = torch.load(path + "/" +file)
+                        new_agent_2 = SADQAdaptive(name = file,
+                        state_length = len(state_1),
+                        network_config = network_config,
+                        reinforce_config = reinforce_config)
+                        new_agent_2.load_weight(new_weights)
+                        new_agent_2.disable_learning(is_save = False)
+                        agents_2.append(new_agent_2)
                         
     test_summaries_path = evaluation_config.summaries_path + "/test"
     clear_summary_path(test_summaries_path)
@@ -92,15 +96,20 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             print(agent_2.name)
             average_state = np.zeros(len(state_1))
             total_rewwards_list = []  
-            for episode in tqdm(range(evaluation_config.test_episodes)):
+            for episode in tqdm(range(10)):
                 state = env.reset()
                 total_reward_1 = 0
                 done = False
                 skiping = True
                 steps = 0
+                if evaluation_config.generate_xai_replay:
+                    recorder = XaiReplayRecorder2LaneNexus(env.sc2_env, episode, evaluation_config.env, action_component_names, replay_dimension)
 
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
+                    if evaluation_config.generate_xai_replay:
+                        #recorder.save_jpg()
+                        recorder.record_game_clock_tick(env.decomposed_reward_dict)
 
                     if dp or done:
                         break
@@ -116,10 +125,28 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
     #                 choice_1 = agent_1.predict(env.denormalization(state_1), env.denormalization(state_2)[env.miner_index])
     #                 print(state_1)
-                    actions_1111111 = agent_1.predict(state_1, state_2[env.miner_index])
-
+                    actions_1111111, node = agent_1.predict(state_1, state_2[env.miner_index], dp = steps)
+#                     print()
+#                     print()
+#                     print()
+# #                     node.print_tree(p_best_q_value = True, p_action = True, p_after_q_value = True)
+                    if evaluation_config.generate_xai_replay: 
+                        path_whole_tree = recorder.json_pathname[:-5] + "_whole_tree/"
+                        print(path_whole_tree)
+                        path_partial_tree = recorder.json_pathname[:-5] + "_partial_tree/"
+                        print(path_partial_tree)
+                        
+                        if not os.path.exists(path_whole_tree):
+                            os.mkdir(path_whole_tree)
+                        if not os.path.exists(path_partial_tree):
+                            os.mkdir(path_partial_tree)
+                            
+                        node.save_into_json(path = path_whole_tree, dp = steps)   
+                        node.save_into_json(path = path_partial_tree, dp = steps, is_partial = True)
+                        
+#                     input()
     #                 print(actions_1111111)
-    #                 input()
+#                     input()
 
     #                 input("state_1 checked")
                     combine_states_2 = combine_sa(state_2, actions_2)
@@ -128,6 +155,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     else:
                         choice_2 = randint(0, len(actions_2) - 1)
 
+                    if evaluation_config.generate_xai_replay:
+                        #recorder.save_jpg()
+                        recorder.record_decision_point(actions_1111111, actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
+    
     #                 env.step(list(actions_1[choice_1]), 1)
 
     #                 print(actions_2[choice_2])
@@ -144,10 +175,17 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     while skiping:
                         state_1, state_2, done, dp = env.step([], 0)
                         #input(' step wating for done signal')
+                        if evaluation_config.generate_xai_replay:
+                            #recorder.save_jpg()
+                            recorder.record_game_clock_tick(env.decomposed_reward_dict)
+
                         if dp or done:
                             break
 
                     if steps == max_episode_steps or done:
+                        if evaluation_config.generate_xai_replay:
+                            recorder.done_recording()
+
                         win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
 
                         if win_lose == 1:
@@ -177,7 +215,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             f.write(np.array2string(average_state / evaluation_config.test_episodes, precision=2, separator=',', suppress_small=True) + "\n")
             
             f.close()
-        break
+#         break
         
 def pretty_print(state,  text = ""):
     state_list = state.copy().tolist()

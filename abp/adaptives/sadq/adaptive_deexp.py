@@ -57,8 +57,8 @@ class SADQAdaptive_exp(object):
         self.summary = SummaryWriter(log_dir=reinforce_summary_path)
         
         self.true_q_model = DQNModel(self.name + "ture_q", self.network_config, use_cuda)
-        self.target_model = DQNModel(self.name + "_target", self.network_config, use_cuda)
-        self.eval_model = DQNModel(self.name + "_eval", self.network_config, use_cuda)
+        self.target_model = DQNModel(self.name + "_target", self.network_config, use_cuda, is_sigmoid = True)
+        self.eval_model = DQNModel(self.name + "_eval", self.network_config, use_cuda, is_sigmoid = True)
 
         self.beta_schedule = LinearSchedule(self.reinforce_config.beta_timesteps,
                                             initial_p=self.reinforce_config.beta_initial,
@@ -84,8 +84,9 @@ class SADQAdaptive_exp(object):
         
         if self.learning:
             self.steps += 1
-        
-        state = np.unique(state, axis=0)
+#         print(len(state))
+#         state = np.unique(state, axis=0)
+#         print(len(state))
         with torch.no_grad():
             q_values = FloatTensor(self.true_q_model.predict_batch(Tensor(state))[1]).view(-1)
             _, choice = q_values.max(0)
@@ -110,6 +111,9 @@ class SADQAdaptive_exp(object):
             action = choice
         else:
             action = choice
+            
+        if not self.learning:
+            action = choice_eval
         
         if self.learning and self.steps % self.reinforce_config.replace_frequency == 0:
             logger.debug("Replacing target model for %s" % self.name)
@@ -154,7 +158,7 @@ class SADQAdaptive_exp(object):
 #         print(self.current_reward)
         
         match_percent = sum(self.match_history) / len(self.match_history)
-        print(match_percent)
+#         print(match_percent)
 #         input()
         if match_percent > self.best_match and len(self.match_history) > 15:
             self.best_match = match_percent
@@ -230,10 +234,10 @@ class SADQAdaptive_exp(object):
         
 #         print(next_states.size())
         # Current Q Values
-        _, q_values = self.eval_model.predict_batch(states)
+        q_values = self.eval_model.predict_batch(states)[1]
         q_values = q_values.view(-1)
         # Calculate target
-        q_next = self.target_model.predict_batch(next_states.view(-1, self.state_length))[1]
+        q_next = self.target_model.predict_batch(next_states)[1]
 #         q_max = torch.stack([each_qmax.max(0)[0].detach() for each_qmax in q_next], dim = 1)[0]
         q_next = q_next.view(-1)
         q_next = (1 - terminal) * q_next

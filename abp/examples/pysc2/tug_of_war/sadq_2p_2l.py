@@ -45,7 +45,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         agent_1 = SADQAdaptive(name = "TugOfWar",
                             state_length = len(state_1),
                             network_config = network_config,
-                            reinforce_config = reinforce_config)
+                            reinforce_config = reinforce_config,
+                            is_sigmoid = True)
         print("sadq agent 1")
     else:
         print("random agent 1")
@@ -117,7 +118,25 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     if agent_1_model == file:
                         print("********agent_1_model", file)
                         agent_1.load_model(new_agent_2.eval_model)
-        
+                        
+    elif network_config.restore_network:
+        agents_2 = []
+        restore_path = network_config.network_path
+        for r, d, f in os.walk(restore_path):
+            f = sorted(f)
+            for file in f:
+                if 'eval.pupdate' in file or 'eval.p_the_best' in file:
+                    new_weights = torch.load(restore_path + "/" +file)
+                    new_agent_2 = SADQAdaptive(name = file,
+                    state_length = len(state_1),
+                    network_config = network_config,
+                    reinforce_config = reinforce_config,
+                    memory_resotre = False)
+                    new_agent_2.load_weight(new_weights)
+                    new_agent_2.disable_learning(is_save = False)
+                    agents_2.append(new_agent_2)
+                    print("loaded agent:", file)
+                    
     if evaluation_config.generate_xai_replay:
         agent_1_model = "TugOfWar_eval.pupdate_240"
         agent_2_model = "TugOfWar_eval.pupdate_429_one_agent_top"
@@ -137,12 +156,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
     while True:
         if len(privous_result) >= update_wins_waves and \
-        sum(privous_result) / update_wins_waves > 10000 and \
+        sum(privous_result) / update_wins_waves > 0.95 and \
         not reinforce_config.is_random_agent_2:
             privous_result = []
             print("replace enemy agent's weight with self agent")
 #             random_enemy = False
-            f = open("result_self_play_2l.txt", "a+")
+            f = open("result_self_play_2l_deexp.txt", "a+")
             f.write("Update agent\n")
             f.close()
             
@@ -168,9 +187,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         print("Now have {} enemy".format(len(agents_2)))
         
+        
         for idx_enemy, enemy_agent in enumerate(agents_2[::-1]):
 #             break
-            if reinforce_config.collecting_experience:
+            if reinforce_config.collecting_experience or evaluation_config.training_episodes == 0:
                 break
             if enemy_agent == "random":
                 print(enemy_agent)
@@ -248,17 +268,25 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     #                     input('time_step')
                         if dp or done:
                             break
+#                     if steps == max_episode_steps or done:
+#                         win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
+
+#                         if win_lose == 1:
+#                             env.decomposed_rewards[4] = 10000
+#                             env.decomposed_rewards[5] = 0
+#                         elif win_lose == -1:
+#                             env.decomposed_rewards[4] = 0
+#                             env.decomposed_rewards[5] = 10000
+                    reward = []
                     if steps == max_episode_steps or done:
                         win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
 
                         if win_lose == 1:
-                            env.decomposed_rewards[4] = 10000
-                            env.decomposed_rewards[5] = 0
+                            reward = [1]
                         elif win_lose == -1:
-                            env.decomposed_rewards[4] = 0
-                            env.decomposed_rewards[5] = 10000
-
-                    reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
+                            reward = [0]
+                        
+#                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
                     # print('reward:')
                     # print(state_1[27], state_1[28], state_1[29], state_1[30])
                     # print(reward_1)
@@ -269,7 +297,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
 
                     if not reinforce_config.is_random_agent_1:
-                        agent_1.reward(sum(reward_1))
+                        agent_1.reward(sum(reward))
 
                 if not reinforce_config.is_random_agent_1:
                     agent_1.end_episode(state_1)
@@ -280,7 +308,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                 global_step = episode + 1)
         
         if not reinforce_config.is_random_agent_1:
-            agent_1.disable_learning(is_save = not reinforce_config.collecting_experience)
+            agent_1.disable_learning(is_save = not reinforce_config.collecting_experience and not evaluation_config.training_episodes)
 
         total_rewwards_list = []
             
@@ -423,23 +451,31 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
 #                     input(f"dp is {dp} done is {done}")
 
+#                     if steps == max_episode_steps or done:
+#                         recorder.done_recording()
+#                         win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
+
+#                         if win_lose == 1:
+#                             env.decomposed_rewards[4] = 10000
+#                             env.decomposed_rewards[5] = 0
+#                         elif win_lose == -1:
+#                             env.decomposed_rewards[4] = 0
+#                             env.decomposed_rewards[5] = 10000
+                    reward = []
                     if steps == max_episode_steps or done:
-                        recorder.done_recording()
                         win_lose = player_1_win_condition(state_1[27], state_1[28], state_1[29], state_1[30])
 
                         if win_lose == 1:
-                            env.decomposed_rewards[4] = 10000
-                            env.decomposed_rewards[5] = 0
+                            reward = [1]
                         elif win_lose == -1:
-                            env.decomposed_rewards[4] = 0
-                            env.decomposed_rewards[5] = 10000
+                            reward = [0]
 
-                    reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
+#                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
     #                 print(env.decomposed_rewards)
     #                 print(reward_1, reward_2)
 
     #                 for r1 in reward_1:
-                    current_reward_1 = sum(reward_1)
+                    current_reward_1 = sum(reward)
     #                 print(current_reward_1)
 
 
@@ -479,16 +515,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #             print("should be done with episode...")
 
             total_rewards_list_np = np.array(total_rewwards_list)
-
-            tied = np.sum(total_rewards_list_np[-test_num:] == 0)
+            tied = 0
+#             tied = np.sum(total_rewards_list_np[-test_num:] == 0)
             wins = np.sum(total_rewards_list_np[-test_num:] > 0)
-            lose = np.sum(total_rewards_list_np[-test_num:] < 0)
+            lose = np.sum(total_rewards_list_np[-test_num:] <= 0)
             
             tied_lose += (tied + lose)
             print("wins/lose/tied")
             print(str(wins / test_num * 100) + "% \t",
-                 str(lose / test_num * 100) + "% \t",
-                 str(tied / test_num * 100) + "% \t")
+                 str(lose / test_num * 100) + "% \t",)
+#                  str(tied / test_num * 100) + "% \t")
             pretty_print(average_end_state / test_num)
             
             
@@ -500,7 +536,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         if len(privous_result) > update_wins_waves:
             del privous_result[0]
-        f = open("result_self_play_2l.txt", "a+")
+        f = open("result_self_play_2l_deexp.txt", "a+")
         f.write(str(tr) + "\n")
         f.close()
         

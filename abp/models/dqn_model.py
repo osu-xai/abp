@@ -22,7 +22,7 @@ def weights_initialize(module):
 class _DQNModel(nn.Module):
     """ Model for DQN """
 
-    def __init__(self, network_config):
+    def __init__(self, network_config, is_sigmoid):
         super(_DQNModel, self).__init__()
 
         layer_modules, input_shape = generate_layers(network_config.input_shape,
@@ -30,6 +30,9 @@ class _DQNModel(nn.Module):
 
         layer_modules["OutputLayer"] = nn.Linear(int(np.prod(input_shape)),
                                                  network_config.output_shape)
+        
+        self.is_sigmoid = is_sigmoid
+        self.sigmoid_func = nn.Sigmoid()
 
         self.layers = nn.Sequential(layer_modules)
         self.layers.apply(weights_initialize)
@@ -40,14 +43,16 @@ class _DQNModel(nn.Module):
             if type(layer) == nn.Linear:
                 x = x.view(-1, int(np.prod(x.shape[1:])))
             x = layer(x)
+        if self.is_sigmoid:
+            x = self.sigmoid_func(x)
         return x
 
 
 class DQNModel(Model):
 
-    def __init__(self, name, network_config, use_cuda, restore=True, learning_rate=0.001):
+    def __init__(self, name, network_config, use_cuda, restore=True, learning_rate=0.001, is_sigmoid = False):
         self.name = name
-        model = _DQNModel(network_config)
+        model = _DQNModel(network_config, is_sigmoid = is_sigmoid)
         model = nn.DataParallel(model)
         self.use_cuda = use_cuda
 
