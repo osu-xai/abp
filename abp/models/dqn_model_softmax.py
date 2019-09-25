@@ -64,7 +64,7 @@ class DQNModel(Model):
         self.optimizer = Adam(self.model.parameters(), lr=self.network_config.learning_rate)
         self.loss_fn = nn.SmoothL1Loss()
         self.is_SmoothL1Loss = True
-        print("loss func: SmoothL1Loss")
+#         print("loss func: SmoothL1Loss")
 #         self.loss_fn = nn.CrossEntropyLoss()
 #         self.is_SmoothL1Loss = False
 #         print("loss func: CrossEntropyLoss")

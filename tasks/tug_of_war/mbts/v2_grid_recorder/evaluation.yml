@@ -1,0 +1,9 @@
+name: "tug of war mbts"
+env: "tug_of_war_mbts-v2_grid_recorder"
+summaries_path: "./tensorflow_summaries/tug_of_war/mbts/v2_grid_recorder/evaluation_summary"
+test_episodes: 10
+training_episodes: 0
+render: False
+sleep: 5
+generate_xai_replay: True
+xai_replay_dimension: 2048

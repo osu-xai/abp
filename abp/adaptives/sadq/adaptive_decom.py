@@ -107,7 +107,7 @@ class SADQAdaptive(object):
 #             print(q_values)
             q_values = self.combine_decomposed_reward(q_values)
 #             print(q_values)
-            _, choice = q_values.max(0)
+            max_q, choice = q_values.max(0)
             action = choice
             
         if self.learning and self.steps % self.reinforce_config.replace_frequency == 0:
@@ -120,7 +120,6 @@ class SADQAdaptive(object):
             self.update()
 #         print(action)
         self.previous_state = state[action]
-
         return choice, q_values
 
     def disable_learning(self, is_save = False):

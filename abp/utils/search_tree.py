@@ -1,12 +1,16 @@
 import json
 
 class Node():
-    def __init__(self, name, state, reward = 0, parent = None, q_value_after_state = None, parent_action = None, best_q_value = None):
+    def __init__(self, name, state, reward = 0, parent = None, 
+                 q_value_after_state = None, parent_action = None, best_q_value = None,
+                decom_q_value_after_state = None, decom_best_q_value = None):
+        
         self.parent = parent
         self.q_value_after_state = q_value_after_state
         self.best_q_value = best_q_value
-#         self.reward = reward
-#         self.accumulate_reward = 0
+        self.decom_q_value_after_state = decom_q_value_after_state
+        self.decom_best_q_value = best_q_value
+        
         self.children = []
         self.action_dict = {}
         self.actions = []
@@ -15,6 +19,8 @@ class Node():
         self.best_child = None
         self.best_action = None
         self.parent_action = parent_action
+        
+
         
     def add_child(self, sub_node, action = None):
         self.children.append(sub_node)
@@ -62,24 +68,37 @@ class Node():
         if self.parent_action is None:
             action_str = None
         else:
-            action_str = ""
-            for a in self.parent_action:
-                action_str += str(int(a))
+            action_str = self.parent_action
+#             for a in self.parent_action:
+#                 action_str += str(int(a))
         return {"action" : action_str}
     
     def tree_dict(self, best_child = None, new_name = None, tree_number = "", is_partial = False, is_expand = True):
         if new_name is not None:
             self.name = new_name
         t_dict = {}
-        assert len(self.state) == 32
 #         assert best_child is not None, print(self.name)
         self.tree_num = tree_number
 #         print(type(self.state_process()), type(self.best_q_value), type(self.q_value_after_state), type(self.parent_action),)
         t_dict["name"] = self.name
         t_dict.update(self.state_process())
         t_dict.update(self.action_process())
+#         if self.decom_best_q_value[2] + self.decom_best_q_value[3] + self.decom_best_q_value[6] + self.decom_best_q_value[7] != self.best_q_value:
+            
+#             print(self.decom_best_q_value)
+#             print(self.decom_best_q_value[2] + self.decom_best_q_value[3] + self.decom_best_q_value[6] + self.decom_best_q_value[7])
+#             print(self.best_q_value)
+#             input()
+#         if self.decom_q_value_after_state is not None and self.decom_q_value_after_state[2] + self.decom_q_value_after_state[3] + self.decom_q_value_after_state[6] + self.decom_q_value_after_state[7] != self.q_value_after_state:
+#             print("after")
+#             print(self.decom_q_value_after_state)
+#             print(self.decom_q_value_after_state[2] + self.decom_q_value_after_state[3] + self.decom_q_value_after_state[6] + self.decom_q_value_after_state[7])
+#             print(self.q_value_after_state)
+#             input()
         t_dict["best q_value"] = self.best_q_value
+        t_dict["decom best q_value"] = self.decom_best_q_value
         t_dict["after state q_value"] = self.q_value_after_state
+        t_dict["decom after state q_value"] = self.decom_q_value_after_state
         t_dict["tree path"] = self.tree_num
 #         t_dict["best_child"] = str(self.best_child)
         j = 0
@@ -89,11 +108,11 @@ class Node():
             for i, child in enumerate(self.children):
                 sub_tree_number = tree_number + str(i)
                 if child == best_child:
-                    new_name = "{}_{}(best)".format(child.name, sub_tree_number)
+                    new_name = "{}".format(child.name)
                     c_t_dict = child.tree_dict(best_child = child.best_child, new_name = new_name, tree_number = sub_tree_number,
                                               is_partial = is_partial, is_expand = True)
                 else:
-                    new_name = "{}_{}".format(child.name, sub_tree_number)
+                    new_name = "{}".format(child.name)
                     c_t_dict = child.tree_dict(new_name = new_name, tree_number = sub_tree_number,
                                               is_partial = is_partial, is_expand = False)
                 t_dict["children"][0].append(c_t_dict)
@@ -101,7 +120,7 @@ class Node():
             for i, child in enumerate(self.children):
                 sub_tree_number = tree_number + str(i)
                 if child == best_child:
-                    new_name = "{}_{}(best)".format(child.name, sub_tree_number)
+                    new_name = "{}_{}_best".format(child.name, sub_tree_number)
                     c_t_dict = child.tree_dict(best_child = child.best_child, new_name = new_name, tree_number = sub_tree_number,
                                               is_partial = False, is_expand = False)
                 else:

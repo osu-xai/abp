@@ -194,6 +194,8 @@ class MBTSAdaptive(object):
         self.transition_model_HP.load_weight(new_HP_state_dict)
         self.transition_model_unit.load_weight(new_unit_state_dict)
 #         self.value_model.load_weight(new_value_state_dict)
+#         self.q_model.load_weight(torch.load(models_path + 'q_model_decom8_grid.pt', map_location = device))
+#         self.q_model.load_weight(torch.load(models_path + 'TugOfWar_eval.pupdate_300', map_location = device))
         self.q_model.load_weight(torch.load(models_path + 'q_model_decom8_grid.pt', map_location = device))
             
     def reward_func_win_prob(self, state, next_states):
@@ -226,17 +228,17 @@ class MBTSAdaptive(object):
         state_node = Node("dp{}_level{}_state".format(dp, depth), state[:-1].tolist(), parent = par_node)
 #         if par_node is not None:
 #             par_node.add_child(state_node)
-        
+#         print(state, self.pylon_index_self)
         actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
 #         print("3---------------------------")
 #         print(actions_self)
         com_states_self = self.combine_sa(state, actions_self, is_enemy = False)
 #         print("4---------------------------")
 #         print(com_states_self)
-        top_k_action_self, top_k_state_self, topk_q_self, com_topk_q_self = self.action_ranking(com_states_self, actions_self)
+        top_k_action_self, top_k_state_self, topk_q_self, com_topk_q_self = self.action_ranking(com_states_self, actions_self, k = self.ranking_topk[depth - 1])
 #         print("5---------------------------")
 #         print(top_k_action_self)
-    
+#         print(state, self.pylon_index_enemy)
         actions_enemy = self.env.get_big_A(state[self.mineral_index_enemy].item(), state[self.pylon_index_enemy].item())
 #         print("6---------------------------")
 #         print(state[self.mineral_index_enemy].item(), actions_enemy)
@@ -246,7 +248,7 @@ class MBTSAdaptive(object):
 #         print(state)
 #         print("7---------------------------")
 #         print(com_states_enemy)
-        top_k_action_enemy, top_k_state_enemy, topk_q_enemy, com_topk_q_enemy = self.action_ranking(com_states_enemy, actions_enemy)
+        top_k_action_enemy, top_k_state_enemy, topk_q_enemy, com_topk_q_enemy = self.action_ranking(com_states_enemy, actions_enemy, k = self.ranking_topk[depth - 1])
 #         print("8---------------------------")
 #         print(top_k_action_enemy)
         
@@ -257,7 +259,8 @@ class MBTSAdaptive(object):
 #             print("10---------------------------")
 #             print(top_k_action_enemy)
             action_node_max = Node("dp{}_level{}_action_max".format(dp, depth), top_k_state_self[idx][:-1].tolist(),
-                                  parent = state_node, q_value_after_state = com_topk_q_self[idx].item(), parent_action = a_self.tolist())
+                                  parent = state_node, q_value_after_state = com_topk_q_self[idx].item(), 
+                                   decom_q_value_after_state = topk_q_self[idx].tolist(), parent_action = a_self.tolist())
             action_node_max.parent.add_child(action_node_max, action = action_node_max.parent_action)
     
             action_node_mins = []
@@ -266,9 +269,11 @@ class MBTSAdaptive(object):
 #             start_time = time.time()
             next_states = self.get_next_states(state, a_self, top_k_action_enemy)
 #             print(time.time() - start_time)
-            for tk_a, tk_a_s_e, tk_q_v_e, n_s in zip(top_k_action_enemy, top_k_state_enemy, com_topk_q_enemy, next_states):
+            for tk_a, tk_a_s_e, tk_q_v_e, decom_tk_q_v_e, n_s in zip(top_k_action_enemy, top_k_state_enemy, com_topk_q_enemy, topk_q_enemy, next_states):
                 node_min = Node("dp{}_level{}_action_min".format(dp, depth), self.switch_state_to_enemy(tk_a_s_e)[:-1].tolist(),
-                                      parent = action_node_max, q_value_after_state = tk_q_v_e.item(), parent_action = tk_a.tolist())
+                                parent = action_node_max, q_value_after_state = tk_q_v_e.item(), 
+                               decom_q_value_after_state = decom_tk_q_v_e.tolist(), parent_action = tk_a.tolist())
+            
                 action_node_mins.append(node_min)
                 node_min.parent.add_child(node_min)
                 
@@ -276,15 +281,16 @@ class MBTSAdaptive(object):
 #             print("12---------------------------")
 #             print(next_reward)
         
-            if depth == self.look_forward_step:
+            if depth == self.look_forward_step or dp >= 40:
                 decom_min_values, com_min_values = self.rollout(next_states)
 #                 print(min_values)
 #                 input()
                 next_state_nodes = []
-                for m_v, n_s, a_n_m in zip(com_min_values, next_states, action_node_mins):
+                for m_v, decom_m_v, n_s, a_n_m in zip(com_min_values, decom_min_values, next_states, action_node_mins):
                     node_n_s = Node("dp{}_level{}_state".format(dp, depth), n_s[:-1].tolist(),
-                                          parent = a_n_m, best_q_value = m_v.item())
+                                          parent = a_n_m, best_q_value = m_v.item(), decom_best_q_value = decom_m_v.tolist())
                     a_n_m.best_q_value = m_v.item()
+                    a_n_m.decom_best_q_value = decom_m_v.tolist()
                     a_n_m.best_child = node_n_s
                     next_state_nodes.append(node_n_s)
                     node_n_s.parent.add_child(node_n_s)
@@ -294,30 +300,37 @@ class MBTSAdaptive(object):
             else:
                 next_state_nodes = []
                 com_min_values = FloatTensor(np.zeros(len(next_states)))
+                decom_min_values = FloatTensor(np.zeros((len(next_states), 8)))
+                
                 for i, (n_s, n_r) in enumerate(zip(next_states, next_reward)):
 #                     if n_r == 1 or n_r == 0:
 # #                         min_values[i] = n_r
 #                         continue
-                    com_min_values[i], _, next_state_node = self.minimax(n_s, dp = dp + 1, depth = depth + 1, par_node = action_node_mins[i])
+                    com_min_values[i], decom_min_values[i], _, next_state_node = self.minimax(n_s, dp = dp + 1, depth = depth + 1, par_node = action_node_mins[i])
                     action_node_mins[i].best_q_value = com_min_values[i].item()
+                    action_node_mins[i].decom_best_q_value = decom_min_values[i].tolist()
                     action_node_mins[i].best_child = next_state_node
                     next_state_nodes.append(next_state_node)
                     next_state_node.parent.add_child(next_state_node)
 #             print("13---------------------------")
 #             print(min_values)
             com_min_values = com_min_values.view(-1)
+            decom_min_values = decom_min_values.view(-1, 8)
 #             print(min_values)
 #             min_value = min_values.min(0)[0].item()
             min_value, min_value_idx = com_min_values.min(0)
+            decom_min_value = decom_min_values[min_value_idx].tolist()
             min_value = min_value.item()
         
             action_node_max.best_q_value = min_value
+            action_node_max.decom_best_q_value = deepcopy(decom_min_value)
             action_node_max.best_child = action_node_mins[min_value_idx]
             action_node_max.best_action = action_node_mins[min_value_idx].parent_action
 #             print("17---------------------------")
 #             print(min_value)
             if max_value < min_value:
                 max_value = min_value
+                decom_max_value = deepcopy(decom_min_value)
                 best_action = a_self
                 best_max_child = action_node_max
 #             print("18---------------------------")
@@ -326,10 +339,11 @@ class MBTSAdaptive(object):
 #             print(best_action)
 #             input()
         state_node.best_q_value = max_value
+        state_node.decom_best_q_value = deepcopy(decom_max_value)
         state_node.best_child = best_max_child
         state_node.best_action = best_action
         
-        return max_value, best_action, state_node
+        return max_value, FloatTensor(decom_max_value), best_action, state_node
 
     def predict(self, state, minerals_enemy, dp = 0):
 #         print("1---------------------------")
@@ -339,7 +353,7 @@ class MBTSAdaptive(object):
 #         print("2---------------------------")
 #         print(state)
         if self.look_forward_step > 0:
-            max_value, best_action, root = self.minimax(state, dp = dp)
+            max_value, decom_max_value, best_action, root = self.minimax(state, dp = dp)
         else:
             pass
 #         print(state)
@@ -368,6 +382,7 @@ class MBTSAdaptive(object):
         values = FloatTensor(np.zeros((len(states), self.reward_num)))
         with torch.no_grad():
             for i, state in enumerate(states):
+#                 print(state, self.pylon_index_self)
                 actions_self = self.env.get_big_A(state[self.mineral_index_self].item(), state[self.pylon_index_self].item())
 
                 com_states = self.combine_sa(state, actions_self, is_enemy = False)
@@ -380,10 +395,10 @@ class MBTSAdaptive(object):
                 
         return values, com_values
     
-    def action_ranking(self, after_states, action):
+    def action_ranking(self, after_states, action, k = 100000000):
 #         action = FloatTensor(action)
 #         print(len(after_states), len(action))
-        ranking_topk = self.ranking_topk
+        ranking_topk = k
         if ranking_topk >= len(after_states):
               ranking_topk = len(after_states)
 #             return action[np.array(range(len(after_states)))], after_states[np.array(range(len(after_states)))]
@@ -458,10 +473,10 @@ class MBTSAdaptive(object):
         after_states = self.combine_sa(after_states_self, top_k_action_enemy, True)
         
         after_states[:, self.mineral_index_self] += after_states[:, self.pylon_index_self] * 75 + 100
-        after_states[after_states[:, self.mineral_index_self] > 1500] = 1500
+        after_states[after_states[:, self.mineral_index_self] > 1500, self.mineral_index_self] = 1500
         
         after_states[:, self.mineral_index_enemy] += after_states[:, self.pylon_index_enemy] * 75 + 100
-        after_states[after_states[:, self.mineral_index_enemy] > 1500] = 1500
+        after_states[after_states[:, self.mineral_index_enemy] > 1500, self.mineral_index_enemy] = 1500
         
         return after_states
     

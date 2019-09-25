@@ -1,0 +1,13 @@
+decay_steps: 300
+starting_epsilon: 1
+discount_factor: 0.99
+batch_size: 32
+memory_size: 10000
+summaries_path: "./tensorflow_summaries/tug_of_war/mbts/v2_grid_recorder/reinforce_summary"
+update_frequency: 10
+replace_frequency: 3000
+epsilon_timesteps: 10000
+starting_epsilon: 1
+final_epsilon: 0.01
+is_random_agent_1: False
+is_random_agent_2: False
