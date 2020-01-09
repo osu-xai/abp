@@ -1,7 +1,7 @@
 torch
 torchvision
 gym[atari]
-pysc2
+pysc2==2.0.2
 numpy
 visdom
 tensorflow
