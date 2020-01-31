@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.tug_of_war_2L_self_play_4grid import TugOfWar
 from sc2env.environments.tug_of_war_2L_self_play_4grid import action_component_names
-from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
+#from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
 from tqdm import tqdm
 from copy import deepcopy
 from random import randint, random

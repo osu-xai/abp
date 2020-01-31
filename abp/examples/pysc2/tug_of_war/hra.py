@@ -10,7 +10,7 @@ from abp.explanations import PDX
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.tug_of_war import TugOfWar
-from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
+#from sc2env.xai_replay.recorder.recorder import XaiReplayRecorder
 from tqdm import tqdm
 
 np.set_printoptions(precision = 2)
