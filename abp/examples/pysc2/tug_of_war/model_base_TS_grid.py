@@ -159,7 +159,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     node.print_children_prob(node)
 #                     input()
                     if evaluation_config.generate_xai_replay: 
-                        print(111111111111)
+#                         print(111111111111)
                         path_whole_tree = recorder.json_pathname[:-5] + "_whole_tree/"
 #                         print(path_whole_tree)
                         path_partial_tree = recorder.json_pathname[:-5] + "_partial_tree/"
