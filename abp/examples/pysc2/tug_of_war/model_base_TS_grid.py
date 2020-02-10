@@ -56,7 +56,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     models_path = "abp/examples/pysc2/tug_of_war/models_mb/"
     agent_1 = MBTSAdaptive(name = "TugOfWar", state_length = len(state_1),
                         network_config = network_config, reinforce_config = reinforce_config,
-                          models_path = models_path, depth = 2, action_ranking = [7, 7], env = env, is_F_all_unit = True)
+                          models_path = models_path, depth = 2, action_ranking = [20, 10, 5, 3], env = env, is_F_all_unit = True)
     
     if not reinforce_config.is_random_agent_2:
         agent_2 = SADQAdaptive(name = "self_model_free",
@@ -155,7 +155,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     print()
 #                     print()
 #                     print()
-# #                     node.print_tree(p_best_q_value = True, p_action = True, p_after_q_value = True)
+# # #                     node.print_tree(p_best_q_value = True, p_action = True, p_after_q_value = True)
+#                     node.print_children_prob(node)
+#                     input()
                     if evaluation_config.generate_xai_replay: 
                         path_whole_tree = recorder.json_pathname[:-5] + "_whole_tree/"
 #                         print(path_whole_tree)
@@ -235,7 +237,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             print("total reward:")
             print(tr)
 
-            f = open("result_model_based_grid_v7.txt", "a+")
+            f = open("result_model_based_final_results_mf.txt", "a+")
             f.write(agent_2.name + "\n")
             f.write(str(tr) + "\n")
             f.write(np.array2string(average_state / evaluation_config.test_episodes, precision=2, separator=',', suppress_small=True) + "\n")

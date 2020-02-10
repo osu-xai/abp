@@ -1,5 +1,5 @@
 import json
-
+import numpy as np
 class Node():
     def __init__(self, name, state, reward = 0, parent = None, 
                  q_value_after_state = None, parent_action = None, best_q_value = None,
@@ -9,7 +9,7 @@ class Node():
         self.q_value_after_state = q_value_after_state
         self.best_q_value = best_q_value
         self.decom_q_value_after_state = decom_q_value_after_state
-        self.decom_best_q_value = best_q_value
+        self.decom_best_q_value = decom_best_q_value
         
         self.children = []
         self.action_dict = {}
@@ -47,7 +47,15 @@ class Node():
         for child in self.children:
             child.print_tree(p_state = p_state, p_after_q_value = p_after_q_value, 
                              p_best_q_value = p_best_q_value, p_action = p_action, tab = tab + 1)
-            
+    
+    def print_children_prob(self, node):
+        np.set_printoptions(precision = 5)
+        output = np.zeros(len(node.children))
+        for i, child in enumerate(node.children):
+            output[i] = child.best_q_value
+#         for child in node.children:
+#             print(child.decom_best_q_value)
+        print(output)
     def state_process(self):
         separate_state = {
                          "mineral" : self.state[0],

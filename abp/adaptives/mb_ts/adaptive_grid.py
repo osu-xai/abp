@@ -21,6 +21,7 @@ from abp.utils.search_tree import Node
 from abp.configs import NetworkConfig, ReinforceConfig, EvaluationConfig
 from abp.models import TransModel
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger('root')
 use_cuda = torch.cuda.is_available()
@@ -57,6 +58,8 @@ class MBTSAdaptive(object):
         
         self.env = env
         self.player = player
+        
+        self.number_of_worst_action = 3
         
 #         print("%%%%%%%%%%%%%%%%%%%%%%",state_length)
         self.index_hp = LongTensor(range(63, 67))
@@ -235,7 +238,8 @@ class MBTSAdaptive(object):
         com_states_self = self.combine_sa(state, actions_self, is_enemy = False)
 #         print("4---------------------------")
 #         print(com_states_self)
-        top_k_action_self, top_k_state_self, topk_q_self, com_topk_q_self = self.action_ranking(com_states_self, actions_self, k = self.ranking_topk[depth - 1])
+        top_k_action_self, top_k_state_self, topk_q_self, com_topk_q_self = self.action_ranking(com_states_self, actions_self, 
+                                                                                                k = self.ranking_topk[(depth - 1) * 2], depth = depth)
 #         print("5---------------------------")
 #         print(top_k_action_self)
 #         print(state, self.pylon_index_enemy)
@@ -248,12 +252,13 @@ class MBTSAdaptive(object):
 #         print(state)
 #         print("7---------------------------")
 #         print(com_states_enemy)
-        top_k_action_enemy, top_k_state_enemy, topk_q_enemy, com_topk_q_enemy = self.action_ranking(com_states_enemy, actions_enemy, k = self.ranking_topk[depth - 1])
+        top_k_action_enemy, top_k_state_enemy, topk_q_enemy, com_topk_q_enemy = self.action_ranking(com_states_enemy, actions_enemy, k = self.ranking_topk[(depth - 1) * 2 + 1])
 #         print("8---------------------------")
 #         print(top_k_action_enemy)
         
         max_value = float("-inf")
-        for idx, a_self in enumerate(tqdm(top_k_action_self, desc = "Making decision depth={}, dp={}".format(depth, dp))):
+#         for idx, a_self in enumerate(tqdm(top_k_action_self, desc = "Making decision depth={}, dp={}".format(depth, dp))):
+        for idx, a_self in enumerate(top_k_action_self):
 #             print("9---------------------------")
 #             print(a_self)
 #             print("10---------------------------")
@@ -366,7 +371,19 @@ class MBTSAdaptive(object):
 #         pretty_print(state[: -1], text = "original state")
 #         pretty_print(self.switch_state_to_enemy(state)[:-1], text = "switch state")
 #         input()
+#         print(decom_max_value)
+#         self.plot_reward_bars(decom_max_value, dp)
+#         input()
         return best_action, root
+    
+    def plot_reward_bars(self, decom_max_value, dp):
+        names = ['Dmg_1_T', 'Dmg_1_B', 'Dmg_2_T', 'Dmg_2_B', 'Des_1_T', 'Des_1_B', 'Des_2_T', 'Des_2_B']
+        plt.bar(names, decom_max_value.tolist())
+        plt.suptitle('reward bars decision point {}'.format(dp))
+        plt.xticks(rotation='30')
+        plt.yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+        plt.savefig('dp_{}.png'.format(dp),dpi=100)
+        plt.clf()
     
     def normalization(self, state, is_vf = False):
         return state[:, :-1].clone() / self.norm_vector
@@ -395,23 +412,45 @@ class MBTSAdaptive(object):
                 
         return values, com_values
     
-    def action_ranking(self, after_states, action, k = 100000000):
+    def action_ranking(self, after_states, action, k = 100000000, depth = 0):
 #         action = FloatTensor(action)
 #         print(len(after_states), len(action))
+        if depth == 1:
+            wrostk_len = self.number_of_worst_action
         ranking_topk = k
         if ranking_topk >= len(after_states):
-              ranking_topk = len(after_states)
-#             return action[np.array(range(len(after_states)))], after_states[np.array(range(len(after_states)))]
-#         print(ranking_topk)
+            ranking_topk = len(after_states)
+            wrostk_len = 0
+            
         with torch.no_grad():
 #             print(FloatTensor(self.normalization(after_states, is_vf = True)))
             q_values = self.q_model.predict_batch(FloatTensor(self.normalization(after_states, is_vf = True)))
 #             print(q_values)
+            q_length = len(after_states)
             com_q_values = self.combine_decomposed_func(q_values)
             
             com_q_values = com_q_values.view(-1)
             com_topk_q, indices = torch.topk(com_q_values, ranking_topk)
+            topk_length = len(indices)
+            
             topk_q = q_values[indices]
+            
+            if depth == 1 and q_length - topk_length < wrostk_len:
+                wrostk_len = q_length - topk_length
+                
+            if depth == 1 and wrostk_len != 0:
+                com_worstk_q, worst_indices = torch.topk(com_q_values, wrostk_len, largest = False)
+                worstk_q = q_values[worst_indices]
+                
+                com_topk_q = torch.cat((com_topk_q, com_worstk_q), 0)
+                topk_q = torch.cat((topk_q, worstk_q), 0)
+                indices = torch.cat((indices, worst_indices))
+#                 print()
+#                 print(len(topk_q))
+#                 print(com_topk_q)
+#                 print(indices)
+# #                 print(topk_q)
+#                 input()
 #         print(topk_q)
 #         print(indices)
 #         input()
