@@ -13,7 +13,7 @@ from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.tug_of_war_2L_self_play_4grid import TugOfWar
 from sc2env.environments.tug_of_war_2L_self_play_4grid import action_component_names
-#from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
+from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
 from tqdm import tqdm
 from copy import deepcopy
 from random import randint
@@ -35,7 +35,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     flags.FLAGS(sys.argv[:1])
     
     max_episode_steps = 40
-    evaluation_config.generate_xai_replay = False
+#     evaluation_config.generate_xai_replay = False
     replay_dimension = evaluation_config.xai_replay_dimension
     env = TugOfWar(map_name = map_name, \
         generate_xai_replay = evaluation_config.generate_xai_replay, xai_replay_dimension = replay_dimension)
@@ -124,13 +124,13 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 skiping = True
                 steps = 0
                 
-                # recorder = XaiReplayRecorder2LaneNexus(env.sc2_env, episode, evaluation_config.env, action_component_names, replay_dimension)
+                recorder = XaiReplayRecorder2LaneNexus(env.sc2_env, episode, evaluation_config.env, action_component_names, replay_dimension)
 
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
-                    #if evaluation_config.generate_xai_replay:
-                        #recorder.save_jpg()
-                        #recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                    if evaluation_config.generate_xai_replay:
+                        recorder.save_jpg()
+                        recorder.record_game_clock_tick(env.decomposed_reward_dict)
                     
                     if dp or done:
                         break
@@ -159,6 +159,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     node.print_children_prob(node)
 #                     input()
                     if evaluation_config.generate_xai_replay: 
+                        print(111111111111)
                         path_whole_tree = recorder.json_pathname[:-5] + "_whole_tree/"
 #                         print(path_whole_tree)
                         path_partial_tree = recorder.json_pathname[:-5] + "_partial_tree/"
@@ -172,20 +173,15 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         node.save_into_json(path = path_whole_tree, dp = steps)   
                         node.save_into_json(path = path_partial_tree, dp = steps, is_partial = True)
                         
-#                     input()
-    #                 print(actions_1111111)
-#                     input()
-
-    #                 input("state_1 checked")
                     combine_states_2 = combine_sa(state_2, actions_2)
                     if not reinforce_config.is_random_agent_2 and not random_enemy:
                         choice_2, _ = agent_2.predict(env.normalization(combine_states_2))
                     else:
                         choice_2 = randint(0, len(actions_2) - 1)
 
-                    #if evaluation_config.generate_xai_replay:
-                        #recorder.save_jpg()
-                        #recorder.record_decision_point(actions_1111111, actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
+                    if evaluation_config.generate_xai_replay:
+                        recorder.save_jpg()
+                        recorder.record_decision_point(actions_1111111, actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
     
     #                 env.step(list(actions_1[choice_1]), 1)
 
@@ -203,9 +199,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     while skiping:
                         state_1, state_2, done, dp = env.step([], 0)
                         #input(' step wating for done signal')
-                        #if evaluation_config.generate_xai_replay:
-                            #recorder.save_jpg()
-                            #recorder.record_game_clock_tick(env.decomposed_reward_dict)
+                        if evaluation_config.generate_xai_replay:
+                            recorder.save_jpg()
+                            recorder.record_game_clock_tick(env.decomposed_reward_dict)
 
                         if dp or done:
                             break
@@ -215,8 +211,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
                     current_reward_1 = 0 
                     if steps == max_episode_steps or done:
-                        #if evaluation_config.generate_xai_replay:
-                        #    recorder.done_recording()
+                        if evaluation_config.generate_xai_replay:
+                            recorder.done_recording()
 
                         if reward_num == 4:
                             current_reward_1 = sum(reward[2:])
