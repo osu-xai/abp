@@ -2,7 +2,7 @@ Adaptation Based Programming
 ============================
 
 ## Installation
-See [installation.md]("./installation.md")
+See [installation.md](installation.md)
 
 ## Testing
 

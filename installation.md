@@ -3,7 +3,7 @@ ABP Install
 Recommended Specs:
  - Python 3.6
  - [Ubuntu 18.04 LTS](https://ubuntu.com/download/desktop)
- - Nvidia CUDA Enabled GPU and Comparable CPU
+ - Nvidia CUDA Enabled GPU and comparable CPU
 
 1. Update and install the latest Nvidia GPU drivers for your distribution.
 2. Install [Nvidia CUDA](https://developer.nvidia.com/cuda-toolkit)
