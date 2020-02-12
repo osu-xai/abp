@@ -5,6 +5,7 @@ Adaptation Based Programming
 ```bash
     git clone https://github.com/osu-xai/abp
     cd abp
+    sudo apt install libopenmpi-dev ffmpeg
     pip3 install -r requirements.txt
     python3 setup.py install
 ```
