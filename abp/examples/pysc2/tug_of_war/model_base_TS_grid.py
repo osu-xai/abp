@@ -202,7 +202,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         if evaluation_config.generate_xai_replay:
                             recorder.save_jpg()
                             recorder.record_game_clock_tick(env.decomposed_reward_dict)
-
+#                         break
                         if dp or done:
                             break
                             
@@ -220,9 +220,18 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             current_reward_1 = reward[2] + reward[3] + reward[6] + reward[7]
                             
                     total_reward_1 += current_reward_1
-                    
+#                     if steps == 2:
+                        
+#                         break
                 average_state += state_1
+                
                 total_rewwards_list.append(total_reward_1)
+#                 print(total_rewwards_list, recorder.json_pathname[:-5])
+                
+                recorder_files_name = recorder.json_pathname[:-5]
+                recorder = None
+                if evaluation_config.generate_xai_replay:
+                    add_result_mark_to_replay(total_reward_1, recorder_files_name)
 #                 print(total_rewwards_list)
                 test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
                                                global_step=episode + 1)
@@ -240,8 +249,44 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             
             f.close()
 #         break
-        
-def pretty_print(state,  text = ""):
+
+def add_result_mark_to_replay(reward, file_name):
+    if reward > 0:
+        tag = "win"
+    else:
+        tag = "lose"
+    replay_path = "../sc2env/sc2env/xai_replay/ui/viz/replays/"
+    
+    video_file = "{}.mp4".format(file_name)
+    tag_video_file = "{}_{}.mp4".format(file_name, tag)
+    
+    whole_tree_dir = "{}_whole_tree/".format(file_name)
+    tag_whole_tree_dir = "{}_whole_tree_{}/".format(file_name, tag)
+    
+    partial_tree_dir = "{}_partial_tree/".format(file_name)
+    tag_partial_tree_dir = "{}_partial_tree_{}/".format(file_name, tag)
+    
+    expl_file = "{}.expl".format(file_name)
+    tag_expl_file = "{}_{}.expl".format(file_name, tag)
+    
+    json_file = "{}.json".format(file_name)
+    tag_json_file = "{}_{}.json".format(file_name, tag)
+    
+#     print(video_file)
+#     print(tag_video_file)
+#     print(whole_tree_dir)
+#     print(tag_whole_tree_dir)
+#     print(partial_tree_dir)
+#     print(tag_partial_tree_dir)
+#     print(expl_file)
+#     print(tag_expl_file)
+    
+    os.rename(video_file, tag_video_file)
+    os.rename(whole_tree_dir, tag_whole_tree_dir)
+    os.rename(partial_tree_dir, tag_partial_tree_dir)
+    os.rename(expl_file, tag_expl_file)
+    os.rename(json_file, tag_json_file)
+def pretty_print(expl_file,  text = ""):
     state_list = state.copy().tolist()
     state = []
     for s in state_list:
