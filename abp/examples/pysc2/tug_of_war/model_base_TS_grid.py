@@ -162,16 +162,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                         print(111111111111)
                         path_whole_tree = recorder.json_pathname[:-5] + "_whole_tree/"
 #                         print(path_whole_tree)
-                        path_partial_tree = recorder.json_pathname[:-5] + "_partial_tree/"
+                        #path_partial_tree = recorder.json_pathname[:-5] + "_partial_tree/"
 #                         print(path_partial_tree)
                         
                         if not os.path.exists(path_whole_tree):
                             os.mkdir(path_whole_tree)
-                        if not os.path.exists(path_partial_tree):
-                            os.mkdir(path_partial_tree)
+                        #if not os.path.exists(path_partial_tree):
+                        #    os.mkdir(path_partial_tree)
                             
                         node.save_into_json(path = path_whole_tree, dp = steps)   
-                        node.save_into_json(path = path_partial_tree, dp = steps, is_partial = True)
+                        #node.save_into_json(path = path_partial_tree, dp = steps, is_partial = True)
                         
                     combine_states_2 = combine_sa(state_2, actions_2)
                     if not reinforce_config.is_random_agent_2 and not random_enemy:
@@ -263,8 +263,8 @@ def add_result_mark_to_replay(reward, file_name):
     whole_tree_dir = "{}_whole_tree/".format(file_name)
     tag_whole_tree_dir = "{}_whole_tree_{}/".format(file_name, tag)
     
-    partial_tree_dir = "{}_partial_tree/".format(file_name)
-    tag_partial_tree_dir = "{}_partial_tree_{}/".format(file_name, tag)
+    #partial_tree_dir = "{}_partial_tree/".format(file_name)
+    #tag_partial_tree_dir = "{}_partial_tree_{}/".format(file_name, tag)
     
     expl_file = "{}.expl".format(file_name)
     tag_expl_file = "{}_{}.expl".format(file_name, tag)
@@ -283,7 +283,7 @@ def add_result_mark_to_replay(reward, file_name):
     
     os.rename(video_file, tag_video_file)
     os.rename(whole_tree_dir, tag_whole_tree_dir)
-    os.rename(partial_tree_dir, tag_partial_tree_dir)
+    #os.rename(partial_tree_dir, tag_partial_tree_dir)
     os.rename(expl_file, tag_expl_file)
     os.rename(json_file, tag_json_file)
 def pretty_print(expl_file,  text = ""):
