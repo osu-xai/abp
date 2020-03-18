@@ -16,5 +16,8 @@ python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p_2l_hp/v1/ -tk task
 # SADQ agent self-play on tug_of_way 2 lanes 4 grid decomposed version
 python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p_2l_decom/v1_4/ -tk task_2p_2l_grid_decomposed
 
+# SADQ agent self-play on tug_of_way 2 lanes 4 grid for auto_decom_reward
+python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p_2l_decom/auto_decom_reward/ -tk task_2p_2l_grid_decomposed_auto_decom_reward
+
 # run Model base (tree search) grid agent on tug_of_way
 python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/mbts/v2_grid/ -tk task_mbts_grid
