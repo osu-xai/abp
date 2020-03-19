@@ -25,8 +25,8 @@ output_shape: 4
 shared_layers: [] #TODO
 aggeregator: "average" #TODO
 
-network_path: "./saved_models/tug_of_war/sadq_2p_2l_decom/auto_decom_reward.ckpt"
-summaries_path: "./tensorflow_summaries/tug_of_war/sadq_2p_2l_decom/auto_decom_reward/network_summary"
+network_path: "./saved_models/tug_of_war/gqf/v1.ckpt"
+summaries_path: "./tensorflow_summaries/tug_of_war/gqf/v1/network_summary"
 summaries_step: 10000000000
 restore_network: True
 save_steps: 10

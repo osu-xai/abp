@@ -25,6 +25,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("|       USING CUDA       |")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print("HERE")
     else:
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("|     NOT USING CUDA     |")
