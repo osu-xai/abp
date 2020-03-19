@@ -6,6 +6,7 @@ import sys, os
 import torch
 
 from abp.adaptives.sadq.adaptive_decom import SADQAdaptive
+from abp.adaptives.gqf.adaptive import DQN_GQF
 from abp.utils import clear_summary_path
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
@@ -25,7 +26,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("|       USING CUDA       |")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        print("HERE")
     else:
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
         print("|     NOT USING CUDA     |")
@@ -52,12 +52,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         player_1_end_vector = player_1_end_vector_8
     
     if not reinforce_config.is_random_agent_1:
-        agent_1 = SADQAdaptive(name = "TugOfWar",
+        agent_1 = DQN_GQF(name = "TugOfWar",
                             state_length = len(state_1),
                             network_config = network_config,
                             reinforce_config = reinforce_config,
                             reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
-        print("sadq agent 1")
+        print("DQN_GQF agent 1")
     else:
         print("random agent 1")
         
