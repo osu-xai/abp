@@ -26,7 +26,7 @@ Tensor = FloatTensor
 class SADQ_GQF(object):
     """Adaptive which uses the SADQ algorithm"""
 
-    def __init__(self, name, state_length, network_config, reinforce_config, feature_len, is_sigmoid = False, memory_resotre = True):
+    def __init__(self, name, state_length, network_config, reinforce_config, feature_len, reward_num, combine_decomposed_func, is_sigmoid = False, memory_resotre = True):
         super(SADQ_GQF, self).__init__()
         self.name = name
         #self.choices = choices
@@ -39,7 +39,7 @@ class SADQ_GQF(object):
         self.explanation = False
         self.state_length = state_length
 
-        self.features = None
+        self.features = 0
         self.feature_len = feature_len
         # Global
         self.steps = 0
@@ -255,7 +255,7 @@ class SADQ_GQF(object):
         self.total_reward += r
         self.current_reward += r
 
-    def features(self, features):
+    def passFeatures(self, features):
         self.features = features
         return
 
@@ -288,7 +288,7 @@ class SADQ_GQF(object):
         # Current Q Values
         feature_values, q_values = self.eval_model.predict_batch(states)
         q_values = q_values.flatten()
-        feature_values = view(-1, self.feature_len)
+        feature_values = features_vector.view(-1, self.feature_len)
         # Calculate target
 #         q_next = [self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))[1] for ns in next_states]
         q_next = []

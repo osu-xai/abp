@@ -56,8 +56,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             state_length = len(state_1),
                             network_config = network_config,
                             reinforce_config = reinforce_config,
-                            feature_len = network_config.shared_layers
-                            reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
+                            feature_len = network_config.shared_layers,
+                            reward_num = reward_num,
+                            combine_decomposed_func = combine_decomposed_func
+                            )
         print("SADQ_GQF agent 1")
     else:
         print("random agent 1")
@@ -292,7 +294,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     features = [0] * reward_num
                     if steps == max_episode_steps or done:
                         features = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
-                    total_reward = combine_decomposed_func_8(features)
+                    total_reward = sum(features)
 #                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
 #                     print('reward:')
                     # print(state_1[27], state_1[28], state_1[29], state_1[30])
@@ -302,7 +304,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                         input()
 
                     if not reinforce_config.is_random_agent_1:
-                        agent_1.features(features)
+                        print("features: ", features)
+                        agent_1.passFeatures(features)
                         agent_1.reward(total_reward)
 
                 if not reinforce_config.is_random_agent_1:
@@ -612,10 +615,10 @@ def combine_decomposed_func_4(q_values):
     return q_values
 
 def combine_decomposed_func_8(q_values):
-#     print(q_values)
+#   print(q_values)
 #     print(q_values[:, :1].size())
     q_values = torch.sum(q_values[:, [2, 3, 6, 7]], dim = 1)
-#     print(q_values)
+#    print("q values: ", q_values)
 #     input("combine")
     return q_values
             
