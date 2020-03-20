@@ -26,7 +26,7 @@ Tensor = FloatTensor
 class SADQ_GQF(object):
     """Adaptive which uses the SADQ algorithm"""
 
-    def __init__(self, name, state_length, network_config, reinforce_config, is_sigmoid = False, memory_resotre = True):
+    def __init__(self, name, state_length, network_config, reinforce_config, feature_len, is_sigmoid = False, memory_resotre = True):
         super(SADQ_GQF, self).__init__()
         self.name = name
         #self.choices = choices
@@ -40,7 +40,7 @@ class SADQ_GQF(object):
         self.state_length = state_length
 
         self.features = None
-        
+        self.feature_len = feature_len
         # Global
         self.steps = 0
         self.reward_history = []
@@ -275,28 +275,51 @@ class SADQ_GQF(object):
                                        global_step=self.steps)
         else:
             batch = self.memory.sample(self.reinforce_config.batch_size)
-            (states, actions, reward, next_states, is_terminal) = batch
+            (states, actions, reward, next_states, is_terminal, features_vector) = batch
 
         states = FloatTensor(states)
         #next_states = FloatTensor(next_states)
         terminal = FloatTensor([1 if t else 0 for t in is_terminal])
         reward = FloatTensor(reward)
+        features_vector = FloatTensor(features_vector)
         batch_index = torch.arange(self.reinforce_config.batch_size,
                                    dtype=torch.long)
         
         # Current Q Values
-        _, q_values = self.eval_model.predict_batch(states)
+        feature_values, q_values = self.eval_model.predict_batch(states)
         q_values = q_values.flatten()
+        feature_values = view(-1, self.feature_len)
         # Calculate target
-        q_next = [self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))[1] for ns in next_states]
-        q_max = torch.stack([each_qmax.max(0)[0].detach() for each_qmax in q_next], dim = 1)[0]
+#         q_next = [self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))[1] for ns in next_states]
+        q_next = []
+        features_next  =[]
+        for ns in next_states:
+            feature_n, q_n = self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))
+            features_next.append(feature_n)
+            q_next.append(q_n)
+            
+            
+#         q_max = torch.stack([each_qmax.max(0)[0].detach() for each_qmax in q_next], dim = 1)[0]
+        
+        q_max = []
+        f_max = []
+        for each_qmax in q_next:
+            idx, q_value_max = each_qmax.max(0)
+            features_max = features_next[idx]
+            
+            q_max.append(q_value_max)
+            f_max.append(features_max)
+        q_max = torch.stack(q_max)
+        features_max = torch.stack(features_max)
 
         q_max = (1 - terminal) * q_max
+        features_max = (1 - terminal) * features_max
         
         q_target = reward + self.reinforce_config.discount_factor * q_max
+        f_target = features_vector + self.reinforce_config.discount_factor * f_max
 
         # update model
-        self.eval_model.fit(q_values, q_target, self.steps)
+        self.eval_model.fit(q_values, q_target, feature_values, f_target)
 
         # Update priorities
         if self.reinforce_config.use_prior_memory:

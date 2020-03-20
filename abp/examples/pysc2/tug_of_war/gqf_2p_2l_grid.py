@@ -56,6 +56,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             state_length = len(state_1),
                             network_config = network_config,
                             reinforce_config = reinforce_config,
+                            feature_len = network_config.shared_layers
                             reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
         print("SADQ_GQF agent 1")
     else:
@@ -291,7 +292,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     features = [0] * reward_num
                     if steps == max_episode_steps or done:
                         features = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
-                    
                     total_reward = combine_decomposed_func_8(features)
 #                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
 #                     print('reward:')
