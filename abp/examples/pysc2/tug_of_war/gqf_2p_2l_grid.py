@@ -6,7 +6,7 @@ import sys, os
 import torch
 
 from abp.adaptives.sadq.adaptive_decom import SADQAdaptive
-from abp.adaptives.gqf.adaptive import DQN_GQF
+from abp.adaptives.gqf.adaptive import SADQ_GQF
 from abp.utils import clear_summary_path
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
@@ -52,12 +52,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         player_1_end_vector = player_1_end_vector_8
     
     if not reinforce_config.is_random_agent_1:
-        agent_1 = DQN_GQF(name = "TugOfWar",
+        agent_1 = SADQ_GQF(name = "TugOfWar",
                             state_length = len(state_1),
                             network_config = network_config,
                             reinforce_config = reinforce_config,
                             reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
-        print("DQN_GQF agent 1")
+        print("SADQ_GQF agent 1")
     else:
         print("random agent 1")
         
@@ -288,10 +288,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 # #                         if type(enemy_agent) != type("random"):
 #                         assert next_mineral_2 == state_2[env.miner_index], print(l_m_2, next_mineral_2, state_2[env.miner_index], combine_states_2[choice_2], actions_2[choice_2])
                         
-                    reward = [0] * reward_num
+                    features = [0] * reward_num
                     if steps == max_episode_steps or done:
-                        reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
-                        
+                        features = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
+                    
+                    total_reward = combine_decomposed_func_8(features)
 #                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
 #                     print('reward:')
                     # print(state_1[27], state_1[28], state_1[29], state_1[30])
@@ -301,7 +302,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                         input()
 
                     if not reinforce_config.is_random_agent_1:
-                        agent_1.reward(reward)
+                        agent_1.features(features)
+                        agent_1.reward(total_reward)
 
                 if not reinforce_config.is_random_agent_1:
                     agent_1.end_episode(env.normalization(state_1))
