@@ -41,12 +41,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     combine_sa = env.combine_sa
     state_1, state_2 = env.reset()
     
-    if network_config.output_shape == 4:
+    if network_config.shared_layers == 4:
         reward_num = 4
         combine_decomposed_func = combine_decomposed_func_4
         player_1_end_vector = player_1_end_vector_4
         
-    if network_config.output_shape == 8:
+    if network_config.shared_layers == 8:
         reward_num = 8
         combine_decomposed_func = combine_decomposed_func_8
         player_1_end_vector = player_1_end_vector_8

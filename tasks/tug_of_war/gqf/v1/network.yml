@@ -27,7 +27,7 @@ feature_len:
 
 output_shape: 4
 
-shared_layers: [] #TODO
+shared_layers: 8
 aggeregator: "average" #TODO
 
 network_path: "./saved_models/tug_of_war/gqf/v1.ckpt"

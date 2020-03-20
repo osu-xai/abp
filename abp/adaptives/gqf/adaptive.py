@@ -10,7 +10,7 @@ from tensorboardX import SummaryWriter
 from baselines.common.schedules import LinearSchedule
 
 from abp.utils import clear_summary_path
-from abp.models import DQNModel
+from abp.models import feature_q_model
 from abp.adaptives.common.prioritized_memory.memory_gqf import ReplayBuffer_decom
 import numpy as np
 
@@ -59,8 +59,8 @@ class SADQ_GQF(object):
         
         self.summary = SummaryWriter(log_dir=reinforce_summary_path)
 
-        self.target_model = DQNModel(self.name + "_target", self.network_config, use_cuda, is_sigmoid = is_sigmoid)
-        self.eval_model = DQNModel(self.name + "_eval", self.network_config, use_cuda, is_sigmoid = is_sigmoid)
+        self.target_model = feature_q_model(self.network_config.input_shape, self.network_config.feature_len, self.network_config.output_shape)
+        self.eval_model = feature_q_model(self.network_config.input_shape, self.network_config.feature_len, self.network_config.output_shape)
 #         self.target_model.eval_mode()
 
         self.beta_schedule = LinearSchedule(self.reinforce_config.beta_timesteps,
