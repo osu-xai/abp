@@ -10,7 +10,7 @@ from tensorboardX import SummaryWriter
 from baselines.common.schedules import LinearSchedule
 
 from abp.utils import clear_summary_path
-from abp.models import feature_q_model
+from abp.models.feature_q_model import feature_q_model
 from abp.adaptives.common.prioritized_memory.memory_gqf import ReplayBuffer_decom
 import numpy as np
 
@@ -47,6 +47,7 @@ class SADQ_GQF(object):
         self.episode_time_history = []
         self.best_reward_mean = -maxsize
         self.episode = 0
+        self.feature_len = feature_len
 
         self.reset()
         self.memory_resotre = memory_resotre
@@ -58,9 +59,8 @@ class SADQ_GQF(object):
             self.restore_state()
         
         self.summary = SummaryWriter(log_dir=reinforce_summary_path)
-
-        self.target_model = feature_q_model(self.network_config.input_shape, self.network_config.feature_len, self.network_config.output_shape)
-        self.eval_model = feature_q_model(self.network_config.input_shape, self.network_config.feature_len, self.network_config.output_shape)
+        self.eval_model = feature_q_model(name, state_length, self.feature_len, self.network_config.output_shape, network_config)
+        self.target_model = feature_q_model(name, state_length, self.feature_len, self.network_config.output_shape, network_config)
 #         self.target_model.eval_mode()
 
         self.beta_schedule = LinearSchedule(self.reinforce_config.beta_timesteps,
@@ -278,46 +278,55 @@ class SADQ_GQF(object):
             (states, actions, reward, next_states, is_terminal, features_vector) = batch
 
         states = FloatTensor(states)
-        #next_states = FloatTensor(next_states)
+#         print(states.size())
+#         next_states = FloatTensor(next_states)
         terminal = FloatTensor([1 if t else 0 for t in is_terminal])
         reward = FloatTensor(reward)
         features_vector = FloatTensor(features_vector)
         batch_index = torch.arange(self.reinforce_config.batch_size,
                                    dtype=torch.long)
-        
+#         print(states)
+#         print(features_vector)
+#         if torch.sum(features_vector) > 1:
+#             print(states)
+#             print(features_vector)
+#             input()
+#         print(next_states)
+#         input()
         # Current Q Values
         feature_values, q_values = self.eval_model.predict_batch(states)
+#         print(feature_values.size(), q_values.size())
         q_values = q_values.flatten()
         feature_values = features_vector.view(-1, self.feature_len)
+#         print(feature_values.size(), q_values.size())
         # Calculate target
 #         q_next = [self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))[1] for ns in next_states]
-        q_next = []
-        features_next  =[]
-        for ns in next_states:
-            feature_n, q_n = self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))
-            features_next.append(feature_n)
-            q_next.append(q_n)
-            
-            
+#         print(q_next)
+#         input() 
 #         q_max = torch.stack([each_qmax.max(0)[0].detach() for each_qmax in q_next], dim = 1)[0]
+#         print([each_qmax.max(0)[0].detach() for each_qmax in q_next])
         
+#         print(torch.stack([each_qmax.max(0)[0].detach() for each_qmax in q_next], dim = 1))
+#         print(q_max)
         q_max = []
         f_max = []
-        for each_qmax in q_next:
-            idx, q_value_max = each_qmax.max(0)
-            features_max = features_next[idx]
+        for ns in next_states:
+            feature_n, q_n = self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))
+            q_value_max, idx = q_n.max(0)
+            features_max = feature_n[idx]
             
             q_max.append(q_value_max)
-            f_max.append(features_max)
-        q_max = torch.stack(q_max)
-        features_max = torch.stack(features_max)
-
+            f_max.append(features_max.view(-1))
+            
+        q_max = torch.stack(q_max, dim = 1).view(-1)
+        f_max = torch.stack(f_max)
         q_max = (1 - terminal) * q_max
-        features_max = (1 - terminal) * features_max
+        
+        f_max = (1 - terminal.view(-1, 1)) * f_max
         
         q_target = reward + self.reinforce_config.discount_factor * q_max
         f_target = features_vector + self.reinforce_config.discount_factor * f_max
-
+        
         # update model
         self.eval_model.fit(q_values, q_target, feature_values, f_target)
 

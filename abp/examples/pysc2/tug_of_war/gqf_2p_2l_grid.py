@@ -52,7 +52,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         player_1_end_vector = player_1_end_vector_8
     
     if not reinforce_config.is_random_agent_1:
-        agent_1 = SADQ_GQF(name = "TugOfWar",
+        agent_1 = SADQ_GQF(name = "TugOfWar_GQF",
                             state_length = len(state_1),
                             network_config = network_config,
                             reinforce_config = reinforce_config,
@@ -89,7 +89,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             for file in f:
                 if '.p' in file:
                     new_weights = torch.load(path + "/" +file)
-                    new_agent_2 = SADQAdaptive(name = file,
+                    new_agent_2 = SADQ_GQF(name = file,
                     state_length = len(state_1),
                     network_config = network_config,
                     reinforce_config = reinforce_config, memory_resotre = False,
@@ -109,8 +109,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             f = sorted(f)
             for file in f:
                 if 'eval.pupdate' in file or 'eval.p_the_best' in file:
-                    new_weights = torch.load(restore_path + "/" +file)
-                    new_agent_2 = SADQAdaptive(name = file,
+                    new_weights = torch.load(restore_path + "/" + file)
+                    new_agent_2 = SADQ_GQF(name = file,
                     state_length = len(state_1),
                     network_config = network_config,
                     reinforce_config = reinforce_config,
@@ -133,7 +133,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             weights_1 = torch.load(path + "/" + agent_1_model, map_location=lambda storage, loc:storage)
             weights_2 = torch.load(path + "/" + agent_2_model, map_location=lambda storage, loc:storage)
         
-        new_agent_2 = SADQAdaptive(name = "record",
+        new_agent_2 = SADQ_GQF(name = "record",
                     state_length = len(state_1),
                     network_config = network_config,
                     reinforce_config = reinforce_config,
@@ -155,7 +155,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             f.write("Update agent\n")
             f.close()
             
-            new_agent_2 = SADQAdaptive(name = "TugOfWar_" + str(round_num),
+            new_agent_2 = SADQ_GQF(name = "TugOfWar_" + str(round_num),
                     state_length = len(state_2),
                     network_config = network_config,
                     reinforce_config = reinforce_config,
@@ -192,15 +192,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 training_num = 10
             
             for episode in tqdm(range(training_num)):
-#                 if type(enemy_agent) == type("random"):
-#                     break
                 state_1, state_2 = env.reset()
                 total_reward = 0
                 skiping = True
                 done = False
                 steps = 0
-    #             print(list(state_1))
-    #             print(list(state_2))
                 
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
@@ -209,13 +205,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 last_mineral = state_1[env.miner_index]
                 while not done and steps < max_episode_steps:
                     steps += 1
-#                     w += 1
-#                     print(w)
-                    # Decision point
-    #                 print('state:')
-    #                 print("=======================================================================")
-                    # pretty_print(state_1, text = "state 1")
-                    # pretty_print(state_2, text = "state 2")
                     if agent_1.steps < reinforce_config.epsilon_timesteps:
                         actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = 1)
                     else:
@@ -225,15 +214,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     assert state_1[-1] == state_2[-1] == steps, print(state_1, state_2, steps)
                     if not reinforce_config.is_random_agent_1:
                         combine_states_1 = combine_sa(state_1, actions_1)
-    #                     print(combine_states_1)
-    #                     print(env.normalization(combine_states_1))
-    #                     print(state_1[env.miner_index])
                         choice_1, _ = agent_1.predict(env.normalization(combine_states_1))
-    #                     input()
-    #                     for cs1 in combine_states_1:
-    #                         print(cs1.tolist())
                     else:
-    #                     combine_states_1 = combine_sa(state_1, actions_1)
                         choice_1 = randint(0, len(actions_1) - 1)
 
                     if not reinforce_config.is_random_agent_2 and type(enemy_agent) != type("random"):
@@ -243,24 +225,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         if enemy_agent == "random_2":
                             actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
                         choice_2 = randint(0, len(actions_2) - 1)
-                    
-                           
-    #                 print("action list:")
-    #                 print(actions_1)
-    #                 print(actions_2)
-    #                 assign action
-#                     print("choice:")
-#                     print(actions_1[choice_1])
-    #                 print(actions_2[choice_2])
-#                     pretty_print(combine_states_1[choice_1], text = "after state:")
-    #                 input("pause")
-    #                 print(combine_states_2[choice_2].tolist())
-    #                 if state_1[env.miner_index] > 300:
-#                     input('pause')
+
                     env.step(list(actions_1[choice_1]), 1)
                     env.step(list(actions_2[choice_2]), 2)
-#                     if steps == 39:
-#                         env.step([3,0,0,0,0,0,0], 1)
                     
                     last_mineral = combine_states_1[choice_1][env.miner_index]
             
@@ -269,52 +236,21 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             
                     while skiping:
                         state_1, state_2, done, dp = env.step([], 0)
-    #                     input('time_step')
                         if dp or done:
                             break
 
-#                     Check if the mineral is correct
-#                     if not done and steps < max_episode_steps and type(enemy_agent) != type("random"):
-#                         next_mineral_1 = combine_states_1[choice_1][env.miner_index] + 100 + combine_states_1[choice_1][env.pylon_index] * 75
-# #                         if type(enemy_agent) != type("random"):
-#                         next_mineral_2 = combine_states_2[choice_2][env.miner_index] + 100 + combine_states_2[choice_2][env.pylon_index] * 75
-#                         if next_mineral_1 > 1500:
-#                             next_mineral_1 = 1500
-#                         if next_mineral_2 > 1500:
-#                             next_mineral_2 = 1500
-                        
-#                         print(next_mineral_1, state_1[env.miner_index], combine_states_1[choice_1], actions_1[choice_1])
-                        
-# #                         if type(enemy_agent) != type("random"):
-#                         print(next_mineral_2, state_2[env.miner_index], combine_states_2[choice_2], actions_2[choice_2])
-#                         assert next_mineral_1 == state_1[env.miner_index], print(l_m_1, next_mineral_1, state_1[env.miner_index], combine_states_1[choice_1], actions_1[choice_1])
-# #                         if type(enemy_agent) != type("random"):
-#                         assert next_mineral_2 == state_2[env.miner_index], print(l_m_2, next_mineral_2, state_2[env.miner_index], combine_states_2[choice_2], actions_2[choice_2])
-                        
                     features = [0] * reward_num
                     if steps == max_episode_steps or done:
                         features = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
                     total_reward = sum(features)
-#                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
-#                     print('reward:')
-                    # print(state_1[27], state_1[28], state_1[29], state_1[30])
-#                     print(reward_1)
-#                     print(reward_2)
-#                     if steps == max_episode_steps or done:
-#                         input()
-
+                    
                     if not reinforce_config.is_random_agent_1:
-                        print("features: ", features)
+#                         print("features: ", features)
                         agent_1.passFeatures(features)
                         agent_1.reward(total_reward)
 
                 if not reinforce_config.is_random_agent_1:
                     agent_1.end_episode(env.normalization(state_1))
-
-#                 test_summary_writer.add_scalar(tag = "Train/Episode Reward", scalar_value = total_reward,
-#                                                global_step = episode + 1)
-#                 train_summary_writer.add_scalar(tag = "Train/Steps to choosing Enemies", scalar_value = steps + 1,
-#                                                 global_step = episode + 1)
         
         if not reinforce_config.is_random_agent_1:
             agent_1.disable_learning(is_save = not reinforce_config.collecting_experience and not evaluation_config.generate_xai_replay)
@@ -352,23 +288,15 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 if evaluation_config.generate_xai_replay:
                     recorder = XaiReplayRecorder2LaneNexus(env.sc2_env, episode, evaluation_config.env, action_component_names, replay_dimension)
            
-#                 print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Starting episode%%%%%%%%%%%%%%%%%%%%%%%%%")
-#                 print(f"reinforce_config.collecting_experience {reinforce_config.collecting_experience}")
                 while skiping:
-#                     print("about to call env.step() during skip")
-    #                 start_time = time.time()
                     state_1, state_2, done, dp = env.step([], 0)
                     if evaluation_config.generate_xai_replay:
-                        #recorder.save_jpg()
                         recorder.record_game_clock_tick(env.decomposed_reward_dict)
                     if dp or done:
-    #                     print(time.time() - start_time)
                         break
-#                 input(f"dp is {dp} done is {done}")
-#                 print("done stepping to finish prior action")
                 while not done and steps < max_episode_steps:
-#                     input(f"not done and steps == {steps} < {max_episode_steps}")
                     steps += 1
+                    
     #                 # Decision point
                     if not reinforce_config.is_random_agent_1:
                         actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
@@ -392,16 +320,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         combine_states_2 = combine_sa(state_2, actions_2)
                         choice_2 = randint(0, len(actions_2) - 1)
 
-#                     input("record dp if engaged")
                     if evaluation_config.generate_xai_replay:
-                        #recorder.save_jpg()
                         recorder.record_decision_point(actions_1[choice_1], actions_2[choice_2], state_1, state_2, env.decomposed_reward_dict)
                     
-    #                 input('stepped with command 2')
-                    #######
-                    #experience collecting
-                    ######
-#                     input("collect experience if configured so")
                     if reinforce_config.collecting_experience:
                         if previous_state_1 is not None and previous_state_2 is not None and previous_action_1 is not None and previous_action_2 is not None:
                             previous_state_1[8:14] = previous_state_2[1:7] # Include player 2's action
@@ -433,42 +354,24 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
 
                     while skiping:
-    #                     print("Get actions time:")
-    #                     start_time = time.time()
-#                         input("step to move the game along and send the wave")
                         state_1, state_2, done, dp = env.step([], 0)
                         if evaluation_config.generate_xai_replay:
-                            #recorder.save_jpg()
                             recorder.record_game_clock_tick(env.decomposed_reward_dict)
-                        #input(' step wating for done signal')
                         if dp or done:
-    #                         print(time.time() - start_time)
                             break
 
                     reward = [0] * reward_num
                     if steps == max_episode_steps or done:
                         reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
-                            
-#                     input("separate rewards...")
-#                     reward_1, reward_2 = env.sperate_reward(env.decomposed_rewards)
-    #                 print(env.decomposed_rewards)
-    #                 print(reward_1, reward_2)
 
-    #                 for r1 in reward_1:
                     if reward_num == 4:
                         current_reward_1 = sum(reward[2:])
                     elif reward_num == 8:
                         current_reward_1 = reward[2] + reward[3] + reward[6] + reward[7]
-                        
-    #                 print(current_reward_1)
-
 
                     total_reward_1 += current_reward_1
-    #                 print(total_reward_1)
-    #                 if total_reward_1 > 14000 or total_reward_1 < -14000:
-    #                     input()
                     previous_reward_1 = current_reward_1
-#                 print("collect experience again if configured so")
+                    
                 if reinforce_config.collecting_experience:
                     previous_state_1[8:14] = previous_state_2[1:7] # Include player 2's action
                     previous_state_1[env.miner_index] += previous_state_1[env.pylon_index] * 75 + 100
@@ -489,11 +392,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                global_step=episode + 1)
                 test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                                global_step=episode + 1)
-    #         if reinforce_config.collecting_experience:
-    #             break
-            #print(test.size())
-    #         print(total_rewwards_list)
-#             print("should be done with episode...")
+
             total_rewards_list_np = np.array(total_rewwards_list)
 
             tied = np.sum(total_rewards_list_np[-test_num:] == 0)

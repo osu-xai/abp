@@ -25,7 +25,7 @@ input_shape:
 feature_len:
     - 8
 
-output_shape: 4
+output_shape: 1
 
 shared_layers: 8
 aggeregator: "average" #TODO
