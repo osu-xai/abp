@@ -37,7 +37,8 @@ class _q_model(nn.Module):
             , nn.ReLU()
         )
         self.output = nn.Sequential(
-            torch.nn.Linear(256, ouput_len, bias = True),
+            torch.nn.Linear(256, ouput_len, bias = True)
+            , nn.Sigmoid()
         )
     def forward(self, x):
 #         return self.linear_com(input)
@@ -69,12 +70,13 @@ class _feature_model(nn.Module):
         self.output = nn.Sequential(
             torch.nn.Linear(256, ouput_len, bias = True),
         )
+        self.softmax_func = nn.Softmax()
     def forward(self, x):
 #         return self.linear_com(input)
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
-        return self.output(x)
+        return self.softmax_func(self.output(x))
             
 class feature_q_model():
     def __init__(self, name, input_len, feature_len, output_len, network_config, learning_rate = 0.0001):
