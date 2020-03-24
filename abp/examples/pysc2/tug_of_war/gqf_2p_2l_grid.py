@@ -418,7 +418,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         f = open(evaluation_config.result_path, "a+")
         f.write(str(tr) + "\n")
         f.close()
-        
+        if not reinforce_config.is_random_agent_1:
+            agent_1.summary_test(tr)
         if tied_lose == 0 and not reinforce_config.is_random_agent_1:
             agent_1.save(force = True, appendix = "_the_best")
             

@@ -48,6 +48,7 @@ class SADQ_GQF(object):
         self.best_reward_mean = -maxsize
         self.episode = 0
         self.feature_len = feature_len
+        self.features = None
 
         self.reset()
         self.memory_resotre = memory_resotre
@@ -88,46 +89,24 @@ class SADQ_GQF(object):
         if self.learning:
             self.steps += 1
         # add to experience
-        if self.previous_state is not None:
+        if self.previous_state is not None and self.learning and self.current_reward is not None:
             state_crr = np.unique(state, axis=0)
             self.memory.add(self.previous_state,
                             None,
                             self.current_reward,
                         state_crr.reshape(-1, self.state_length), 0,
                         self.features)
-#         q_values = FloatTensor([self.eval_model.predict(Tensor(s).unsqueeze(0),
-#                                                self.steps,
-#                                                self.learning)[1] for s in state])
-#         print(q_values)
-#         print(self.current_reward)
-#         input()
+#             print(0, self.features)
         if self.learning and self.should_explore() and not isGreedy:
             q_values = None
             choice = random.choice(list(range(len(state))))
             action = choice
         else:
-#             self.prediction_time -= time.time()
-            #_state = Tensor(state).unsqueeze(0)
-#             print(state.shape)
-#             print(state)
-#             input()
-#             q_values = FloatTensor([self.eval_model.predict(Tensor(s).unsqueeze(0),
-#                                                    self.steps,
-#                                                    self.learning)[1] for s in state])
-#             self.eval_model.eval_mode()
-#             state = np.unique(state, axis=0)
             with torch.no_grad():
                 q_values = FloatTensor(self.eval_model.predict_batch(Tensor(state))[1]).view(-1)
-#             print(q_values)
-#             print(q_values_2)
-#             print(q_values.size())
-#             print(q_values_2.size())
-#             _, choice = q_values.max(0)
+
             _, choice = q_values.max(0)
-#             print(choice, choice_2)
-#             input()
             action = choice
-#             self.prediction_time += time.time()
             
         if self.learning and self.steps % self.reinforce_config.replace_frequency == 0:
             logger.debug("Replacing target model for %s" % self.name)
@@ -196,6 +175,7 @@ class SADQ_GQF(object):
                         self.current_reward,
                         state.reshape(-1, self.state_length), 1,
                         self.features)
+#         print(1, self.features)
         self.save()
         self.reset()
 
@@ -207,6 +187,7 @@ class SADQ_GQF(object):
         self.previous_action = None
         self.prediction_time = 0
         self.update_time = 0
+        self.features = None
 
     def restore_state(self):
         restore_path = self.network_config.network_path + "/adaptive.info"
@@ -256,9 +237,13 @@ class SADQ_GQF(object):
         self.current_reward += r
 
     def passFeatures(self, features):
-        self.features = features
+        self.features = features.copy()
         return
 
+    def summary_test(self, reward):
+        self.summary.add_scalar(tag='%s/eval reward' % self.name,
+                                scalar_value=reward, global_step=self.steps)
+    
     def update(self):
         if len(self.memory._storage) <= self.reinforce_config.batch_size:
             return
@@ -285,29 +270,9 @@ class SADQ_GQF(object):
         features_vector = FloatTensor(features_vector)
         batch_index = torch.arange(self.reinforce_config.batch_size,
                                    dtype=torch.long)
-#         print(states)
-#         print(features_vector)
-#         if torch.sum(features_vector) > 1:
-#             print(states)
-#             print(features_vector)
-#             input()
-#         print(next_states)
-#         input()
         # Current Q Values
         feature_values, q_values = self.eval_model.predict_batch(states)
-#         print(feature_values.size(), q_values.size())
         q_values = q_values.flatten()
-        feature_values = features_vector.view(-1, self.feature_len)
-#         print(feature_values.size(), q_values.size())
-        # Calculate target
-#         q_next = [self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))[1] for ns in next_states]
-#         print(q_next)
-#         input() 
-#         q_max = torch.stack([each_qmax.max(0)[0].detach() for each_qmax in q_next], dim = 1)[0]
-#         print([each_qmax.max(0)[0].detach() for each_qmax in q_next])
-        
-#         print(torch.stack([each_qmax.max(0)[0].detach() for each_qmax in q_next], dim = 1))
-#         print(q_max)
         q_max = []
         f_max = []
         for ns in next_states:
@@ -317,7 +282,11 @@ class SADQ_GQF(object):
             
             q_max.append(q_value_max)
             f_max.append(features_max.view(-1))
-            
+        
+        if torch.sum(terminal == torch.sum(features_vector, dim = 1)) != len(terminal):
+            print(terminal)
+            print(features_vector)
+            input()
         q_max = torch.stack(q_max, dim = 1).view(-1)
         f_max = torch.stack(f_max)
         q_max = (1 - terminal) * q_max
@@ -327,6 +296,13 @@ class SADQ_GQF(object):
         q_target = reward + self.reinforce_config.discount_factor * q_max
         f_target = features_vector + self.reinforce_config.discount_factor * f_max
         
+#         print(terminal)
+#         print(feature_values)
+#         print(features_vector)
+#         print(f_max)
+#         print(f_target)
+#         print()
+#         input()
         # update model
         self.eval_model.fit(q_values, q_target, feature_values, f_target)
 
