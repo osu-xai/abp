@@ -70,13 +70,14 @@ class _feature_model(nn.Module):
         self.output = nn.Sequential(
             torch.nn.Linear(256, ouput_len, bias = True),
         )
-        self.softmax_func = nn.Softmax()
+        self.softmax_func = nn.Softmax(dim = 1)
     def forward(self, x):
 #         return self.linear_com(input)
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
-        return self.softmax_func(self.output(x), dim=1)
+        x = self.output(x)
+        return self.softmax_func(x)
             
 class feature_q_model():
     def __init__(self, name, input_len, feature_len, output_len, network_config, learning_rate = 0.0001):

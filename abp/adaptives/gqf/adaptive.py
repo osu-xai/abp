@@ -283,10 +283,10 @@ class SADQ_GQF(object):
             q_max.append(q_value_max)
             f_max.append(features_max.view(-1))
         
-        if torch.sum(terminal == torch.sum(features_vector, dim = 1)) != len(terminal):
-            print(terminal)
-            print(features_vector)
-            input()
+#         if torch.sum(terminal == torch.sum(features_vector, dim = 1)) != len(terminal):
+#             print(terminal)
+#             print(features_vector)
+#             input()
         q_max = torch.stack(q_max, dim = 1).view(-1)
         f_max = torch.stack(f_max)
         q_max = (1 - terminal) * q_max
@@ -297,10 +297,11 @@ class SADQ_GQF(object):
         f_target = features_vector + self.reinforce_config.discount_factor * f_max
         
 #         print(terminal)
-#         print(feature_values)
+#         print(q_values)
 #         print(features_vector)
-#         print(f_max)
-#         print(f_target)
+#         print(reward)
+#         print(q_max)
+#         print(q_target)
 #         print()
 #         input()
         # update model

@@ -242,8 +242,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     features = [0] * reward_num
                     if steps == max_episode_steps or done:
                         features = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
-                    total_reward = sum(features)
-                    
+                    total_reward = combine_decomposed_func(FloatTensor(features).view(-1, network_config.shared_layers)).item()
+#                     print(total_reward)
                     if not reinforce_config.is_random_agent_1:
 #                         print("features: ", features)
                         agent_1.passFeatures(features)
