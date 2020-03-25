@@ -92,7 +92,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     new_agent_2 = SADQ_GQF(name = file,
                     state_length = len(state_1),
                     network_config = network_config,
-                    reinforce_config = reinforce_config, memory_resotre = False,
+                    reinforce_config = reinforce_config, 
+                    feature_len = network_config.shared_layers, memory_resotre = False,
                     reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
                     
                     new_agent_2.load_weight(new_weights)
@@ -108,14 +109,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         for r, d, f in os.walk(restore_path):
             f = sorted(f)
             for file in f:
-                if 'eval.pupdate' in file or 'eval.p_the_best' in file:
+                if '.pupdate' in file or '.p_the_best' in file:
                     new_weights = torch.load(restore_path + "/" + file)
+                    new_feature_weights, new_q_weights = new_weights
                     new_agent_2 = SADQ_GQF(name = file,
                     state_length = len(state_1),
                     network_config = network_config,
                     reinforce_config = reinforce_config,
+                    feature_len = network_config.shared_layers,
                     memory_resotre = False, reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
-                    new_agent_2.load_weight(new_weights)
+                    new_agent_2.load_weight(new_feature_weights, new_q_weights)
                     new_agent_2.disable_learning(is_save = False)
                     agents_2.append(new_agent_2)
                     print("loaded agent:", file)
@@ -137,6 +140,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     state_length = len(state_1),
                     network_config = network_config,
                     reinforce_config = reinforce_config,
+                    feature_len = network_config.shared_layers,
                     memory_resotre = False, reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
         agent_1.load_weight(weights_1)
         new_agent_2.load_weight(weights_2)
@@ -159,6 +163,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     state_length = len(state_2),
                     network_config = network_config,
                     reinforce_config = reinforce_config,
+                    feature_len = network_config.shared_layers,
                     memory_resotre = False, reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
             
             new_agent_2.load_model(agent_1.eval_model)

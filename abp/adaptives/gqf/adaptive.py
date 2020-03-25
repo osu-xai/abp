@@ -296,14 +296,6 @@ class SADQ_GQF(object):
         q_target = reward + self.reinforce_config.discount_factor * q_max
         f_target = features_vector + self.reinforce_config.discount_factor * f_max
         
-#         print(terminal)
-#         print(q_values)
-#         print(features_vector)
-#         print(reward)
-#         print(q_max)
-#         print(q_target)
-#         print()
-#         input()
         # update model
         self.eval_model.fit(q_values, q_target, feature_values, f_target)
 
@@ -318,3 +310,10 @@ class SADQ_GQF(object):
         
     def load_weight(self, weight_dict):
         self.eval_model.load_weight(weight_dict)
+        
+    def load_model(self, model):
+        self.eval_model.replace(model)
+        
+    def load_weight(self, new_feature_weights, new_q_weights):
+        self.eval_model.feautre_model.load_state_dict(new_feature_weights)
+        self.eval_model.q_model.load_state_dict(new_q_weights)

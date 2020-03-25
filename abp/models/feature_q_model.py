@@ -174,6 +174,7 @@ class feature_q_model():
     def restore_network(self):
         if (self.network_config.restore_network and
                 self.network_config.network_path):
+#             print(self.model_path)
             if os.path.exists(self.model_path):
                 model = torch.load(self.model_path)
                 print("restore: {}".format(self.name))
@@ -181,8 +182,8 @@ class feature_q_model():
                 self.feautre_model.load_state_dict(model[0])
                 self.q_model.load_state_dict(model[1])
                 
-            else:
-                print("path no exist")
+#             else:
+#                 print("path no exist")
         
        
     def eval_mode(self):
