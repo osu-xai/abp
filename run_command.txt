@@ -18,3 +18,6 @@ python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/sadq_2p_2l_decom/v1_4/ -tk
 
 # run Model base (tree search) grid agent on tug_of_way
 python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/mbts/v2_grid/ -tk task_mbts_grid
+
+# Record
+python3 -m sc2env.play_tug_of_war -f tasks/tug_of_war/mbts/v2_grid_recorder/ -tk task_mbts_grid

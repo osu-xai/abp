@@ -160,13 +160,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     input()
                     if evaluation_config.generate_xai_replay: 
 #                         print(111111111111)
-                        path_whole_tree = recorder.json_pathname[:-5] + "_whole_tree/"
+                        path_whole_tree = recorder.json_pathname[:-5] + "_tree/"
+                        path_replay = recorder.json_pathname[:-5] + "_replay/"
 #                         print(path_whole_tree)
                         #path_partial_tree = recorder.json_pathname[:-5] + "_partial_tree/"
 #                         print(path_partial_tree)
                         
                         if not os.path.exists(path_whole_tree):
                             os.mkdir(path_whole_tree)
+                        if not os.path.exists(path_replay):
+                            os.mkdir(path_replay)
                         #if not os.path.exists(path_partial_tree):
                         #    os.mkdir(path_partial_tree)
                             
@@ -260,17 +263,21 @@ def add_result_mark_to_replay(reward, file_name):
     video_file = "{}.mp4".format(file_name)
     tag_video_file = "{}_{}.mp4".format(file_name, tag)
     
-    whole_tree_dir = "{}_whole_tree/".format(file_name)
-    tag_whole_tree_dir = "{}_whole_tree_{}/".format(file_name, tag)
+    whole_tree_dir = "{}_tree/".format(file_name)
+    tag_whole_tree_dir = "{}_tree_{}/".format(file_name, tag)
     
+    replay_dir = "{}_replay/".format(file_name)
+    tag_replay_dir = "{}_replay_{}/".format(file_name, tag)
+
+
     #partial_tree_dir = "{}_partial_tree/".format(file_name)
     #tag_partial_tree_dir = "{}_partial_tree_{}/".format(file_name, tag)
     
-    expl_file = "{}.expl".format(file_name)
-    tag_expl_file = "{}_{}.expl".format(file_name, tag)
+    #expl_file = "{}.expl".format(file_name)
+    #tag_expl_file = "{}_{}.expl".format(file_name, tag)
     
-    json_file = "{}.json".format(file_name)
-    tag_json_file = "{}_{}.json".format(file_name, tag)
+    #json_file = "{}.json".format(file_name)
+    #tag_json_file = "{}_{}.json".format(file_name, tag)
     
 #     print(video_file)
 #     print(tag_video_file)
@@ -281,11 +288,12 @@ def add_result_mark_to_replay(reward, file_name):
 #     print(expl_file)
 #     print(tag_expl_file)
     
-    os.rename(video_file, tag_video_file)
+    #os.rename(video_file, tag_video_file)
     os.rename(whole_tree_dir, tag_whole_tree_dir)
+    os.rename(replay_dir, tag_replay_dir)
     #os.rename(partial_tree_dir, tag_partial_tree_dir)
-    os.rename(expl_file, tag_expl_file)
-    os.rename(json_file, tag_json_file)
+    #os.rename(expl_file, tag_expl_file)
+    #os.rename(json_file, tag_json_file)
 def pretty_print(expl_file,  text = ""):
     state_list = state.copy().tolist()
     state = []
