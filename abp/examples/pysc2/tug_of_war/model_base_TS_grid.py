@@ -116,7 +116,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             print(agent_2.name)
             average_state = np.zeros(len(state_1))
             total_rewwards_list = []  
-            evaluation_config.test_episodes = 10
+            evaluation_config.test_episodes = 1
             for episode in tqdm(range(evaluation_config.test_episodes)):
                 state = env.reset()
                 total_reward_1 = 0
