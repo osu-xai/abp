@@ -26,7 +26,7 @@ Tensor = FloatTensor
 class SADQ_GQF(object):
     """Adaptive which uses the SADQ algorithm"""
 
-    def __init__(self, name, state_length, network_config, reinforce_config, feature_len, reward_num, combine_decomposed_func, is_sigmoid = False, memory_resotre = True):
+    def __init__(self, name, state_length, network_config, reinforce_config, feature_len, combine_decomposed_func, is_sigmoid = False, memory_resotre = True):
         super(SADQ_GQF, self).__init__()
         self.name = name
         #self.choices = choices

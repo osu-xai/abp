@@ -24,7 +24,7 @@ input_shape:
 
 feature_len:
     - 8
-
+version: "v1"
 output_shape: 1
 
 shared_layers: 8

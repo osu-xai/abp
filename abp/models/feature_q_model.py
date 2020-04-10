@@ -71,18 +71,32 @@ class _feature_model(nn.Module):
             torch.nn.Linear(256, ouput_len, bias = True),
         )
         self.softmax_func = nn.Softmax(dim = 1)
-    def forward(self, x):
+        self.sigmoid = nn.Sigmoid()
+    def forward(self, x, version = "v0"):
 #         return self.linear_com(input)
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
         x = self.output(x)
-        return self.softmax_func(x)
-            
+        
+        if version == "v0":
+            return x
+        if version == "v1":
+            return self.softmax_func(x)
+        if version == "v2":
+#             print(x)
+#             print(self.sigmoid(x[:, :24]).size(), self.softmax_func(x[:, 24 : 28]).size(), self.sigmoid(x[:, 28]).size())
+#             x = torch.cat((self.sigmoid(x[:, :24]), self.softmax_func(x[:, 24 : 28]), self.sigmoid(x[:, 28]).view(-1, 1)), dim = 1)
+            x = torch.cat((self.sigmoid(x[:, :24]), self.softmax_func(x[:, 24 : 28]), self.sigmoid(x[:, 28]).view(-1, 1)), dim = 1)
+#             print(x)
+#             input()
+            return x
 class feature_q_model():
     def __init__(self, name, input_len, feature_len, output_len, network_config, learning_rate = 0.0001):
         self.name = name
         self.network_config = network_config
+        self.version = network_config.version
+        print(self.version)
 #         print( name, input_len, feature_len, output_len)
         file_path = ensure_directory_exits(self.network_config.network_path)
         self.model_path = os.path.join(file_path, self.name + '.p')
@@ -118,14 +132,14 @@ class feature_q_model():
         
     def predict(self, input):
         input = FloatTensor(input).unsqueeze(0)
-        feature_vector = self.feautre_model(input)
+        feature_vector = self.feautre_model(input, self.version)
         q_value = self.q_model(feature_vector)
             
         return feature_vector, q_value
 
     def predict_batch(self, input):
         input = FloatTensor(input)
-        feature_vectors = self.feautre_model(input)
+        feature_vectors = self.feautre_model(input, self.version)
         q_values = self.q_model(feature_vectors)
 #         print(feature_vectors)
 #         print(q_values)

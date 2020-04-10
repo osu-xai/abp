@@ -41,15 +41,33 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     combine_sa = env.combine_sa
     state_1, state_2 = env.reset()
     
-    if network_config.shared_layers == 4:
-        reward_num = 4
-        combine_decomposed_func = combine_decomposed_func_4
-        player_1_end_vector = player_1_end_vector_4
+    combine_decomposed_func = combine_decomposed_func_8
+    player_1_end_vector = player_1_end_vector_8
         
-    if network_config.shared_layers == 8:
-        reward_num = 8
-        combine_decomposed_func = combine_decomposed_func_8
-        player_1_end_vector = player_1_end_vector_8
+    def GVFs_v1(state):
+        if steps == max_episode_steps or done:
+            features = combine_decomposed_func_8(state[63], state[64], state[65], state[66], is_done = done)
+        else:
+            features = np.zeros(network_config.shared_layers)
+        return features
+    
+    def GVFs_v2(state):
+        # 15 : 39 The number of each range units
+        
+        if steps == max_episode_steps or done:
+            position = np.array(state)[15 : 39]
+            position[position > 0] = 1
+            nexus_health = player_1_end_vector_8(state[63], state[64], state[65], state[66], is_done = done)
+            lowest_health = nexus_health[4:]
+            if steps == max_episode_steps:
+                wave_end = np.array([1])
+            else:
+                wave_end = np.array([0])
+            features = np.concatenate((position, lowest_health, wave_end))
+        else:
+            features = np.zeros(network_config.shared_layers)
+        
+        return features
     
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQ_GQF(name = "TugOfWar_GQF",
@@ -57,7 +75,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             network_config = network_config,
                             reinforce_config = reinforce_config,
                             feature_len = network_config.shared_layers,
-                            reward_num = reward_num,
                             combine_decomposed_func = combine_decomposed_func
                             )
         print("SADQ_GQF agent 1")
@@ -94,7 +111,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     network_config = network_config,
                     reinforce_config = reinforce_config, 
                     feature_len = network_config.shared_layers, memory_resotre = False,
-                    reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
+                    combine_decomposed_func = combine_decomposed_func)
                     
                     new_agent_2.load_weight(new_weights)
                     new_agent_2.disable_learning(is_save = False)
@@ -117,7 +134,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     network_config = network_config,
                     reinforce_config = reinforce_config,
                     feature_len = network_config.shared_layers,
-                    memory_resotre = False, reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
+                    memory_resotre = False, combine_decomposed_func = combine_decomposed_func)
                     new_agent_2.load_weight(new_feature_weights, new_q_weights)
                     new_agent_2.disable_learning(is_save = False)
                     agents_2.append(new_agent_2)
@@ -141,7 +158,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     network_config = network_config,
                     reinforce_config = reinforce_config,
                     feature_len = network_config.shared_layers,
-                    memory_resotre = False, reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
+                    memory_resotre = False, combine_decomposed_func = combine_decomposed_func)
         agent_1.load_weight(weights_1)
         new_agent_2.load_weight(weights_2)
         new_agent_2.disable_learning(is_save = False)
@@ -164,7 +181,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     network_config = network_config,
                     reinforce_config = reinforce_config,
                     feature_len = network_config.shared_layers,
-                    memory_resotre = False, reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
+                    memory_resotre = False, combine_decomposed_func = combine_decomposed_func)
             
             new_agent_2.load_model(agent_1.eval_model)
             new_agent_2.disable_learning(is_save = False)
@@ -244,10 +261,15 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         if dp or done:
                             break
 
-                    features = [0] * reward_num
+                    if network_config.version == "v1":
+                        features = GVFs_v1(state_1)
+                    elif network_config.version == "v2":
+                        features = GVFs_v2(state_1)
+#                     print(features)
+                    total_reward = 0
                     if steps == max_episode_steps or done:
-                        features = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
-                    total_reward = combine_decomposed_func(FloatTensor(features).view(-1, network_config.shared_layers)).item()
+                        total_reward = combine_decomposed_func(FloatTensor(
+                            player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)).view(-1, 8)).item()
 #                     print(total_reward)
                     if not reinforce_config.is_random_agent_1:
 #                         print("features: ", features)
@@ -365,14 +387,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         if dp or done:
                             break
 
-                    reward = [0] * reward_num
+                    current_reward_1 = 0
                     if steps == max_episode_steps or done:
-                        reward = player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)
-
-                    if reward_num == 4:
-                        current_reward_1 = sum(reward[2:])
-                    elif reward_num == 8:
-                        current_reward_1 = reward[2] + reward[3] + reward[6] + reward[7]
+                        current_reward_1 = combine_decomposed_func(FloatTensor(
+                            player_1_end_vector(state_1[63], state_1[64], state_1[65], state_1[66], is_done = done)).view(-1, 8)).item()
 
                     total_reward_1 += current_reward_1
                     previous_reward_1 = current_reward_1
@@ -430,7 +448,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             
         if not reinforce_config.is_random_agent_1:
             agent_1.enable_learning()
+            
+            
 
+    
 def pretty_print(state,  text = ""):
     state_list = state.copy().tolist()
     state = []
@@ -561,3 +582,4 @@ def player_1_end_vector_8(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp
 #     input("reward_vector")
 
     return reward_vector
+

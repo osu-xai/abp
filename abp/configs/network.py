@@ -20,7 +20,8 @@ default_network_config = {
     "aggregator": "average",  # the type of the aggregator TODO
     "save_network": True,
     "save_steps": 100,
-    "learning_rate": 0.001
+    "learning_rate": 0.001,
+    "version": "v0"
 }
 
 
@@ -68,3 +69,6 @@ class NetworkConfig(BaseConfig):
 
     learning_rate = property(BaseConfig.get_property("learning_rate"),
                              BaseConfig.set_property("learning_rate"))
+    
+    version = property(BaseConfig.get_property("version"),
+                             BaseConfig.set_property("version"))
