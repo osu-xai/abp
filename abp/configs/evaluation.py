@@ -11,7 +11,9 @@ default_evaluation_config = {
     "sleep": 1,
     "generate_xai_replay": False,
     "xai_replay_dimension": 256,
-    "result_path": "result_default.txt"
+    "result_path": "result_default.txt",
+    "explanation" : False,
+    "explanation_path": None
 }
 
 
@@ -54,4 +56,9 @@ class EvaluationConfig(BaseConfig):
     
     result_path = property(BaseConfig.get_property("result_path"),
                      BaseConfig.set_property("result_path"))
-
+    
+    explanation = property(BaseConfig.get_property("explanation"),
+                     BaseConfig.set_property("explanation"))
+    
+    explanation_path = property(BaseConfig.get_property("explanation_path"),
+                     BaseConfig.set_property("explanation_path"))

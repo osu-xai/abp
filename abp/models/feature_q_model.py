@@ -79,8 +79,6 @@ class _feature_model(nn.Module):
         x = self.fc3(x)
         x = self.output(x)
         
-        if version == "v0":
-            return x
         if version == "v1":
             return self.softmax_func(x)
         if version == "v2":
@@ -91,6 +89,7 @@ class _feature_model(nn.Module):
 #             print(x)
 #             input()
             return x
+        return x
 class feature_q_model():
     def __init__(self, name, input_len, feature_len, output_len, network_config, learning_rate = 0.0001):
         self.name = name
@@ -140,7 +139,9 @@ class feature_q_model():
     def predict_batch(self, input):
         input = FloatTensor(input)
         feature_vectors = self.feautre_model(input, self.version)
+#         print(feature_vectors)
         q_values = self.q_model(feature_vectors)
+#         print(q_values)
 #         print(feature_vectors)
 #         print(q_values)
         return feature_vectors, q_values 
@@ -204,7 +205,7 @@ class feature_q_model():
         self.feautre_model.eval()
         self.q_model.eval()
     
-    def replace_soft(self, dest, tau = 1e-3):
+    def replace_soft(self, dest, tau = 5e-4):
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
 

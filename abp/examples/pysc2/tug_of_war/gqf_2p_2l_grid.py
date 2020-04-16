@@ -5,6 +5,7 @@ from absl import flags
 import sys, os
 import torch
 
+from abp.configs import NetworkConfig, ReinforceConfig, EvaluationConfig
 from abp.adaptives.sadq.adaptive_decom import SADQAdaptive
 from abp.adaptives.gqf.adaptive import SADQ_GQF
 from abp.utils import clear_summary_path
@@ -12,10 +13,14 @@ from tensorboardX import SummaryWriter
 from gym.envs.registration import register
 from sc2env.environments.tug_of_war_2L_self_play_4grid import TugOfWar
 from sc2env.environments.tug_of_war_2L_self_play_4grid import action_component_names
+from s2clientprotocol import sc2api_pb2 as sc_pb
+from pysc2.lib import features
 #from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
+from abp.explanations import esf_action_pair
 from tqdm import tqdm
 from copy import deepcopy
 from random import randint, random
+from datetime import datetime
 
 # np.set_printoptions(precision = 2)
 use_cuda = torch.cuda.is_available()
@@ -35,7 +40,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     replay_dimension = evaluation_config.xai_replay_dimension
     env = TugOfWar(map_name = map_name, \
-        generate_xai_replay = evaluation_config.generate_xai_replay, xai_replay_dimension = replay_dimension)
+        generate_xai_replay = evaluation_config.generate_xai_replay or evaluation_config.explanation, xai_replay_dimension = replay_dimension)
     
     reward_types = env.reward_types
     combine_sa = env.combine_sa
@@ -43,6 +48,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     
     combine_decomposed_func = combine_decomposed_func_8
     player_1_end_vector = player_1_end_vector_8
+    reward_num = 8
         
     def GVFs_v1(state):
         if steps == max_episode_steps or done:
@@ -69,6 +75,27 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         return features
     
+    def GVFs_v3(state):
+        features = np.zeros(network_config.shared_layers)
+        unit_kills, _ = env.get_unit_kill()
+        features[:18] = np.array(unit_kills)
+        features[18:] = np.array(state[8:14])
+#         print(unit_kills)
+#         input()
+        return features
+    def GVFs_v4(state):
+        features = np.zeros(network_config.shared_layers)
+        unit_kills, unit_be_killed = env.get_unit_kill()
+        features[:18] = np.array(unit_kills)
+        features[18:24] = np.array(state[:6])
+        features[24:42] = np.array(unit_be_killed)
+        features[42:] = np.array(state[8:14])
+#         print(unit_kills)
+#         input()
+        return features
+    def GVFs_v5(state):
+        features = np.array(state[15:63])
+        return features
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQ_GQF(name = "TugOfWar_GQF",
                             state_length = len(state_1),
@@ -139,7 +166,22 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     new_agent_2.disable_learning(is_save = False)
                     agents_2.append(new_agent_2)
                     print("loaded agent:", file)
-#     agent_1.steps = reinforce_config.epsilon_timesteps / 2                
+#     agent_1.steps = reinforce_config.epsilon_timesteps / 2
+    if reinforce_config.is_use_sepcific_enemy:
+        sepcific_SADQ_enemy_weights = torch.load("./saved_models/tug_of_war/agents/grid_decom/TugOfWar_eval.pupdate_121")
+
+        sepcific_network_config = NetworkConfig.load_from_yaml("./tasks/tug_of_war/sadq_2p_2l_decom/v2_8/network.yml")
+
+        sepcific_SADQ_enemy = SADQAdaptive(name = "sepcific enemy",
+        state_length = len(state_1),
+        network_config = sepcific_network_config,
+        reinforce_config = reinforce_config,  memory_resotre = False,
+        reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
+
+        sepcific_SADQ_enemy.load_weight(sepcific_SADQ_enemy_weights)
+        sepcific_SADQ_enemy.disable_learning(is_save = False)
+        agents_2 = [sepcific_SADQ_enemy]
+    
     if evaluation_config.generate_xai_replay:
 
         agent_1_model = "TugOfWar_eval.pupdate_600"
@@ -165,10 +207,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         agents_2.append(new_agent_2)
 #     w = 0
     while True:
+        
         print(sum(np.array(privous_result) >= 0.9))
         if len(privous_result) >= update_wins_waves and \
         sum(np.array(privous_result) >= 0.9) >= update_wins_waves and \
-        not reinforce_config.is_random_agent_2:
+        not reinforce_config.is_random_agent_2 and not reinforce_config.is_use_sepcific_enemy:
             privous_result = []
             print("replace enemy agent's weight with self agent")
 #             random_enemy = False
@@ -189,9 +232,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             agent_1.steps = reinforce_config.epsilon_timesteps / 2
             agent_1.best_reward_mean = 0
             agent_1.save(force = True, appendix = "update_" + str(round_num))
-            
+#         if reinforce_config.is_use_sepcific_enemy:
+#             agents_2 = [sepcific_SADQ_enemy]
         round_num += 1
-    
+#         agent_1.steps = reinforce_config.epsilon_timesteps / 2
         print("=======================================================================")
         print("===============================Now training============================")
         print("=======================================================================")
@@ -201,7 +245,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         for idx_enemy, enemy_agent in enumerate(agents_2):
 #             break
-            if reinforce_config.collecting_experience:
+            if reinforce_config.collecting_experience or evaluation_config.explanation:
                 break
             if type(enemy_agent) == type("random"):
                 print(enemy_agent)
@@ -260,12 +304,19 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         state_1, state_2, done, dp = env.step([], 0)
                         if dp or done:
                             break
-
+                    
                     if network_config.version == "v1":
                         features = GVFs_v1(state_1)
                     elif network_config.version == "v2":
                         features = GVFs_v2(state_1)
+                    elif network_config.version == "v3":
+                        features = GVFs_v3(state_1)
+                    elif network_config.version == "v4":
+                        features = GVFs_v4(state_1)
+                    elif network_config.version == "v5":
+                        features = GVFs_v5(state_1)
 #                     print(features)
+#                     input()
                     total_reward = 0
                     if steps == max_episode_steps or done:
                         total_reward = combine_decomposed_func(FloatTensor(
@@ -280,7 +331,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     agent_1.end_episode(env.normalization(state_1))
         
         if not reinforce_config.is_random_agent_1:
-            agent_1.disable_learning(is_save = not reinforce_config.collecting_experience and not evaluation_config.generate_xai_replay)
+            agent_1.disable_learning(is_save = not reinforce_config.collecting_experience 
+                                     and not evaluation_config.generate_xai_replay 
+                                     and not evaluation_config.explanation)
 
         total_rewwards_list = []
             
@@ -290,18 +343,27 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("======================================================================")
         
         tied_lose = 0
+        if evaluation_config.explanation:
+            time_stamp = datetime.now()
+            exp_path = evaluation_config.explanation_path + "/" + str(time_stamp)
+            game_count = 0
         for idx_enemy, enemy_agent in enumerate(agents_2):
             average_end_state = np.zeros(len(state_1))
             if type(enemy_agent) == type("random"):
+                enemy_name = enemy_agent
                 print(enemy_agent)
             else:
+                enemy_name = enemy_agent.name
                 print(enemy_agent.name)
                 
             if idx_enemy == len(agents_2) - 1 and not reinforce_config.collecting_experience:
                 test_num = evaluation_config.test_episodes
             else:
                 test_num = 5
-                
+            if evaluation_config.explanation:
+                test_num = 1
+                game_count += 1
+                save_exp_path = "{}/game_{}({})".format(exp_path, game_count, enemy_name)
             for episode in tqdm(range(test_num)):
                 env.reset()
                 total_reward_1 = 0
@@ -333,8 +395,14 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = 1)
                         combine_states_1 = combine_sa(state_1, actions_1)
                         choice_1 = randint(0, len(actions_1) - 1)
-
-
+                    if evaluation_config.explanation:
+                        
+                        frame = get_frame(env.sc2_env)
+                        esf_action_pair(agent_1.eval_model, state_1, frame, env.normalization(combine_states_1), 
+                                        actions_1, save_exp_path,
+                                        decision_point = "dp_{}".format(steps))
+#                         input()
+                    
                     if not reinforce_config.is_random_agent_2 and type(enemy_agent) != type("random"):
                         actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
                         combine_states_2 = combine_sa(state_2, actions_2)
@@ -394,6 +462,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 
                     total_reward_1 += current_reward_1
                     previous_reward_1 = current_reward_1
+                    
+                if evaluation_config.explanation:
+                    if total_reward_1 == 1:
+                        os.rename(save_exp_path, save_exp_path + "_win")
+                    else:
+                        os.rename(save_exp_path, save_exp_path + "_lost")
                     
                 if reinforce_config.collecting_experience:
                     previous_state_1[8:14] = previous_state_2[1:7] # Include player 2's action
@@ -583,3 +657,11 @@ def player_1_end_vector_8(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp
 
     return reward_vector
 
+def get_frame(sc2_env):
+    observation = sc2_env._controllers[0]._client.send(observation=sc_pb.RequestObservation())
+#     print(observation.observation["rgb_screen"])
+    frame = features.Feature.unpack_rgb_image(observation.observation.render_data.map).astype(np.uint8)#.swapaxes(0,2).swapaxes(1,2)
+#     frame = features.Feature.unpack(observation.observation).astype(np.int32)  
+#     print(np.array(observation.observation.render_data.map))
+
+    return frame

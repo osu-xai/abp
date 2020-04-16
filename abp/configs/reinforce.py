@@ -19,7 +19,8 @@ default_reinforce_config = {
     "use_prior_memory" : True,
     "is_random_agent_1" : False,
     "is_random_agent_2" : False,
-    "collecting_experience": False
+    "collecting_experience": False,
+    "is_use_sepcific_enemy": False
 }
 
 
@@ -88,3 +89,6 @@ class ReinforceConfig(BaseConfig):
 
     collecting_experience = property(BaseConfig.get_property("collecting_experience"),
                         BaseConfig.set_property("collecting_experience"))
+    
+    is_use_sepcific_enemy = property(BaseConfig.get_property("is_use_sepcific_enemy"),
+                        BaseConfig.set_property("is_use_sepcific_enemy"))
