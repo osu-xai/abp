@@ -38,7 +38,7 @@ class _q_model(nn.Module):
         )
         self.output = nn.Sequential(
             torch.nn.Linear(256, ouput_len, bias = True)
-            , nn.Sigmoid()
+#             , nn.Sigmoid()
         )
     def forward(self, x):
 #         return self.linear_com(input)
@@ -80,7 +80,7 @@ class _feature_model(nn.Module):
         x = self.output(x)
         
         if version == "v1":
-            return self.softmax_func(x)
+            x = self.softmax_func(x)
         if version == "v2":
 #             print(x)
 #             print(self.sigmoid(x[:, :24]).size(), self.softmax_func(x[:, 24 : 28]).size(), self.sigmoid(x[:, 28]).size())
@@ -88,7 +88,9 @@ class _feature_model(nn.Module):
             x = torch.cat((self.sigmoid(x[:, :24]), self.softmax_func(x[:, 24 : 28]), self.sigmoid(x[:, 28]).view(-1, 1)), dim = 1)
 #             print(x)
 #             input()
-            return x
+        if version in ["v6", "v7"]:
+            x = torch.cat((self.softmax_func(x[:8]), x[8:]))
+        
         return x
 class feature_q_model():
     def __init__(self, name, input_len, feature_len, output_len, network_config, learning_rate = 0.0001):

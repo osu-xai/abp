@@ -52,7 +52,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
     def GVFs_v1(state):
         if steps == max_episode_steps or done:
-            features = combine_decomposed_func_8(state[63], state[64], state[65], state[66], is_done = done)
+            features = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
         else:
             features = np.zeros(network_config.shared_layers)
         return features
@@ -96,6 +96,24 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     def GVFs_v5(state):
         features = np.array(state[15:63])
         return features
+    def GVFs_v6(state):
+        features = np.zeros(network_config.shared_layers)
+        if steps == max_episode_steps or done:
+            features[:8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
+        damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
+        features[8:14] = np.array(damage_to_nexus)
+        features[14:20] = np.array(get_damage_nexus)
+        return features
+    
+    def GVFs_v7(state):
+        features = np.zeros(network_config.shared_layers)
+        if steps == max_episode_steps or done:
+            features[:8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
+        damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
+        features[8:14] = np.array(damage_to_nexus) / 2000
+        features[14:20] = np.array(get_damage_nexus) / 2000
+        return features
+    
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQ_GQF(name = "TugOfWar_GQF",
                             state_length = len(state_1),
@@ -107,6 +125,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("SADQ_GQF agent 1")
     else:
         print("random agent 1")
+    
         
     training_summaries_path = evaluation_config.summaries_path + "/train"
     clear_summary_path(training_summaries_path)
@@ -315,6 +334,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         features = GVFs_v4(state_1)
                     elif network_config.version == "v5":
                         features = GVFs_v5(state_1)
+                    elif network_config.version == "v6":
+                        features = GVFs_v6(state_1)
+                    elif network_config.version == "v7":
+                        features = GVFs_v7(state_1)
 #                     print(features)
 #                     input()
                     total_reward = 0
