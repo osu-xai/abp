@@ -359,8 +359,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         features = GVFs_v7(state_1)
                     elif network_config.version == "v8":
                         features = GVFs_v8(state_1)
-                    print(features)
-                    input()
+#                     print(features)
+#                     input()
                     total_reward = 0
                     if steps == max_episode_steps or done:
                         total_reward = combine_decomposed_func(FloatTensor(
