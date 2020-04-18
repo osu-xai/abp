@@ -101,8 +101,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         if steps == max_episode_steps or done:
             features[:8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
         damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
-        features[8:14] = np.array(damage_to_nexus)
-        features[14:20] = np.array(get_damage_nexus)
+        features[8:14] = np.array(damage_to_nexus) / 2000
+        features[14:20] = np.array(get_damage_nexus) / 2000
         return features
     
     def GVFs_v7(state):
