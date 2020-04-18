@@ -114,6 +114,25 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         features[14:20] = np.array(get_damage_nexus) / 2000
         return features
     
+    def GVFs_v8(state):
+        features = np.zeros(network_config.shared_layers)
+            
+        agent_attacking_units, enemy_attacking_units = env.get_attacking()
+        features[:12] = np.array(state[15:27])
+        features[12:15] = agent_attacking_units[:3]
+        features[15:27] = np.array(state[27:39])
+        features[27:30] = agent_attacking_units[3:]
+        
+        features[30:42] = np.array(state[39:51])
+        features[42:45] = enemy_attacking_units[:3]
+        features[45:57] = np.array(state[51:63])
+        features[57:60] = enemy_attacking_units[3:]
+        
+        if steps == max_episode_steps:
+            features[60:64] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
+            features[65] = 1
+        return features
+    
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQ_GQF(name = "TugOfWar_GQF",
                             state_length = len(state_1),
@@ -338,8 +357,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         features = GVFs_v6(state_1)
                     elif network_config.version == "v7":
                         features = GVFs_v7(state_1)
-#                     print(features)
-#                     input()
+                    elif network_config.version == "v8":
+                        features = GVFs_v8(state_1)
+                    print(features)
+                    input()
                     total_reward = 0
                     if steps == max_episode_steps or done:
                         total_reward = combine_decomposed_func(FloatTensor(

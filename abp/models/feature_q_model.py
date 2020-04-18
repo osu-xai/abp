@@ -90,6 +90,8 @@ class _feature_model(nn.Module):
 #             input()
         if version in ["v6", "v7"]:
             x = torch.cat((self.softmax_func(x[:8]), x[8:]))
+        if version == "v8":
+            x = torch.cat((x[:, :30], self.softmax_func(x[:, 24 : 28]), self.sigmoid(x[:, 28]).view(-1, 1)), dim = 1)
         
         return x
 class feature_q_model():
