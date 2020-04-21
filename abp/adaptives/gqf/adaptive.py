@@ -96,6 +96,7 @@ class SADQ_GQF(object):
                             self.current_reward,
                         state_crr.reshape(-1, self.state_length), 0,
                         self.features)
+#             print("not final : {}".format(self.current_reward) )
 #             print(0, self.features)
         if self.learning and self.should_explore() and not isGreedy:
             q_values = None
@@ -107,7 +108,8 @@ class SADQ_GQF(object):
 
             _, choice = q_values.max(0)
             action = choice
-            
+#         print("q_value : {}".format(q_values))
+#         input()
         if self.learning and self.steps % self.reinforce_config.replace_frequency == 0:
             logger.debug("Replacing target model for %s" % self.name)
             if self.reinforce_config.replace_frequency != 1:
@@ -178,6 +180,8 @@ class SADQ_GQF(object):
                         self.current_reward,
                         state.reshape(-1, self.state_length), 1,
                         self.features)
+#         print("final : {}".format(self.current_reward) )
+#         input()
 #         print(1, self.features)
         self.save()
         self.reset()
@@ -299,6 +303,12 @@ class SADQ_GQF(object):
         q_target = reward + self.reinforce_config.discount_factor * q_max
         f_target = features_vector + self.reinforce_config.discount_factor * f_max
         
+#         if torch.sum(reward).item() > 0:
+#             print(reward)
+#             print(feature_values)
+#             print(q_target)
+#             print(q_values)
+#             input()
         # update model
         self.eval_model.fit(q_values, q_target, feature_values, f_target)
 

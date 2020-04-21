@@ -89,10 +89,12 @@ class _feature_model(nn.Module):
 #             print(x)
 #             input()
         if version in ["v6", "v7"]:
-            x = torch.cat((self.softmax_func(x[:8]), x[8:]))
+            x = torch.cat((self.softmax_func(x[:, :8]), x[:, 8:]), dim = 1)
         if version == "v8":
-            x = torch.cat((x[:, :30], self.softmax_func(x[:, 24 : 28]), self.sigmoid(x[:, 28]).view(-1, 1)), dim = 1)
-        
+            x = torch.cat((x[:, :60], self.softmax_func(x[:, 60 : 64]), self.sigmoid(x[:, 64]).view(-1, 1)), dim = 1)
+        if version == "v9":
+            x = torch.cat((self.sigmoid(x[:, :12]), self.softmax_func(x[:, 12 : 16]), self.sigmoid(x[:, 16]).view(-1, 1)), dim = 1)
+#             x = torch.cat((x[:, :12], self.softmax_func(x[:, 12 : 17]), self.sigmoid(x[:, 17]).view(-1, 1)), dim = 1)
         return x
 class feature_q_model():
     def __init__(self, name, input_len, feature_len, output_len, network_config, learning_rate = 0.0001):
@@ -136,25 +138,37 @@ class feature_q_model():
     def predict(self, input):
         input = FloatTensor(input).unsqueeze(0)
         feature_vector = self.feautre_model(input, self.version)
-        q_value = self.q_model(feature_vector)
+        input_feature_vectors = feature_vector.clone()
+        if self.version == "v9":
+            input_feature_vectors[:, :3] = input_feature_vectors[:, :3] / input[:, 65].view(-1, 1)# / 2000
+            input_feature_vectors[:, 3:6] = input_feature_vectors[:, 3:6] / input[:, 66].view(-1, 1)# / 2000
+            input_feature_vectors[:, 6:9] = input_feature_vectors[:, 6:9] / input[:, 63].view(-1, 1)# / 2000
+            input_feature_vectors[:, 9:12] = input_feature_vectors[:, 9:12] / input[:, 64].view(-1, 1)# / 2000
+            
+            input_feature_vectors[input_feature_vectors == float('inf')] = 0
+        q_value = self.q_model(input_feature_vectors)
             
         return feature_vector, q_value
 
     def predict_batch(self, input):
         input = FloatTensor(input)
         feature_vectors = self.feautre_model(input, self.version)
-#         print(feature_vectors)
-        q_values = self.q_model(feature_vectors)
-#         print(q_values)
-#         print(feature_vectors)
+#         print(input[0:2])
+        input_feature_vectors = feature_vectors.clone()
+#         print(input_feature_vectors[0:2])
+        input_state = input.detach()
+        if self.version == "v9":
+            input_feature_vectors[:, :3] = input_feature_vectors[:, :3] / input_state[:, 65].view(-1, 1)# / 2000
+            input_feature_vectors[:, 3:6] = input_feature_vectors[:, 3:6] / input_state[:, 66].view(-1, 1)# / 2000
+            input_feature_vectors[:, 6:9] = input_feature_vectors[:, 6:9] / input_state[:, 63].view(-1, 1)# / 2000
+            input_feature_vectors[:, 9:12] = input_feature_vectors[:, 9:12] / input_state[:, 64].view(-1, 1)# / 2000
+            
+            input_feature_vectors[input_feature_vectors == float('inf')] = 0
+#         print(input_feature_vectors[0:2])
+        q_values = self.q_model(input_feature_vectors)
 #         print(q_values)
         return feature_vectors, q_values 
 
-#     def predict_batch_com(self, input):
-#         input = FloatTensor(input)
-#         q_values = self.q_model(input)
-        
-#         return q_values
 
     def fit(self, q_values, target_q_values, feature_vectors, target_feature_vector):
         loss_1 = self.loss_fn(q_values, target_q_values)

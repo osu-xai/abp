@@ -123,14 +123,30 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         features[15:27] = np.array(state[27:39])
         features[27:30] = agent_attacking_units[3:]
         
-        features[30:42] = np.array(state[39:51])
-        features[42:45] = enemy_attacking_units[:3]
-        features[45:57] = np.array(state[51:63])
-        features[57:60] = enemy_attacking_units[3:]
+        features[30:33] = enemy_attacking_units[:3]
+        features[33:45] = np.array(state[39:51])
+        features[45:48] = enemy_attacking_units[3:]
+        features[48:60] = np.array(state[51:63])
         
         if steps == max_episode_steps:
-            features[60:64] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
-            features[65] = 1
+            nexus_health = player_1_end_vector_8(state[63], state[64], state[65], state[66], is_done = done)
+            features[60:64] = nexus_health[4:]
+            features[64] = 1
+        return features
+    
+    def GVFs_v9(state):
+        features = np.zeros(network_config.shared_layers)
+        damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
+        features[:6] = damage_to_nexus / 2000
+        features[6:12] = get_damage_nexus / 2000
+        if steps == max_episode_steps:
+            nexus_health = player_1_end_vector_8(state[63], state[64], state[65], state[66], is_done = done)
+            features[12:16] = nexus_health[4:]
+            features[16] = 1
+#             features[16] = 0
+#             features[17] = 1
+#         else:
+#             features[16] = 1
         return features
     
     if not reinforce_config.is_random_agent_1:
@@ -244,6 +260,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         new_agent_2.disable_learning(is_save = False)
         agents_2.append(new_agent_2)
 #     w = 0
+    if evaluation_config.explanation:
+        time_stamp = datetime.now()
+        exp_path = evaluation_config.explanation_path + "/" + str(time_stamp)
+        game_count = 0
     while True:
         
         print(sum(np.array(privous_result) >= 0.9))
@@ -359,6 +379,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         features = GVFs_v7(state_1)
                     elif network_config.version == "v8":
                         features = GVFs_v8(state_1)
+                    elif network_config.version == "v9":
+                        features = GVFs_v9(state_1)
+#                     print("features")
 #                     print(features)
 #                     input()
                     total_reward = 0
@@ -387,10 +410,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("======================================================================")
         
         tied_lose = 0
-        if evaluation_config.explanation:
-            time_stamp = datetime.now()
-            exp_path = evaluation_config.explanation_path + "/" + str(time_stamp)
-            game_count = 0
+
         for idx_enemy, enemy_agent in enumerate(agents_2):
             average_end_state = np.zeros(len(state_1))
             if type(enemy_agent) == type("random"):
