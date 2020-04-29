@@ -134,8 +134,8 @@ class SADQ_GQF(object):
     def disable_learning(self, is_save = False):
         logger.info("Disabled Learning for %s agent" % self.name)
         if is_save:
-            self.save()
-            self.save(force = True, appendix = "_for_now")
+#             self.save()
+            self.save(force = True)
         self.learning = False
         self.episode = 0
         
@@ -230,8 +230,8 @@ class SADQ_GQF(object):
                 logger.info("Saving network. Found new best reward (%.2f)" % total_reward)
                 self.eval_model.save_network(appendix = appendix)
                 self.target_model.save_network(appendix = appendix)
-                self.eval_model.save_network()
-                self.target_model.save_network()
+#                 self.eval_model.save_network()
+#                 self.target_model.save_network()
                 with open(self.network_config.network_path + "/adaptive.info", "wb") as file:
                     pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
                 self.memory.save(self.network_config.network_path)
@@ -282,12 +282,24 @@ class SADQ_GQF(object):
         q_values = q_values.flatten()
         q_max = []
         f_max = []
-        for ns in next_states:
+        for i, ns in enumerate(next_states):
             feature_n, q_n = self.target_model.predict_batch(FloatTensor(ns).view(-1, self.state_length))
             q_value_max, idx = q_n.max(0)
             features_max = feature_n[idx]
             
             q_max.append(q_value_max)
+            if self.network_config.version == "v10":
+#                 print(features_max)
+#                 print(ns[idx, 63:67])
+#                 print(states[i, 63:67])
+#                 print(features_max.size(), FloatTensor(ns).view(-1, self.state_length).size(), states.size())
+                features_max[:, :3] = (features_max[:, :3] * ns[idx, 65]) / states[i, 65]
+                features_max[:, 3:6] = (features_max[:, 3:6] * ns[idx, 66]) / states[i, 66]
+                features_max[:, 6:9] = (features_max[:, 6:9] * ns[idx, 63]) / states[i, 63]
+                features_max[:, 9:12] = (features_max[:, 9:12] * ns[idx, 64]) / states[i, 64]
+                features_max[features_max == float('inf')] = 0
+#                 print(features_max)
+#                 input()
             f_max.append(features_max.view(-1))
         
 #         if torch.sum(terminal == torch.sum(features_vector, dim = 1)) != len(terminal):
@@ -301,6 +313,7 @@ class SADQ_GQF(object):
         f_max = (1 - terminal.view(-1, 1)) * f_max
         
         q_target = reward + self.reinforce_config.discount_factor * q_max
+        
         f_target = features_vector + self.reinforce_config.discount_factor * f_max
         
 #         if torch.sum(reward).item() > 0:
@@ -310,6 +323,20 @@ class SADQ_GQF(object):
 #             print(q_values)
 #             input()
         # update model
+        if (torch.sum(feature_values != feature_values).item() + torch.sum(f_target != f_target)).item() > 0:
+
+#             print("1")
+#             print(features_vector)
+#             print("2")
+#             print(feature_values)
+#             print("3")
+#             print(f_target)
+#             print("4")
+#             print(f_max)
+#             print("5")
+#             print(states.tolist())
+#             input()
+            f_target[f_target != f_target] = 0
         self.eval_model.fit(q_values, q_target, feature_values, f_target)
 
         # Update priorities

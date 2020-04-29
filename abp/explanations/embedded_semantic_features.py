@@ -193,11 +193,17 @@ def esf_action_pair(fq_model, state, frame, state_actions, actions, save_path,
     
     show_image = True
     for i, sub_action in enumerate(q_sort_idx):
-        save_name = "{}/subaction_#{}".format(exp_path_dp, i + 1)       
-        txt_info.append("\nbaseline subaction_#{}: {}".format(i, pretty_print_action(actions[sub_action].tolist())))
+        if i < pick_actions[0]:
+            ential = "(best)"
+        elif i < (pick_actions[0] + pick_actions[1]):
+            ential = "(rand)"
+        else:
+            ential = "(worst)"
+        save_name = "{}/subaction_#{}{}".format(exp_path_dp, i + 1, ential)       
+        txt_info.append("\nbaseline subaction_#{}{}: {}".format(i + 1, ential, pretty_print_action(actions[sub_action].tolist())))
         txt_info.append("baseline features: {}\n".format(v_features[sub_action].tolist()))
         txt_info.append("baseline value: {}\n".format(q_value[sub_action].item()))
-        plot(v_features[q_best_idx].tolist(), save_name + "_features", title = 'GVFs')
+        plot(v_features[i].tolist(), save_name + "_features", title = 'GVFs')
         sub_action = sub_action.item()
         
         msx_idx, msx_value, intergated_grad = differenc_vector_action(fq_model.q_model, 

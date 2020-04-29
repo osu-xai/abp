@@ -94,18 +94,56 @@ class _feature_model(nn.Module):
             x = torch.cat((x[:, :60], self.softmax_func(x[:, 60 : 64]), self.sigmoid(x[:, 64]).view(-1, 1)), dim = 1)
         if version == "v9":
             x = torch.cat((self.sigmoid(x[:, :12]), self.softmax_func(x[:, 12 : 16]), self.sigmoid(x[:, 16]).view(-1, 1)), dim = 1)
-#             x = torch.cat((x[:, :12], self.softmax_func(x[:, 12 : 17]), self.sigmoid(x[:, 17]).view(-1, 1)), dim = 1)
+        if version == "v10":
+            x = torch.cat((self.sigmoid(x[:, :12]), self.softmax_func(x[:, 12 : 16]), self.sigmoid(x[:, 16]).view(-1, 1)), dim = 1)
+        if version in ["GFVs_all_1", "GVFs_all_2"]:
+#             x = self.all_1_x(x)
+            x = torch.cat((self.softmax_func(x[:, : 8]), x[:, 8 : -1], self.sigmoid(x[:, -1]).view(-1, 1)), dim = 1)
+#             x = self.softmax_func(x[:, : 8])
         return x
+    
+    def all_1_x(self, x):
+        current_idx = 0
+        
+        x[:, current_idx : current_idx + 8] = self.softmax_func(x[:, current_idx : current_idx + 8])
+        current_idx += 8
+        
+        # self-mineral feature idx 8, enemy-mineral idx 9. self-pylone idx 7, enemy-pylon 14
+        current_idx += 2
+        
+        # features idx: The number of self-units will be spawned, length : 6, The number of enemy-units will be spawned, length : 6
+        # state idx: The number of self-building 1-6, The number of self-building 8-13, 
+        current_idx += 12
+        
+        # features idx: The accumulative number of each type of unit in each range from now to the end of the game: length : 30, for enemy: length : 30
+        current_idx += 60
+        
+        # features idx: Damage of each friendly unit to each Nexus: length : 6, for enemy: length : 6
+        current_idx += 12
+        
+        # features idx: The number of which friendly troops kills which enemy troops: length : 18, for enemy: length : 18
+        current_idx += 36
+        
+        # features idx: prob of limitation wave: length : 1
+        x[:, current_idx] = self.sigmoid(x[:, current_idx])
+        current_idx += 1
+        
+        return x
+    
 class feature_q_model():
     def __init__(self, name, input_len, feature_len, output_len, network_config, learning_rate = 0.0001):
         self.name = name
         self.network_config = network_config
         self.version = network_config.version
         print(self.version)
+#         if self.version == "GFVs_all_1":
+#             torch.autograd.set_detect_anomaly(True)
 #         print( name, input_len, feature_len, output_len)
         file_path = ensure_directory_exits(self.network_config.network_path)
         self.model_path = os.path.join(file_path, self.name + '.p')
         self.feautre_model = _feature_model(input_len, feature_len)
+        if self.version == "GVFs_all_2":
+            feature_len = 8
         self.q_model = _q_model(feature_len, output_len)
             
         if use_cuda:
@@ -146,6 +184,7 @@ class feature_q_model():
             input_feature_vectors[:, 9:12] = input_feature_vectors[:, 9:12] / input[:, 64].view(-1, 1)# / 2000
             
             input_feature_vectors[input_feature_vectors == float('inf')] = 0
+            
         q_value = self.q_model(input_feature_vectors)
             
         return feature_vector, q_value
@@ -154,9 +193,9 @@ class feature_q_model():
         input = FloatTensor(input)
         feature_vectors = self.feautre_model(input, self.version)
 #         print(input[0:2])
-        input_feature_vectors = feature_vectors.clone()
+#         input_feature_vectors = feature_vectors.clone()
 #         print(input_feature_vectors[0:2])
-        input_state = input.detach()
+#         input_state = input.detach()
         if self.version == "v9":
             input_feature_vectors[:, :3] = input_feature_vectors[:, :3] / input_state[:, 65].view(-1, 1)# / 2000
             input_feature_vectors[:, 3:6] = input_feature_vectors[:, 3:6] / input_state[:, 66].view(-1, 1)# / 2000
@@ -164,9 +203,15 @@ class feature_q_model():
             input_feature_vectors[:, 9:12] = input_feature_vectors[:, 9:12] / input_state[:, 64].view(-1, 1)# / 2000
             
             input_feature_vectors[input_feature_vectors == float('inf')] = 0
+            
+        if self.version == "GVFs_all_2":
+#             input_feature_vectors = feature_vectors[:, :8].clone()
+            q_values = self.q_model(feature_vectors[:, :8])
+#             print(feature_vectors[:, :8])
 #         print(input_feature_vectors[0:2])
-        q_values = self.q_model(input_feature_vectors)
-#         print(q_values)
+        else:
+            q_values = self.q_model(feature_vectors)
+
         return feature_vectors, q_values 
 
 
@@ -238,3 +283,5 @@ class feature_q_model():
             
         for target_param, eval_param in zip(self.q_model.parameters(), dest.q_model.parameters()):
             target_param.data.copy_(tau*eval_param.data + (1.0-tau)*target_param.data)
+            
+            

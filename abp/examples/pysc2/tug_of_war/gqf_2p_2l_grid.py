@@ -148,7 +148,100 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #         else:
 #             features[16] = 1
         return features
-    
+    def GVFs_v10(state):
+        features = np.zeros(network_config.shared_layers)
+        damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
+        features[:6] = damage_to_nexus
+        features[6:12] = get_damage_nexus
+        
+#         print(features)
+        features[:3] = features[:3] / (state[65] + sum(features[:3]))
+        features[3:6] = features[3:6] / (state[66] + sum(features[3:6]))
+        features[6:9] = features[6:9] / (state[63] + sum(features[6:9]))
+        features[9:12] = features[9:12] / (state[64] + sum(features[9:12]))
+        
+#         features[features == float('inf')] = 1
+        features[np.isnan(features)] = 0
+#         if np.sum(np.isnan(features)) > 0:
+#             print(state)
+#             print(features)
+#             input()
+        if steps == max_episode_steps:
+            nexus_health = player_1_end_vector_8(state[63], state[64], state[65], state[66], is_done = done)
+            features[12:16] = nexus_health[4:]
+            features[16] = 1
+        return features
+    def GFVs_all_1(state):
+        # eval 2 features
+        current_idx = 0
+        features = np.zeros(network_config.shared_layers)
+        
+        if steps == max_episode_steps or done:
+            features[current_idx : current_idx + 8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
+        current_idx += 8
+#         print(current_idx)
+        # self-mineral feature idx 8, enemy-mineral idx 9. self-pylone idx 7, enemy-pylon 14
+        features[current_idx] = state[7] * 75 + 100
+        current_idx += 1
+        features[current_idx] = state[14] * 75 + 100
+        current_idx += 1
+#         print(current_idx)
+        
+        # features idx: The number of self-units will be spawned, length : 6, The number of enemy-units will be spawned, length : 6
+        # state idx: The number of self-building 1-6, The number of self-building 8-13, 
+        features[current_idx : current_idx + 6] = state[1:7]
+        current_idx += 6
+        features[current_idx : current_idx + 6] = state[8:14]
+        current_idx += 6
+#         print(current_idx)
+        
+        # features idx: The accumulative number of each type of unit in each range from now to the end of the game: length : 30, for enemy: length : 30
+        agent_attacking_units, enemy_attacking_units = env.get_attacking()
+        features[current_idx : current_idx + 12] = np.array(state[15:27])
+        current_idx += 12
+        features[current_idx : current_idx + 3] = agent_attacking_units[:3]
+        current_idx += 3
+        features[current_idx : current_idx + 12] = np.array(state[27:39])
+        current_idx += 12
+        features[current_idx : current_idx + 3] = agent_attacking_units[3:]
+        current_idx += 3
+#         print(current_idx)
+        
+        features[current_idx : current_idx + 3] = enemy_attacking_units[:3]
+        current_idx += 3
+        features[current_idx : current_idx + 12] = np.array(state[39:51])
+        current_idx += 12
+        features[current_idx : current_idx + 3] = enemy_attacking_units[3:]
+        current_idx += 3
+        features[current_idx : current_idx + 12] = np.array(state[51:63])
+        current_idx += 12
+#         print(current_idx)
+        
+        # features idx: Damage of each friendly unit to each Nexus: length : 6, for enemy: length : 6
+        damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
+        features[current_idx : current_idx + 6] = np.array(damage_to_nexus)# / 2000
+        current_idx += 6
+        features[current_idx : current_idx + 6] = np.array(get_damage_nexus)# / 2000
+        current_idx += 6
+#         print(current_idx)
+        
+        # features idx: The number of which friendly troops kills which enemy troops: length : 18, for enemy: length : 18
+        unit_kills, unit_be_killed = env.get_unit_kill()
+        features[current_idx : current_idx + 18] = np.array(unit_kills)
+        current_idx += 18
+        features[current_idx : current_idx + 18] = np.array(unit_be_killed)
+        current_idx += 18
+#         print(current_idx)
+        
+        # features idx: prob of limitation wave: length : 1
+        if steps == max_episode_steps:
+            features[current_idx] = 1
+        current_idx += 1
+#         print(current_idx)
+        return features
+        
+        
+            
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQ_GQF(name = "TugOfWar_GQF",
                             state_length = len(state_1),
@@ -264,11 +357,16 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         time_stamp = datetime.now()
         exp_path = evaluation_config.explanation_path + "/" + str(time_stamp)
         game_count = 0
+#     agent_1.steps = reinforce_config.epsilon_timesteps / 2
     while True:
         
-        print(sum(np.array(privous_result) >= 0.9))
+#         print(sum(np.array(privous_result) >= 0.9))
+        print(np.array(privous_result).mean())
+#         if len(privous_result) >= update_wins_waves and \
+#         sum(np.array(privous_result) >= 0.9) >= update_wins_waves and \
+#         not reinforce_config.is_random_agent_2 and not reinforce_config.is_use_sepcific_enemy:
         if len(privous_result) >= update_wins_waves and \
-        sum(np.array(privous_result) >= 0.9) >= update_wins_waves and \
+        np.array(privous_result).mean() >= 0.9 and privous_result[-1] >= 0.9 and \
         not reinforce_config.is_random_agent_2 and not reinforce_config.is_use_sepcific_enemy:
             privous_result = []
             print("replace enemy agent's weight with self agent")
@@ -293,7 +391,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #         if reinforce_config.is_use_sepcific_enemy:
 #             agents_2 = [sepcific_SADQ_enemy]
         round_num += 1
-#         agent_1.steps = reinforce_config.epsilon_timesteps / 2
+        
         print("=======================================================================")
         print("===============================Now training============================")
         print("=======================================================================")
@@ -381,6 +479,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         features = GVFs_v8(state_1)
                     elif network_config.version == "v9":
                         features = GVFs_v9(state_1)
+                    elif network_config.version == "v10":
+                        features = GVFs_v10(state_1)
+                    elif network_config.version in ["GFVs_all_1", "GVFs_all_2"]:
+                        features = GFVs_all_1(state_1)
+                        
 #                     print("features")
 #                     print(features)
 #                     input()

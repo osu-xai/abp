@@ -149,10 +149,14 @@ class ReplayBuffer_decom(object):
         }
         with open(path + "/memory.info", "wb") as file:
 #             pickle.dump(info, file, protocol=pickle.HIGHEST_PROTOCOL)
-            p = pickle.Pickler(file) 
-            p.fast = True 
-            p.dump(info)
-            p.memo.clear()
+            try:
+                p = pickle.Pickler(file) 
+                p.fast = True 
+                p.dump(info)
+                p.memo.clear()
+            except:
+                print("skip store memory")
+            print("continue")
             
     def load(self, path):
         """ Load the parameters of a saved off memory file
@@ -173,3 +177,6 @@ class ReplayBuffer_decom(object):
             self._storage = info["storage"]
             self._maxsize = info["maxsize"]
             self._next_idx = info["next_idx"]
+#             self._storage = list(info["storage"][:30000])
+#             self._maxsize = info["maxsize"]
+#             self._next_idx = 30000
