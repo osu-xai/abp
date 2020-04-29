@@ -175,53 +175,55 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         # eval 2 features
         current_idx = 0
         features = np.zeros(network_config.shared_layers)
+        norm_vector = np.ones(4)
+        norm_vector = np.array(1500, 100, 30, 2000)
         
         if steps == max_episode_steps or done:
             features[current_idx : current_idx + 8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
         current_idx += 8
 #         print(current_idx)
         # self-mineral feature idx 8, enemy-mineral idx 9. self-pylone idx 7, enemy-pylon 14
-        features[current_idx] = state[7] * 75 + 100
+        features[current_idx] = (state[7] * 75 + 100) / norm_vector[0]
         current_idx += 1
-        features[current_idx] = state[14] * 75 + 100
+        features[current_idx] = (state[14] * 75 + 100)
         current_idx += 1
 #         print(current_idx)
         
         # features idx: The number of self-units will be spawned, length : 6, The number of enemy-units will be spawned, length : 6
         # state idx: The number of self-building 1-6, The number of self-building 8-13, 
-        features[current_idx : current_idx + 6] = state[1:7]
+        features[current_idx : current_idx + 6] = state[1:7] / norm_vector[1]
         current_idx += 6
-        features[current_idx : current_idx + 6] = state[8:14]
+        features[current_idx : current_idx + 6] = state[8:14] / norm_vector[1]
         current_idx += 6
 #         print(current_idx)
         
         # features idx: The accumulative number of each type of unit in each range from now to the end of the game: length : 30, for enemy: length : 30
         agent_attacking_units, enemy_attacking_units = env.get_attacking()
-        features[current_idx : current_idx + 12] = np.array(state[15:27])
+        features[current_idx : current_idx + 12] = np.array(state[15:27]) / norm_vector[2]
         current_idx += 12
-        features[current_idx : current_idx + 3] = agent_attacking_units[:3]
+        features[current_idx : current_idx + 3] = agent_attacking_units[:3] / norm_vector[2]
         current_idx += 3
-        features[current_idx : current_idx + 12] = np.array(state[27:39])
+        features[current_idx : current_idx + 12] = np.array(state[27:39]) / norm_vector[2]
         current_idx += 12
-        features[current_idx : current_idx + 3] = agent_attacking_units[3:]
+        features[current_idx : current_idx + 3] = agent_attacking_units[3:] / norm_vector[2]
         current_idx += 3
 #         print(current_idx)
         
-        features[current_idx : current_idx + 3] = enemy_attacking_units[:3]
+        features[current_idx : current_idx + 3] = enemy_attacking_units[:3] / norm_vector[2]
         current_idx += 3
-        features[current_idx : current_idx + 12] = np.array(state[39:51])
+        features[current_idx : current_idx + 12] = np.array(state[39:51]) / norm_vector[2]
         current_idx += 12
-        features[current_idx : current_idx + 3] = enemy_attacking_units[3:]
+        features[current_idx : current_idx + 3] = enemy_attacking_units[3:] / norm_vector[2]
         current_idx += 3
-        features[current_idx : current_idx + 12] = np.array(state[51:63])
+        features[current_idx : current_idx + 12] = np.array(state[51:63]) / norm_vector[2]
         current_idx += 12
 #         print(current_idx)
         
         # features idx: Damage of each friendly unit to each Nexus: length : 6, for enemy: length : 6
         damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
-        features[current_idx : current_idx + 6] = np.array(damage_to_nexus)# / 2000
+        features[current_idx : current_idx + 6] = np.array(damage_to_nexus) / norm_vector[3]
         current_idx += 6
-        features[current_idx : current_idx + 6] = np.array(get_damage_nexus)# / 2000
+        features[current_idx : current_idx + 6] = np.array(get_damage_nexus) / norm_vector[3]
         current_idx += 6
 #         print(current_idx)
         
