@@ -176,7 +176,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         current_idx = 0
         features = np.zeros(network_config.shared_layers)
         norm_vector = np.ones(4)
-        norm_vector = np.array([1500, 100, 30, 2000])
+#         norm_vector = np.array([1500, 100, 30, 2000])
         
         if steps == max_episode_steps or done:
             features[current_idx : current_idx + 8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
