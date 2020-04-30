@@ -106,7 +106,7 @@ def select_action(event):
             actions.add(d.path.split("/")[-1][:12])
     actions = sorted(list(actions))
     combo_action['values']= (actions)
-    combo_action.current(0)
+    combo_action.current(len(actions) - 1)
     show_exp(None)
     
 def show_exp(event):

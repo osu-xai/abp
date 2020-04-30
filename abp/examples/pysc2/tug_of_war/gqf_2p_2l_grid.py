@@ -175,8 +175,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         # eval 2 features
         current_idx = 0
         features = np.zeros(network_config.shared_layers)
-        norm_vector = np.ones(4)
-#         norm_vector = np.array([1500, 100, 30, 2000])
+        norm_vector = np.ones(5)
+#         norm_vector = np.array([1500, 100, 30, 200, 5000])
         
         if steps == max_episode_steps or done:
             features[current_idx : current_idx + 8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
@@ -185,7 +185,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         # self-mineral feature idx 8, enemy-mineral idx 9. self-pylone idx 7, enemy-pylon 14
         features[current_idx] = (state[7] * 75 + 100) / norm_vector[0]
         current_idx += 1
-        features[current_idx] = (state[14] * 75 + 100)
+        features[current_idx] = (state[14] * 75 + 100) / norm_vector[0]
         current_idx += 1
 #         print(current_idx)
         
@@ -229,9 +229,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         # features idx: The number of which friendly troops kills which enemy troops: length : 18, for enemy: length : 18
         unit_kills, unit_be_killed = env.get_unit_kill()
-        features[current_idx : current_idx + 18] = np.array(unit_kills)
+        features[current_idx : current_idx + 18] = np.array(unit_kills) / norm_vector[4]
         current_idx += 18
-        features[current_idx : current_idx + 18] = np.array(unit_be_killed)
+        features[current_idx : current_idx + 18] = np.array(unit_be_killed) / norm_vector[4]
         current_idx += 18
 #         print(current_idx)
         
