@@ -20,6 +20,8 @@ runs/
 __pycache__/
 .coverage
 
+explanations/
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
