@@ -161,15 +161,15 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     if evaluation_config.generate_xai_replay: 
 #                         print(111111111111)
                         path_whole_tree = recorder.json_pathname[:-5] + "_tree/"
-                        path_replay = recorder.json_pathname[:-5] + "_replay/"
+                        # path_replay = recorder.json_pathname[:-5] + "_replay/"
 #                         print(path_whole_tree)
                         #path_partial_tree = recorder.json_pathname[:-5] + "_partial_tree/"
 #                         print(path_partial_tree)
                         
                         if not os.path.exists(path_whole_tree):
                             os.mkdir(path_whole_tree)
-                        if not os.path.exists(path_replay):
-                            os.mkdir(path_replay)
+                        # if not os.path.exists(path_replay):
+                        #     os.mkdir(path_replay)
                         #if not os.path.exists(path_partial_tree):
                         #    os.mkdir(path_partial_tree)
                             
@@ -231,10 +231,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 total_rewwards_list.append(total_reward_1)
 #                 print(total_rewwards_list, recorder.json_pathname[:-5])
                 
-                recorder_files_name = recorder.json_pathname[:-5]
-                recorder = None
+                # recorder_file_directory = recorder.game_replay_dir
                 if evaluation_config.generate_xai_replay:
-                    add_result_mark_to_replay(total_reward_1, recorder_files_name)
+                    add_result_mark_to_replay(total_reward_1, episode, replay_dimension, recorder.time_string)
+                recorder = None
 #                 print(total_rewwards_list)
                 test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
                                                global_step=episode + 1)
@@ -253,22 +253,15 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             f.close()
 #         break
 
-def add_result_mark_to_replay(reward, file_name):
+def add_result_mark_to_replay(reward, game_number, replay_dimension, time_string):
     if reward > 0:
         tag = "win"
     else:
         tag = "lose"
-    replay_path = "../sc2env/sc2env/xai_replay/ui/viz/replays/"
-    
-    video_file = "{}.mp4".format(file_name)
-    tag_video_file = "{}_{}.mp4".format(file_name, tag)
-    
-    whole_tree_dir = "{}_tree/".format(file_name)
-    tag_whole_tree_dir = "{}_tree_{}/".format(file_name, tag)
-    
-    replay_dir = "{}_replay/".format(file_name)
-    tag_replay_dir = "{}_replay_{}/".format(file_name, tag)
-
+    all_replays_dir = "../sc2env/sc2env/xai_replay/ui/viz/replays/"
+    folder_name = "game_" + str(game_number) + "_" + time_string + "_" + str(replay_dimension) + "_replay"
+    tag_replay_dir = "{}_{}".format(folder_name, tag)
+    os.rename(os.path.join(all_replays_dir, folder_name), os.path.join(all_replays_dir, tag_replay_dir))
 
     #partial_tree_dir = "{}_partial_tree/".format(file_name)
     #tag_partial_tree_dir = "{}_partial_tree_{}/".format(file_name, tag)
@@ -289,8 +282,8 @@ def add_result_mark_to_replay(reward, file_name):
 #     print(tag_expl_file)
     
     #os.rename(video_file, tag_video_file)
-    os.rename(whole_tree_dir, tag_whole_tree_dir)
-    os.rename(replay_dir, tag_replay_dir)
+    # os.rename(whole_tree_dir, tag_whole_tree_dir)
+    # os.rename(replay_dir, tag_replay_dir)
     #os.rename(partial_tree_dir, tag_partial_tree_dir)
     #os.rename(expl_file, tag_expl_file)
     #os.rename(json_file, tag_json_file)
