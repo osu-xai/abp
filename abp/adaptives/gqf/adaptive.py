@@ -100,14 +100,17 @@ class SADQ_GQF(object):
 #             print(0, self.features)
         if self.learning and self.should_explore() and not isGreedy:
             q_values = None
+            fv = None
             choice = random.choice(list(range(len(state))))
             action = choice
         else:
             with torch.no_grad():
-                q_values = FloatTensor(self.eval_model.predict_batch(Tensor(state))[1]).view(-1)
+                features_vector, q_values = self.eval_model.predict_batch(Tensor(state))
+                q_values = FloatTensor(q_values).view(-1)
 
             _, choice = q_values.max(0)
             action = choice
+            fv = features_vector[choice]
 #         print("q_value : {}".format(q_values))
 #         input()
         if self.learning and self.steps % self.reinforce_config.replace_frequency == 0:
@@ -129,7 +132,7 @@ class SADQ_GQF(object):
         self.previous_state = state[action]
         #self.previous_action = action
 
-        return choice, q_values
+        return choice, fv#,q_values
 
     def disable_learning(self, is_save = False):
         logger.info("Disabled Learning for %s agent" % self.name)
@@ -247,9 +250,12 @@ class SADQ_GQF(object):
         self.features = features.copy()
         return
 
-    def summary_test(self, reward):
+    def summary_test(self, reward, epoch):
         self.summary.add_scalar(tag='%s/eval reward' % self.name,
-                                scalar_value=reward, global_step=self.steps)
+                                scalar_value=reward, global_step=epoch * 40)
+    def summary_GVFs_loss(self, loss, epoch):
+        self.summary.add_scalar(tag='%s/GVFs loss' % self.name,
+                                scalar_value=loss, global_step=epoch * 40)
     
     def update(self):
         if len(self.memory._storage) <= self.reinforce_config.batch_size:
@@ -288,7 +294,7 @@ class SADQ_GQF(object):
             features_max = feature_n[idx]
             
             q_max.append(q_value_max)
-            if self.network_config.version == "v10":
+            if self.network_config.version in ["v10", "v11"]:
 #                 print(features_max)
 #                 print(ns[idx, 63:67])
 #                 print(states[i, 63:67])

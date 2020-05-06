@@ -70,7 +70,7 @@ class _feature_model(nn.Module):
         self.output = nn.Sequential(
             torch.nn.Linear(256, ouput_len, bias = True),
         )
-        self.softmax_func = nn.Softmax(dim = 1)
+        self.softmax_func = nn.Softmax()
         self.sigmoid = nn.Sigmoid()
     def forward(self, x, version = "v0"):
 #         return self.linear_com(input)
@@ -99,6 +99,8 @@ class _feature_model(nn.Module):
         if version in ["GFVs_all_1", "GVFs_all_2"]:
 #             x = self.all_1_x(x)
             x = torch.cat((self.softmax_func(x[:, : 8]), x[:, 8 : -1], self.sigmoid(x[:, -1]).view(-1, 1)), dim = 1)
+        if version == "v11":
+            x = torch.cat((self.sigmoid(x[:, :12]), self.softmax_func(x[:, 12 : 17])), dim = 1)
 #             x = self.softmax_func(x[:, : 8])
         return x
     
@@ -185,7 +187,7 @@ class feature_q_model():
             
             input_feature_vectors[input_feature_vectors == float('inf')] = 0
             
-        q_value = self.q_model(input_feature_vectors)
+        q_value = self.q_model(feature_vector)
             
         return feature_vector, q_value
 
@@ -211,6 +213,8 @@ class feature_q_model():
 #         print(input_feature_vectors[0:2])
         else:
             q_values = self.q_model(feature_vectors)
+#             print(feature_vectors)
+#             print(q_values)
 
         return feature_vectors, q_values 
 

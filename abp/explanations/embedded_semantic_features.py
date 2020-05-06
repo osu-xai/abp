@@ -189,21 +189,21 @@ def esf_action_pair(fq_model, state, frame, state_actions, actions, save_path,
     if len(q_sort_idx) > (sum(pick_actions) + 1):
         random_idx = LongTensor(np.random.choice(q_sort_idx[pick_actions[0] + 1: -pick_actions[1]].tolist(), 
                                                     pick_actions[2], replace = False))
-        q_sort_idx = torch.cat((q_sort_idx[1 : pick_actions[0] + 1], q_sort_idx[-pick_actions[1]:], q_sort_idx[random_idx]))
+        q_sort_idx = torch.cat((q_sort_idx[1 : pick_actions[0] + 1], q_sort_idx[random_idx], q_sort_idx[-pick_actions[1]:]))
     
     show_image = True
     for i, sub_action in enumerate(q_sort_idx):
         if i < pick_actions[0]:
-            ential = "(best)"
+            entail = "(best)"
         elif i < (pick_actions[0] + pick_actions[1]):
-            ential = "(rand)"
+            entail = "(rand)"
         else:
-            ential = "(worst)"
-        save_name = "{}/subaction_#{}{}".format(exp_path_dp, i + 1, ential)       
-        txt_info.append("\nbaseline subaction_#{}{}: {}".format(i + 1, ential, pretty_print_action(actions[sub_action].tolist())))
+            entail = "(worst)"
+        save_name = "{}/subaction_#{}{}".format(exp_path_dp, i + 1, entail)       
+        txt_info.append("\nbaseline subaction_#{}{}: {}".format(i + 1, entail, pretty_print_action(actions[sub_action].tolist())))
         txt_info.append("baseline features: {}\n".format(v_features[sub_action].tolist()))
         txt_info.append("baseline value: {}\n".format(q_value[sub_action].item()))
-        plot(v_features[i].tolist(), save_name + "_features", title = 'GVFs')
+        plot(v_features[sub_action].tolist(), save_name + "_features", title = 'GVFs')
         sub_action = sub_action.item()
         
         msx_idx, msx_value, intergated_grad = differenc_vector_action(fq_model.q_model, 

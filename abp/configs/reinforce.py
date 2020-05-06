@@ -20,7 +20,8 @@ default_reinforce_config = {
     "is_random_agent_1" : False,
     "is_random_agent_2" : False,
     "collecting_experience": False,
-    "is_use_sepcific_enemy": False
+    "is_use_sepcific_enemy": False,
+    "enemy_path": None
 }
 
 
@@ -92,3 +93,6 @@ class ReinforceConfig(BaseConfig):
     
     is_use_sepcific_enemy = property(BaseConfig.get_property("is_use_sepcific_enemy"),
                         BaseConfig.set_property("is_use_sepcific_enemy"))
+
+    enemy_path = property(BaseConfig.get_property("enemy_path"),
+                        BaseConfig.set_property("enemy_path"))

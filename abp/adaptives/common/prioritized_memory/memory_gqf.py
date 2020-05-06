@@ -177,6 +177,19 @@ class ReplayBuffer_decom(object):
             self._storage = info["storage"]
             self._maxsize = info["maxsize"]
             self._next_idx = info["next_idx"]
+        for obses_t, actions, rewards, obses_tp1, dones, rewards_decoms in self._storage:
+            if np.sum(np.isnan(obses_t)) > 0 or np.sum(obses_t == float('inf')) > 0:
+                print(obses_t)
+                input()
+            if rewards == float('inf') or rewards == float('nan'):
+                print(rewards)
+                input()
+            if np.sum(np.isnan(obses_tp1)) > 0 or np.sum(obses_tp1 == float('inf')) > 0:
+                print(obses_tp1)
+                input()
+            if np.sum(np.isnan(rewards_decoms)) > 0 or np.sum(rewards_decoms == float('inf')) > 0:
+                print(rewards_decoms)
+                input()
 #             self._storage = list(info["storage"][:30000])
 #             self._maxsize = info["maxsize"]
 #             self._next_idx = 30000

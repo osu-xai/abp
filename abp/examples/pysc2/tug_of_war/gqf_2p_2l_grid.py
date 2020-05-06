@@ -171,12 +171,36 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             features[12:16] = nexus_health[4:]
             features[16] = 1
         return features
+    def GVFs_v10_loss_eval(state):
+        features = np.zeros(network_config.shared_layers)
+        damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
+        features[:6] = damage_to_nexus
+        features[6:12] = get_damage_nexus
+        
+#         print(features)
+        features[:3] = features[:3]# / (state[65] + sum(features[:3]))
+        features[3:6] = features[3:6]# / (state[66] + sum(features[3:6]))
+        features[6:9] = features[6:9]# / (state[63] + sum(features[6:9]))
+        features[9:12] = features[9:12]# / (state[64] + sum(features[9:12]))
+        
+#         features[features == float('inf')] = 1
+        features[np.isnan(features)] = 0
+#         if np.sum(np.isnan(features)) > 0:
+#             print(state)
+#             print(features)
+#             input()
+        if steps == max_episode_steps:
+            nexus_health = player_1_end_vector_8(state[63], state[64], state[65], state[66], is_done = done)
+            features[12:16] = nexus_health[4:]
+            features[16] = 1
+        return features
+    
     def GFVs_all_1(state):
         # eval 2 features
         current_idx = 0
         features = np.zeros(network_config.shared_layers)
-        norm_vector = np.ones(5)
-#         norm_vector = np.array([1500, 100, 30, 200, 5000])
+#         norm_vector = np.ones(5)
+        norm_vector = np.array([1500, 100, 30, 200, 5000])
         
         if steps == max_episode_steps or done:
             features[current_idx : current_idx + 8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
@@ -242,7 +266,31 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #         print(current_idx)
         return features
         
+    def GVFs_v11(state):
+        features = np.zeros(network_config.shared_layers)
+        damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
+        features[:6] = damage_to_nexus
+        features[6:12] = get_damage_nexus
         
+#         print(features)
+        features[:3] = features[:3] / (state[65] + sum(features[:3]))
+        features[3:6] = features[3:6] / (state[66] + sum(features[3:6]))
+        features[6:9] = features[6:9] / (state[63] + sum(features[6:9]))
+        features[9:12] = features[9:12] / (state[64] + sum(features[9:12]))
+        
+#         features[features == float('inf')] = 1
+        features[np.isnan(features)] = 0
+#         if np.sum(np.isnan(features)) > 0:
+#             print(state)
+#             print(features)
+#             input()
+        if steps == max_episode_steps:
+            nexus_health = player_1_end_vector_8(state[63], state[64], state[65], state[66], is_done = done)
+            features[12:16] = nexus_health[4:]
+            features[16] = 0
+        else:
+            features[16] = 1
+        return features
             
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQ_GQF(name = "TugOfWar_GQF",
@@ -250,7 +298,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                             network_config = network_config,
                             reinforce_config = reinforce_config,
                             feature_len = network_config.shared_layers,
-                            combine_decomposed_func = combine_decomposed_func
+                            combine_decomposed_func = combine_decomposed_func,
+                            memory_resotre = not evaluation_config.explanation
                             )
         print("SADQ_GQF agent 1")
     else:
@@ -302,7 +351,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         for r, d, f in os.walk(restore_path):
             f = sorted(f)
             for file in f:
-                if '.pupdate' in file or '.p_the_best' in file:
+                if '.pupdate' in file:# or '.p_the_best' in file:
                     new_weights = torch.load(restore_path + "/" + file)
                     new_feature_weights, new_q_weights = new_weights
                     new_agent_2 = SADQ_GQF(name = file,
@@ -317,7 +366,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     print("loaded agent:", file)
 #     agent_1.steps = reinforce_config.epsilon_timesteps / 2
     if reinforce_config.is_use_sepcific_enemy:
-        sepcific_SADQ_enemy_weights = torch.load("./saved_models/tug_of_war/agents/grid_decom/TugOfWar_eval.pupdate_121")
+        sepcific_SADQ_enemy_weights = torch.load(reinforce_config.enemy_path)
 
         sepcific_network_config = NetworkConfig.load_from_yaml("./tasks/tug_of_war/sadq_2p_2l_decom/v2_8/network.yml")
 
@@ -360,8 +409,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         exp_path = evaluation_config.explanation_path + "/" + str(time_stamp)
         game_count = 0
 #     agent_1.steps = reinforce_config.epsilon_timesteps / 2
+    count_epo = 0
     while True:
-        
+        count_epo += 1
 #         print(sum(np.array(privous_result) >= 0.9))
         print(np.array(privous_result).mean())
 #         if len(privous_result) >= update_wins_waves and \
@@ -462,7 +512,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         state_1, state_2, done, dp = env.step([], 0)
                         if dp or done:
                             break
-                    
                     if network_config.version == "v1":
                         features = GVFs_v1(state_1)
                     elif network_config.version == "v2":
@@ -483,9 +532,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         features = GVFs_v9(state_1)
                     elif network_config.version == "v10":
                         features = GVFs_v10(state_1)
+                    elif network_config.version == "v11":
+                        features = GVFs_v11(state_1)
                     elif network_config.version in ["GFVs_all_1", "GVFs_all_2"]:
                         features = GFVs_all_1(state_1)
-                        
 #                     print("features")
 #                     print(features)
 #                     input()
@@ -515,7 +565,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("======================================================================")
         
         tied_lose = 0
-
+        all_GVFs_loss = 0
         for idx_enemy, enemy_agent in enumerate(agents_2):
             average_end_state = np.zeros(len(state_1))
             if type(enemy_agent) == type("random"):
@@ -545,7 +595,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 previous_action_2 = None 
                 if evaluation_config.generate_xai_replay:
                     recorder = XaiReplayRecorder2LaneNexus(env.sc2_env, episode, evaluation_config.env, action_component_names, replay_dimension)
-           
+                all_features_gt = FloatTensor(np.zeros((max_episode_steps, network_config.shared_layers)))
+                all_features_predict = FloatTensor(np.zeros((max_episode_steps, network_config.shared_layers)))
+                discounted_para = FloatTensor(np.zeros((max_episode_steps, 1)))
+                all_Nexus_HP = FloatTensor(np.zeros((max_episode_steps, 4)))
+                
                 while skiping:
                     state_1, state_2, done, dp = env.step([], 0)
                     if evaluation_config.generate_xai_replay:
@@ -559,7 +613,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     if not reinforce_config.is_random_agent_1:
                         actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
                         combine_states_1 = combine_sa(state_1, actions_1)
-                        choice_1, _ = agent_1.predict(env.normalization(combine_states_1))
+                        choice_1, fv_1 = agent_1.predict(env.normalization(combine_states_1))
                     else:
                         actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index], is_train = 1)
                         combine_states_1 = combine_sa(state_1, actions_1)
@@ -575,7 +629,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     if not reinforce_config.is_random_agent_2 and type(enemy_agent) != type("random"):
                         actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
                         combine_states_2 = combine_sa(state_2, actions_2)
-                        choice_2, _ = enemy_agent.predict(env.normalization(combine_states_2))
+                        choice_2, fv_2 = enemy_agent.predict(env.normalization(combine_states_2))
                     else:
                         if enemy_agent == "random_2":
                             actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index], is_train = 0)
@@ -616,14 +670,51 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                     env.step(list(get_human_action()), 2)
 #                     reinforce_config.collecting_experience = False
 
-
                     while skiping:
                         state_1, state_2, done, dp = env.step([], 0)
                         if evaluation_config.generate_xai_replay:
                             recorder.record_game_clock_tick(env.decomposed_reward_dict)
                         if dp or done:
                             break
-
+                            
+                    if network_config.version == "v1":
+                        features = GVFs_v1(state_1)
+                    elif network_config.version == "v2":
+                        features = GVFs_v2(state_1)
+                    elif network_config.version == "v3":
+                        features = GVFs_v3(state_1)
+                    elif network_config.version == "v4":
+                        features = GVFs_v4(state_1)
+                    elif network_config.version == "v5":
+                        features = GVFs_v5(state_1)
+                    elif network_config.version == "v6":
+                        features = GVFs_v6(state_1)
+                    elif network_config.version == "v7":
+                        features = GVFs_v7(state_1)
+                    elif network_config.version == "v8":
+                        features = GVFs_v8(state_1)
+                    elif network_config.version == "v9":
+                        features = GVFs_v9(state_1)
+                    elif network_config.version == "v10":
+                        features = GVFs_v10_loss_eval(state_1)
+                        all_Nexus_HP[steps - 1] = FloatTensor(state_1[63:67])
+                    elif network_config.version == "v11":
+                        features = GVFs_v11(state_1)
+                        all_Nexus_HP[steps - 1] = FloatTensor(state_1[63:67])
+                    elif network_config.version in ["GFVs_all_1", "GVFs_all_2"]:
+                        features = GFVs_all_1(state_1)
+                        
+                    all_features_gt[:steps] += (FloatTensor(features) * (reinforce_config.discount_factor ** discounted_para))[:steps]
+                    all_features_predict[steps - 1] = fv_1
+                    discounted_para[:steps] += 1
+#                     print(discounted_para[:steps])
+#                     print(features)
+#                     print(all_Nexus_HP[:steps])
+#                     print(all_features_gt[:steps])
+#                     print(all_features_predict[:steps])
+#                     input()
+#                     if steps == 1:
+#                         break
                     current_reward_1 = 0
                     if steps == max_episode_steps or done:
                         current_reward_1 = combine_decomposed_func(FloatTensor(
@@ -650,7 +741,19 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     all_experiences.append(experience)
                     if ((len(all_experiences)) % 100 == 0) and reinforce_config.collecting_experience:
                         torch.save(all_experiences, exp_save_path)
-
+                
+                if network_config.version in ["v10", "v11"]:
+                    all_features_gt[:steps, : 3] /= (all_Nexus_HP[:steps, 2] + torch.sum(all_features_gt[:steps, : 3], dim = 1)).view(-1, 1)
+                    all_features_gt[:steps, 3 : 6] /= (all_Nexus_HP[:steps, 3] + torch.sum(all_features_gt[:steps, 3 : 6], dim = 1)).view(-1, 1)
+                    all_features_gt[:steps, 6 : 9] /= (all_Nexus_HP[:steps, 0] + torch.sum(all_features_gt[:steps, 6 : 9], dim = 1)).view(-1, 1)
+                    all_features_gt[:steps, 9 : 12] /= (all_Nexus_HP[:steps, 1] + torch.sum(all_features_gt[:steps, 9 : 12], dim = 1)).view(-1, 1)
+                    
+#                 print(all_features_gt[:steps])
+#                 print(all_features_predict[:steps])
+                with torch.no_grad():
+                    all_GVFs_loss += agent_1.eval_model.loss_fn(all_features_gt[:steps], all_features_predict[:steps]).item()
+            
+                
                 average_end_state += state_1
 
                 total_rewwards_list.append(total_reward_1)
@@ -658,7 +761,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                                                global_step=episode + 1)
                 test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                                global_step=episode + 1)
-
+            
+#             print("GVFs loss: {}".format(all_GVFs_loss / test_num))
+#             input()
+            print(torch.mean((all_features_gt - all_features_predict) ** 2, dim = 1))
             total_rewards_list_np = np.array(total_rewwards_list)
 
             tied = np.sum(total_rewards_list_np[-test_num:] == 0)
@@ -671,8 +777,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                  str(lose / test_num * 100) + "% \t",)
 #                  str(tied / test_num * 100) + "% \t")
             pretty_print(average_end_state / test_num)
-            
-            
+        averge_GFVs_loss = all_GVFs_loss / len(total_rewwards_list)
+        print("average GVFs loss: {}".format(averge_GFVs_loss)) 
+#         input()
         tr = sum(total_rewwards_list) / len(total_rewwards_list)
         print("total reward:")
         print(tr)
@@ -681,14 +788,25 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         if len(privous_result) > update_wins_waves:
             del privous_result[0]
-        f = open(evaluation_config.result_path, "a+")
-        f.write(str(tr) + "\n")
-        f.close()
-        if not reinforce_config.is_random_agent_1:
-            agent_1.summary_test(tr)
+        if not evaluation_config.explanation:
+            f = open(evaluation_config.result_path, "a+")
+            f.write(str(tr) + "\n")
+            f.close()
+
+            f = open("{}_GVFs_loss.txt".format(evaluation_config.result_path[:-4]), "a+")
+            f.write(str(averge_GFVs_loss) + "\n")
+            f.close()
+        
+        if not reinforce_config.is_random_agent_1 and not evaluation_config.explanation:
+            agent_1.summary_test(tr, count_epo)
+            agent_1.summary_GVFs_loss(averge_GFVs_loss, count_epo)
+            
         if tied_lose == 0 and not reinforce_config.is_random_agent_1:
             agent_1.save(force = True, appendix = "_the_best")
             
+        if count_epo % 50 == 0 and reinforce_config.is_use_sepcific_enemy:
+            agent_1.save(force = True, appendix = "_{}".format(count_epo))
+        
         if not reinforce_config.is_random_agent_1:
             agent_1.enable_learning()
             
