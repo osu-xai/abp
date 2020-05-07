@@ -6,10 +6,46 @@ import torch
 from random import uniform, randint, sample, random, choices
 from PIL import Image
 import os
+import math
+from collections import OrderedDict 
 
 FloatTensor = torch.cuda.FloatTensor
 LongTensor = torch.cuda.LongTensor
+SUB_FIGURE_SIZE = (25, 15)
+SUB_PLOT_NUN = 4
+# global VERSION, TITLES
+VERSION = ""
+TITLES = []
+norm_vector_GVFs_all_v1 = np.array([1500, 100, 30, 200, 5000])
+def normalization(values):
+    norm_values = np.array(values).copy()
+    if VERSION in ["GFVs_all_1"]:
+        norm_values[8 : 10] *= norm_vector_GVFs_all_v1[0]
+        norm_values[10 : 22] *= norm_vector_GVFs_all_v1[1]
+        norm_values[22 : 82] *= norm_vector_GVFs_all_v1[2]
+        norm_values[82 : 94] *= norm_vector_GVFs_all_v1[3]
+        norm_values[94 : 130] *= norm_vector_GVFs_all_v1[4]
+    return norm_values.tolist()
+
+def denormalization(values):
+    denorm_values = np.array(values).copy()
+    if VERSION in ["GFVs_all_1"]:
+        denorm_values[8 : 10] /= norm_vector_GVFs_all_v1[0]
+        denorm_values[10 : 22] /= norm_vector_GVFs_all_v1[1]
+        denorm_values[22 : 82] /= norm_vector_GVFs_all_v1[2]
+        denorm_values[82 : 94] /= norm_vector_GVFs_all_v1[3]
+        denorm_values[94 : 130] /= norm_vector_GVFs_all_v1[4]
+    return denorm_values.tolist()
+
 def plot(values, save_name, title = 'decomposition values'):
+    
+    global VERSION
+    if VERSION in ["GFVs_all_1"]:
+        if "features" in save_name:
+            values = normalization(values)
+        if "weights" in save_name:
+            values = denormalization(values)
+        detail_plot(values, save_name)
     plt.clf()
     x_pos = []
     x_name = []
@@ -25,6 +61,40 @@ def plot(values, save_name, title = 'decomposition values'):
 
 #     vis.matplot(plt)
     plt.savefig(save_name + ".jpg")
+#     print(VERSION)
+
+    
+def detail_plot(values, save_name):
+    plt.clf()
+    global TITLES
+#     print(TITLES)
+    fig, axs = plt.subplots(math.ceil(len(TITLES) / SUB_PLOT_NUN), SUB_PLOT_NUN, figsize = SUB_FIGURE_SIZE)
+#     print(SUB_PLOT_NUN, math.ceil(len(TITLES) / SUB_PLOT_NUN))
+    for t_idx, (title, (idx, length)) in enumerate(TITLES.items()):
+        x_pos = []
+        x_name = []
+        v = values[idx : idx + length]
+        for i in range(len(v)):
+            x_pos.append(i + 1)
+            x_name.append("f_{}".format(i + 1))
+#         print(title)
+        c, r = int(t_idx % SUB_PLOT_NUN), int(t_idx / SUB_PLOT_NUN)
+        axs[r][c].bar(x_pos, v, align='center', alpha=0.5)
+        axs[r][c].set_xticks(np.arange(len(x_name)))
+        axs[r][c].set_xticklabels(x_name)
+        axs[r][c].set_ylabel('Accumulated Future Value')
+        axs[r][c].set_title(title)
+        axs[r][c].ticklabel_format(axis="y", style="sci", scilimits=(0,0))
+#         plt.bar(x_pos, values, align='center', alpha=0.5)
+
+#         plt.xticks(x_pos, x_name)
+#         plt.ylabel('Accumulated Future Value of Features')
+#         plt.title(title)
+
+#     #     vis.matplot(plt)
+#         plt.savefig(save_name + ".jpg")
+#     print(save_name)
+    fig.savefig("{}_detail.jpg".format(save_name))
     
 def plot_msx_plus(values, save_name, title = 'decomposition values'):
     plt.clf()
@@ -155,7 +225,25 @@ def intergated_gradients(model, x, txt_info, save_name, iteration = 100, baselin
     return (MSX_idx, MSX_values), intergated_grad
 
 def esf_action_pair(fq_model, state, frame, state_actions, actions, save_path,
-                    txt_info = None, pick_actions = [1, 1, 1], decision_point = "undifined"):
+                    txt_info = None, pick_actions = [1, 1, 1], decision_point = "undifined", version = ""):
+    global VERSION
+    global TITLES
+    VERSION = version
+    
+    if VERSION == "GFVs_all_1":
+        TITLES = OrderedDict({"Destory Prob and Lowest HP Prob": (0, 8),
+                  "Minerals to be Earned": (8, 2),
+                  "Expected Units to Spawn": (10, 12),
+                  "Future Surviving Friendly (Top)": (22, 15),
+                  "Future Surviving Friendly (Bottom)": (37, 15),
+                  "Future Surviving Enemy (Top)": (52, 15),
+                  "Future Surviving Enemy (Bottom)": (67, 15),
+                  "Damage Inflicted on Nexus By Units": (82, 12),
+                  "Friendly Damage Inflicted on Enemy": (94, 18),
+                  "Enemy Damage Inflicted on Friendly": (112, 18),
+                  "Probability to End by Tie-breaker": (130, 1)
+                 })
+        
     if txt_info is None:
         txt_info = []
     exp_path_dp = save_path + "/{}".format(decision_point)
@@ -335,3 +423,7 @@ def fig2data ( fig ):
     # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
     buf = numpy.roll ( buf, 3, axis = 2 )
     return buf
+
+
+
+

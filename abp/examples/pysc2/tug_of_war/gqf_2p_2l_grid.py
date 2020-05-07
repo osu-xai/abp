@@ -623,7 +623,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         frame = get_frame(env.sc2_env)
                         esf_action_pair(agent_1.eval_model, state_1, frame, env.normalization(combine_states_1), 
                                         actions_1, save_exp_path,
-                                        decision_point = "dp_{}".format(steps))
+                                        decision_point = "dp_{}".format(steps), version = network_config.version)
 #                         input()
                     
                     if not reinforce_config.is_random_agent_2 and type(enemy_agent) != type("random"):

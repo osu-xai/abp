@@ -3,7 +3,7 @@ starting_epsilon: 1
 discount_factor: 0.9999
 batch_size: 32
 memory_size: 50000
-summaries_path: "./tensorflow_summaries/tug_of_war/gqf/v10_sepcific_2/reinforce_summary"
+summaries_path: "./tensorflow_summaries/tug_of_war/gqf/v11_sepcific/reinforce_summary"
 update_frequency: 10
 replace_frequency: 6000
 epsilon_timesteps: 50000

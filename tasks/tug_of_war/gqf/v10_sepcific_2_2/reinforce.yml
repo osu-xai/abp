@@ -5,8 +5,8 @@ batch_size: 32
 memory_size: 50000
 summaries_path: "./tensorflow_summaries/tug_of_war/gqf/v10_sepcific_2_2/reinforce_summary"
 update_frequency: 10
-replace_frequency: 1
-epsilon_timesteps: 30000
+replace_frequency: 6000
+epsilon_timesteps: 40000
 starting_epsilon: 1
 final_epsilon: 0.1
 is_random_agent_1: False
