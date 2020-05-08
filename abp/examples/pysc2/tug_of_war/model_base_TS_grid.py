@@ -1,5 +1,6 @@
 import gym
 import time
+import imutil
 import numpy as np
 from absl import flags
 import sys, os
@@ -216,7 +217,6 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     if steps == max_episode_steps or done:
                         if evaluation_config.generate_xai_replay:
                             recorder.done_recording()
-
                         if reward_num == 4:
                             current_reward_1 = sum(reward[2:])
                         elif reward_num == 8:
@@ -231,9 +231,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 total_rewwards_list.append(total_reward_1)
 #                 print(total_rewwards_list, recorder.json_pathname[:-5])
                 
-                # recorder_file_directory = recorder.game_replay_dir
+                recorder_file_directory = recorder.game_replay_dir
                 if evaluation_config.generate_xai_replay:
-                    add_result_mark_to_replay(total_reward_1, episode, replay_dimension, recorder.time_string)
+                    add_result_mark_to_replay(total_reward_1, recorder, replay_dimension)
                 recorder = None
 #                 print(total_rewwards_list)
                 test_summary_writer.add_scalar(tag="Test/Episode Reward", scalar_value=total_reward_1,
@@ -241,6 +241,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 test_summary_writer.add_scalar(tag="Test/Steps to choosing Enemies", scalar_value=steps + 1,
                                                global_step=episode + 1)
 
+                
+            
             tr = sum(total_rewwards_list) / evaluation_config.test_episodes
             print("total reward:")
             print(tr)
@@ -253,15 +255,21 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             f.close()
 #         break
 
-def add_result_mark_to_replay(reward, game_number, replay_dimension, time_string):
+def add_result_mark_to_replay(reward, recorder, replay_dimension):
     if reward > 0:
         tag = "win"
     else:
         tag = "lose"
     all_replays_dir = "../sc2env/sc2env/xai_replay/ui/viz/replays/"
-    folder_name = "game_" + str(game_number) + "_" + time_string + "_" + str(replay_dimension) + "_replay"
+    folder_name = "game_" + str(recorder.game_number) + "_" + recorder.time_string + "_" + str(replay_dimension) + "_replay"
     tag_replay_dir = "{}_{}".format(folder_name, tag)
+    
     os.rename(os.path.join(all_replays_dir, folder_name), os.path.join(all_replays_dir, tag_replay_dir))
+    
+    recorder.game_replay_dir = os.path.join(all_replays_dir, tag_replay_dir)
+    
+    # recorder.video_pathname = os.path.join(recorder.game_replay_dir, "game_" + str(recorder.game_number) + "_" + recorder.time_string + "_" + str(replay_dimension) + ".mp4")
+    # recorder.video = imutil.Video(filename=recorder.video_pathname, framerate=25)
 
     #partial_tree_dir = "{}_partial_tree/".format(file_name)
     #tag_partial_tree_dir = "{}_partial_tree_{}/".format(file_name, tag)
