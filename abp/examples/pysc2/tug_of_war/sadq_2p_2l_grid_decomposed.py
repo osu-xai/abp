@@ -674,7 +674,10 @@ def player_1_end_vector_8(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp
     return reward_vector
 
 def combine_decomposed_func_1(q_values):
-    return torch.sum(q_values)
+#     print(q_values)
+#     print(torch.sum(q_values, dim = 1))
+#     print(torch.sum(q_values))
+    return torch.sum(q_values, dim = 1)
 
 def player_1_end_vector_1(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, is_done = False):
     hp_vector = np.array([state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp])
