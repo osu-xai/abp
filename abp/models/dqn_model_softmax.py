@@ -24,7 +24,8 @@ class _DQNModel(nn.Module):
 
     def __init__(self, network_config):
         super(_DQNModel, self).__init__()
-
+        
+        self.output_shape = network_config.output_shape
         layer_modules, input_shape = generate_layers(network_config.input_shape,
                                                      network_config.layers)
 
@@ -42,8 +43,9 @@ class _DQNModel(nn.Module):
             if type(layer) == nn.Linear:
                 x = x.view(-1, int(np.prod(x.shape[1:])))
             x = layer(x)
-            
-        x = self.softmax_func(x)
+        
+        if self.output_shape > 1:
+            x = self.softmax_func(x)
         return x
 
 
@@ -111,13 +113,14 @@ class DQNModel(Model):
 
     def predict(self, input, steps):
         q_values = self.model(input).squeeze(1)
-
+        
         return q_values
 
     def predict_batch(self, input):
         if self.use_cuda:
             input = input.cuda()
         q_values = self.model(input)
+#         print(q_values)
 #         values, q_actions = q_values.max(1)
         return q_values
 

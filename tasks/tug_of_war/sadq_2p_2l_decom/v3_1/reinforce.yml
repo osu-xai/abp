@@ -5,7 +5,7 @@ batch_size: 32
 memory_size: 50000
 summaries_path: "./tensorflow_summaries/tug_of_war/sadq_2p_2l_decom/v3_1/reinforce_summary"
 update_frequency: 10
-replace_frequency: 6000
+replace_frequency: 1
 epsilon_timesteps: 40000
 starting_epsilon: 1
 final_epsilon: 0.1
