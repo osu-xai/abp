@@ -4,6 +4,7 @@ import numpy as np
 from absl import flags
 import sys, os
 import torch
+import math
 
 from abp.configs import NetworkConfig, ReinforceConfig, EvaluationConfig
 from abp.adaptives.sadq.adaptive_decom import SADQAdaptive
@@ -16,7 +17,7 @@ from sc2env.environments.tug_of_war_2L_self_play_4grid import action_component_n
 from s2clientprotocol import sc2api_pb2 as sc_pb
 from pysc2.lib import features
 #from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
-from abp.explanations import esf_action_pair
+from abp.explanations import esf_action_pair, esf_state_pair
 from tqdm import tqdm
 from copy import deepcopy
 from random import randint, random
@@ -36,6 +37,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         print("|     NOT USING CUDA     |")
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
     flags.FLAGS(sys.argv[:1])
+
     max_episode_steps = 40
     
     replay_dimension = evaluation_config.xai_replay_dimension
@@ -49,7 +51,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     combine_decomposed_func = combine_decomposed_func_8
     player_1_end_vector = player_1_end_vector_8
     reward_num = 8
-        
+    
     def GVFs_v1(state):
         if steps == max_episode_steps or done:
             features = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
@@ -265,7 +267,77 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         current_idx += 1
 #         print(current_idx)
         return features
+
+#     def GFVs_all_2(state):
+#         # eval 2 features
+#         current_idx = 0
+#         features = np.zeros(network_config.shared_layers)
+# #         norm_vector = np.ones(5)
+#         norm_vector = np.array([1500, 100, 30, 200, 5000])
         
+#         if steps == max_episode_steps or done:
+#             features[current_idx : current_idx + 8] = player_1_end_vector(state[63], state[64], state[65], state[66], is_done = done)
+#         current_idx += 8
+# #         print(current_idx)
+#         # self-mineral feature idx 8, enemy-mineral idx 9. self-pylone idx 7, enemy-pylon 14
+#         features[current_idx] = (state[7] * 75 + 100) / norm_vector[0]
+#         current_idx += 1
+#         features[current_idx] = (state[14] * 75 + 100) / norm_vector[0]
+#         current_idx += 1
+# #         print(current_idx)
+        
+#         # features idx: The number of self-units will be spawned, length : 6, The number of enemy-units will be spawned, length : 6
+#         # state idx: The number of self-building 1-6, The number of self-building 8-13, 
+#         features[current_idx : current_idx + 6] = state[1:7] / norm_vector[1]
+#         current_idx += 6
+#         features[current_idx : current_idx + 6] = state[8:14] / norm_vector[1]
+#         current_idx += 6
+# #         print(current_idx)
+        
+#         # features idx: The accumulative number of each type of unit in each range from now to the end of the game: length : 30, for enemy: length : 30
+#         agent_attacking_units, enemy_attacking_units = env.get_attacking()
+#         features[current_idx : current_idx + 12] = np.array(state[15:27]) / norm_vector[2]
+#         current_idx += 12
+#         features[current_idx : current_idx + 3] = agent_attacking_units[:3] / norm_vector[2]
+#         current_idx += 3
+#         features[current_idx : current_idx + 12] = np.array(state[27:39]) / norm_vector[2]
+#         current_idx += 12
+#         features[current_idx : current_idx + 3] = agent_attacking_units[3:] / norm_vector[2]
+#         current_idx += 3
+# #         print(current_idx)
+        
+#         features[current_idx : current_idx + 3] = enemy_attacking_units[:3] / norm_vector[2]
+#         current_idx += 3
+#         features[current_idx : current_idx + 12] = np.array(state[39:51]) / norm_vector[2]
+#         current_idx += 12
+#         features[current_idx : current_idx + 3] = enemy_attacking_units[3:] / norm_vector[2]
+#         current_idx += 3
+#         features[current_idx : current_idx + 12] = np.array(state[51:63]) / norm_vector[2]
+#         current_idx += 12
+# #         print(current_idx)
+        
+#         # features idx: Damage of each friendly unit to each Nexus: length : 6, for enemy: length : 6
+#         damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
+#         features[current_idx : current_idx + 6] = np.array(damage_to_nexus) / norm_vector[3]
+#         current_idx += 6
+#         features[current_idx : current_idx + 6] = np.array(get_damage_nexus) / norm_vector[3]
+#         current_idx += 6
+# #         print(current_idx)
+        
+#         # features idx: The number of which friendly troops kills which enemy troops: length : 18, for enemy: length : 18
+#         unit_kills, unit_be_killed = env.get_unit_kill()
+#         features[current_idx : current_idx + 18] = np.array(unit_kills) / norm_vector[4]
+#         current_idx += 18
+#         features[current_idx : current_idx + 18] = np.array(unit_be_killed) / norm_vector[4]
+#         current_idx += 18
+# #         print(current_idx)
+        
+#         # features idx: prob of limitation wave: length : 1
+#         if steps == max_episode_steps:
+#             features[current_idx] = 1
+#         current_idx += 1
+# #         print(current_idx)
+#         return features        
     def GVFs_v11(state):
         features = np.zeros(network_config.shared_layers)
         damage_to_nexus, get_damage_nexus = env.get_damage_to_nexus()
@@ -305,7 +377,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     else:
         print("random agent 1")
     
-        
+    
     training_summaries_path = evaluation_config.summaries_path + "/train"
     clear_summary_path(training_summaries_path)
     train_summary_writer = SummaryWriter(training_summaries_path)
@@ -369,7 +441,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         sepcific_SADQ_enemy_weights = torch.load(reinforce_config.enemy_path)
 
         sepcific_network_config = NetworkConfig.load_from_yaml("./tasks/tug_of_war/sadq_2p_2l_decom/v2_8/network.yml")
-
+        sepcific_network_config.restore_network = False
         sepcific_SADQ_enemy = SADQAdaptive(name = "sepcific enemy",
         state_length = len(state_1),
         network_config = sepcific_network_config,
@@ -403,6 +475,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         new_agent_2.load_weight(weights_2)
         new_agent_2.disable_learning(is_save = False)
         agents_2.append(new_agent_2)
+        
+    if evaluation_config.is_state_pair_test_exp:
+        time_stamp = datetime.now()
+        state_pair(env, agent_1, evaluation_config.explanation_path + "/" + str(time_stamp), network_config.version)
+        return
 #     w = 0
     if evaluation_config.explanation:
         time_stamp = datetime.now()
@@ -566,6 +643,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         
         tied_lose = 0
         all_GVFs_loss = 0
+        
+        GVFs_loss_exp = []
+        pro_win = []
         for idx_enemy, enemy_agent in enumerate(agents_2):
             average_end_state = np.zeros(len(state_1))
             if type(enemy_agent) == type("random"):
@@ -608,7 +688,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         break
                 while not done and steps < max_episode_steps:
                     steps += 1
-                    
+#                     state_1 = np.array([1500.0, 1.0, 11.0, 0.0, 5.0, 14.0, 1.0, 3.0, 3.0, 2.0, 1.0, 49.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 3.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 49.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1750.0, 2000.0, 1280.0, 2000.0, 32.0] )
     #                 # Decision point
                     if not reinforce_config.is_random_agent_1:
                         actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
@@ -624,6 +704,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         esf_action_pair(agent_1.eval_model, state_1, frame, env.normalization(combine_states_1), 
                                         actions_1, save_exp_path,
                                         decision_point = "dp_{}".format(steps), version = network_config.version)
+#                         esf_action_pair(agent_1.eval_model, state_1, frame, env.normalization(combine_states_1), 
+#                                         actions_1, "./{}/sepcific_example".format(exp_path),
+#                                         decision_point = "dp_{}".format(steps), version = network_config.version)
 #                         input()
                     
                     if not reinforce_config.is_random_agent_2 and type(enemy_agent) != type("random"):
@@ -778,11 +861,19 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                  str(tied / test_num * 100) + "% \t")
             pretty_print(average_end_state / test_num)
         averge_GFVs_loss = all_GVFs_loss / len(total_rewwards_list)
+
         print("average GVFs loss: {}".format(averge_GFVs_loss)) 
 #         input()
         tr = sum(total_rewwards_list) / len(total_rewwards_list)
         print("total reward:")
         print(tr)
+        
+        GVFs_loss_exp.append(averge_GFVs_loss)
+        pro_win.append(tr)
+        
+        if len(GVFs_loss_exp) > 20:
+            print(sum(GVFs_loss_exp[:20]) / 20)
+            print(sum(pro_win[:20]) / 20)
         
         privous_result.append(tr)
         
@@ -952,3 +1043,41 @@ def get_frame(sc2_env):
 #     print(np.array(observation.observation.render_data.map))
 
     return frame
+
+def pretty_print_to_state(pretty_state):
+    state = np.zeros(68)
+    count = 0
+    self_units = []
+    enemy_units = []
+    for i, ps in enumerate(pretty_state):
+        numbers = [float(word) for word in ps.split() if word.isdigit()]
+        if len(numbers) == 0:
+            continue
+        numbers_np = np.array(numbers)
+        if count == 0:
+            state[-1], state[0] = numbers_np[0], numbers_np[1]
+        if count == 1:
+            state[1:8] = numbers_np
+        if count == 2:
+            state[8:15] = numbers_np
+        if count in list(range(3, 11)):
+            self_units.extend(numbers)
+        if count == 10:
+            state[15:39] = self_units
+        if count in list(range(11, 19)):
+            enemy_units.extend(numbers)
+        if count == 18:
+            state[39:63] = enemy_units
+        if count == 19:
+            state[63: 67] = numbers_np
+        count += 1
+    return state
+#     print(state)
+def state_pair(env, agent, save_path, version):
+    state_1 = pretty_print_to_state(open("./explanations/tug_of_war/state_pair_test_example/state_1.txt", "r").readlines())
+    state_2 = pretty_print_to_state(open("./explanations/tug_of_war/state_pair_test_example/state_2.txt", "r").readlines())
+    
+#     print(state_1, state_2)
+    save_exp_path = "{}/state_pair".format(save_path)
+    esf_state_pair(agent.eval_model, state_1, None, state_2, None, env, save_exp_path,
+                   entail = "",txt_info = None, version = version)

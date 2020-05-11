@@ -14,6 +14,7 @@ BL_W = 500
 STATE_INFO_SIZE = (40, 50)
 BL_INFO_SIZE = (100, 25)
 BUTTON_SIZE = (5, 5)
+# DETAIL_IMAGE_SIZE = ()
 
 def read_data(path, action):
     action_img_list = glob.glob("{}/{}*.jpg".format(path, action))
@@ -21,18 +22,21 @@ def read_data(path, action):
     for a_img in action_img_list:
         im = Image.open(a_img).resize(SUB_FIGURES_SIZE)
         render = ImageTk.PhotoImage(im)
-        if "weights" in a_img:
+        if "weights" in a_img and not "detail" in a_img:
             weights_img = render
-        if "features" in a_img:
+        if "features" in a_img and not "detail" in a_img:
             features_img = render
-        if "IG" in a_img:
+        if "IG" in a_img and not "detail" in a_img:
             IG_img = render
-        if "MSX" in a_img:
+        if "MSX" in a_img and not "detail" in a_img:
             MSX_img = render
 
     state_img_path = "{}/state.jpg".format(path)
-    im = Image.open(state_img_path).resize(STATE_SIZE)
-    state_img = ImageTk.PhotoImage(im)
+    if os.path.isfile(state_img_path):
+        im = Image.open(state_img_path).resize(STATE_SIZE)
+        state_img = ImageTk.PhotoImage(im)
+    else:
+        state_img = None
     
     target_features_img_path = "{}/target_features.jpg".format(path)
     im = Image.open(target_features_img_path).resize(TARGET_FEATURES_SIZE)
@@ -73,8 +77,8 @@ def select_game(event):
 #     if event is not None:
     path = combo_version.get()
     for d in os.scandir(path):
-        if "game" in d.path:
-            games.append(d.path.split("/")[-1])
+#         if "game" in d.path or "state_pair" in d.path:
+        games.append(d.path.split("/")[-1])
 #     print(games)
     games = sorted(games)
     combo_game['values']= (games)
@@ -92,7 +96,11 @@ def select_dp(event):
 #     print(dps)
     dps_sorted = []
     for i in range(len(dps)):
-        dps_sorted.append("dp_{}".format(i + 1))
+        if "vs" not in dps[i]:
+            dps_sorted.append("dp_{}".format(i + 1))
+    for dp_vs in dps:
+        if "dp" not in dp_vs:
+            dps_sorted.append(dp_vs)
 #     print(dps_sorted)
     combo_dp['values']= (dps_sorted)
     combo_dp.current(0)
@@ -117,10 +125,10 @@ def show_exp(event):
     
 #     print(state_info_txt)
 #     s_txt.set(state_info_txt)
-    state_info.config(state=NORMAL)
+#     state_info.config(state=NORMAL)
     state_info.delete(1.0, END)
     state_info.insert(END, state_info_txt)
-    state_info.config(state=DISABLED)
+#     state_info.config(state=DISABLED)
     
     state.config(image = state_img)
     state.image = state_img
@@ -129,15 +137,15 @@ def show_exp(event):
     state_feature.image = target_features_img
     
 #     bl_txt.set(subaction_info_txt)
-    baseline_info.config(state=NORMAL)
+#     baseline_info.config(state=NORMAL)
     baseline_info.delete(1.0, END)
     baseline_info.insert(END, subaction_info_txt)
-    baseline_info.config(state=DISABLED)
+#     baseline_info.config(state=DISABLED)
     
-    baseline_feature.config(image = weights_img)
+    baseline_feature.config(image = features_img)
     baseline_feature.image = weights_img
     
-    baseline_weight.config(image = features_img)
+    baseline_weight.config(image = weights_img)
     baseline_weight.image = features_img
     
     baseline_ig.config(image = IG_img)
@@ -198,6 +206,87 @@ def prev_action(event):
     combo_action.current(action_num - 1)
     show_exp(None)
 
+def show_detail_t_features(event):
+    path = "{}/{}/{}".format(combo_version.get(), combo_game.get(), combo_dp.get())
+    show_detail(path, "target_features", "")
+    
+def show_detail_bl_features(event):
+    
+    path = "{}/{}/{}".format(combo_version.get(), combo_game.get(), combo_dp.get())
+    show_detail(path, "_features", combo_action.get())
+
+def show_detail_bl_weights(event):
+    path = "{}/{}/{}".format(combo_version.get(), combo_game.get(), combo_dp.get())
+    show_detail(path, "_weights", combo_action.get())
+
+def show_detail_bl_ig(event):
+    path = "{}/{}/{}".format(combo_version.get(), combo_game.get(), combo_dp.get())
+    show_detail(path, "_IG", combo_action.get())
+
+def show_detail_bl_MSX(event):
+    path = "{}/{}/{}".format(combo_version.get(), combo_game.get(), combo_dp.get())
+    show_detail(path, "_MSX", combo_action.get())
+    
+def show_detail(path, name, action_name):
+#     print(path, name, action_name)
+#     source = "Canvas Image"
+    detail_win = Toplevel(window)
+#     detail_win.geometry('1800x1100')
+#     detail_win.attributes('-fullscreen', True)
+    detail_win.title("show detail image")
+
+    ksbar_y=Scrollbar(detail_win, orient=VERTICAL)
+    ksbar_y.pack(side = RIGHT, fill = Y)
+    
+    ksbar_x=Scrollbar(detail_win, orient=HORIZONTAL)
+    ksbar_x.pack(side = BOTTOM, fill = X)
+    
+    popCanv = Canvas(detail_win,#, width=600, height = 800,
+                     scrollregion=(0,0,2800,2000)) #width=1256, height = 1674)
+
+    popCanv.configure(scrollregion=popCanv.bbox('all'))
+    popCanv.pack(expand = True, fill = "both")
+
+    ksbar_y.config(command=popCanv.yview)
+    ksbar_x.config(command=popCanv.xview)
+    popCanv.config(yscrollcommand = ksbar_y.set)
+    popCanv.config(xscrollcommand = ksbar_x.set)
+    def _on_mousewheel(event):
+        if event.num == 4:
+            popCanv.yview('scroll', -1, 'units')
+        elif event.num == 5:
+            popCanv.yview('scroll', 1, 'units')
+    
+#         popCanv.yview_scroll(-1*(event.delta/120), "units")
+    def _on_key_xmove(event):
+        if event.char == 'z':
+            popCanv.xview('scroll', -1, 'units')
+        elif event.char == 'c':
+            popCanv.xview('scroll', 1, 'units')
+            
+    detail_win.bind("<Button-4>", _on_mousewheel)
+    detail_win.bind("<Button-5>", _on_mousewheel)
+    detail_win.bind("<Key>", _on_key_xmove)
+    
+    action_img_list = glob.glob("{}/{}*.jpg".format(path, action_name))
+    
+    render = None
+    for a_img in action_img_list:
+        if name in a_img and action_name in a_img and "detail" in a_img:
+            im = Image.open(a_img)
+            render = ImageTk.PhotoImage(im)
+#     image_path = "{}/{}_detail.jpg".format(path, name)
+#     im = Image.open(image_path)
+#     render = ImageTk.PhotoImage(im)
+    if render is None:
+        print("no finding this image")
+    image = popCanv.create_image(0, 0, anchor = NW, image=render)
+    popCanv.image = render
+
+    detail_win.rowconfigure(0, weight=1)
+    detail_win.columnconfigure(0, weight=1)
+        
+    
 window = Tk()
 window.title("Show gqf explanation")
 window.geometry('1800x1100')
@@ -241,6 +330,7 @@ state.grid(column=0, row=1, columnspan = 2)
 
 state_feature = Label(window, text = "3333")
 state_feature.grid(column=1, row=2)
+state_feature.bind("<Button-1>", show_detail_t_features)
 
 # bl_txt = StringVar()
 # bl_txt.set("4444")
@@ -254,15 +344,19 @@ baseline_info.grid(column=2, row=1, columnspan = 2)
 
 baseline_feature = Label(window, text = "5555")
 baseline_feature.grid(column=2, row=2)
+baseline_feature.bind("<Button-1>", show_detail_bl_features)
 
 baseline_weight = Label(window, text = "6666")
 baseline_weight.grid(column=3, row=2)
+baseline_weight.bind("<Button-1>", show_detail_bl_weights)
 
 baseline_ig = Label(window, text = "7777")
 baseline_ig.grid(column=2, row=3)
+baseline_ig.bind("<Button-1>", show_detail_bl_ig)
 
 baseline_MSX = Label(window, text = "8888")
 baseline_MSX.grid(column=3, row=3)
+baseline_MSX.bind("<Button-1>", show_detail_bl_MSX)
 
 b_next = Button(window, text = ">dp")
 b_next.bind("<Button-1>", next_dp)

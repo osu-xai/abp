@@ -72,9 +72,9 @@ class SADQ_GQF(object):
                                                initial_p=self.reinforce_config.starting_epsilon,
                                                final_p=self.reinforce_config.final_epsilon)
 
-    def __del__(self):
-        self.save()
-        self.summary.close()
+#     def __del__(self):
+#         self.save()
+#         self.summary.close()
 
     def should_explore(self):
         self.epsilon = self.epsilon_schedule.value(self.steps)

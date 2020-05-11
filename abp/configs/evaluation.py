@@ -13,7 +13,8 @@ default_evaluation_config = {
     "xai_replay_dimension": 256,
     "result_path": "result_default.txt",
     "explanation" : False,
-    "explanation_path": None
+    "explanation_path": None,
+    "is_state_pair_test_exp": False,
 }
 
 
@@ -62,3 +63,6 @@ class EvaluationConfig(BaseConfig):
     
     explanation_path = property(BaseConfig.get_property("explanation_path"),
                      BaseConfig.set_property("explanation_path"))
+
+    is_state_pair_test_exp = property(BaseConfig.get_property("is_state_pair_test_exp"),
+                     BaseConfig.set_property("is_state_pair_test_exp"))

@@ -144,8 +144,8 @@ class feature_q_model():
         file_path = ensure_directory_exits(self.network_config.network_path)
         self.model_path = os.path.join(file_path, self.name + '.p')
         self.feautre_model = _feature_model(input_len, feature_len)
-        if self.version == "GVFs_all_2":
-            feature_len = 8
+#         if self.version == "GVFs_all_2":
+#             feature_len = 8
         self.q_model = _q_model(feature_len, output_len)
             
         if use_cuda:
@@ -206,13 +206,13 @@ class feature_q_model():
             
             input_feature_vectors[input_feature_vectors == float('inf')] = 0
             
-        if self.version == "GVFs_all_2":
-#             input_feature_vectors = feature_vectors[:, :8].clone()
-            q_values = self.q_model(feature_vectors[:, :8])
-#             print(feature_vectors[:, :8])
-#         print(input_feature_vectors[0:2])
-        else:
-            q_values = self.q_model(feature_vectors)
+#         if self.version == "GVFs_all_2":
+# #             input_feature_vectors = feature_vectors[:, :8].clone()
+#             q_values = self.q_model(feature_vectors[:, :8])
+# #             print(feature_vectors[:, :8])
+# #         print(input_feature_vectors[0:2])
+#         else:
+        q_values = self.q_model(feature_vectors)
 #             print(feature_vectors)
 #             print(q_values)
 

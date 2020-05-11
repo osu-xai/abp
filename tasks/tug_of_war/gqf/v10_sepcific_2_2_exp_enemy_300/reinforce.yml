@@ -14,4 +14,4 @@ is_random_agent_2: False
 collecting_experience: False
 use_prior_memory: False
 is_use_sepcific_enemy: True
-enemy_path: "./saved_models/tug_of_war/agents/grid_decom/TugOfWar_eval.pupdate_121"
+enemy_path: "./saved_models/tug_of_war/agents/grid_decom/TugOfWar_eval.pupdate_300"

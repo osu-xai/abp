@@ -49,6 +49,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         reward_num = 8
         combine_decomposed_func = combine_decomposed_func_8
         player_1_end_vector = player_1_end_vector_8
+
+    if network_config.output_shape == 1:
+        reward_num = 1
+        combine_decomposed_func = combine_decomposed_func_1
+        player_1_end_vector = player_1_end_vector_1
     
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQAdaptive(name = "TugOfWar",
@@ -650,3 +655,15 @@ def player_1_end_vector_8(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp
 #     input("reward_vector")
 
     return reward_vector
+
+def combine_decomposed_func_1(q_values):
+    return torch.sum(q_values)
+
+def player_1_end_vector_1(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, is_done = False):
+    hp_vector = np.array([state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp])
+    min_idx = np.argmin(hp_vector)
+    if min_idx == 0 or min_idx == 1:
+        return [0]
+    else:
+        return [1]
+        
