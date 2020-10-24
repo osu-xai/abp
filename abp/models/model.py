@@ -37,7 +37,7 @@ class Model(object):
                 if torch.cuda.is_available():
                     self.model.load_state_dict(torch.load(self.model_path))
                 else:
-                    self.model.load_state_dict(torch.load(self.model_path, map_location='cpu'))
+                    self.model.load_state_dict(torch.load(self.model_path, map_location=torch.device('cpu')))
             else:
                 logger.info("Model does not exist %s" % self.model_path)
 

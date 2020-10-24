@@ -82,7 +82,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     reinforce_config = reinforce_config, memory_resotre = False,
                     reward_num = reward_num, combine_decomposed_func = combine_decomposed_func)
                     
-                    new_weights = torch.load(path + "/" +file, map_location = device)
+                    if use_cuda:
+                        new_weights = torch.load(path + "/" +file, map_location = device)
+                    else:
+                        new_weights = torch.load(path + "/" +file, map_location = torch.device('cpu'))
             #         print(HP_state_dict)
                     new_state_dict = OrderedDict()
 

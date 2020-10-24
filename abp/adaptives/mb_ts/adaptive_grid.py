@@ -162,9 +162,12 @@ class MBTSAdaptive(object):
         else:
             hp_model_name = "trans_hp_gird_F1.pt"
         
-        
-        HP_state_dict = torch.load(models_path + hp_model_name, map_location = device)
-        unit_state_dict = torch.load(models_path + unit_model_name, map_location = device)
+        if use_cuda:
+            HP_state_dict = torch.load(models_path + hp_model_name, map_location = device)
+            unit_state_dict = torch.load(models_path + unit_model_name, map_location = device)
+        else:
+            HP_state_dict = torch.load(models_path + hp_model_name, map_location = torch.device('cpu'))
+            unit_state_dict = torch.load(models_path + unit_model_name, map_location = torch.device('cpu'))
 #         value_state_dict = torch.load(models_path + 'value_model.pt')
 
 #         print(HP_state_dict)
@@ -199,7 +202,10 @@ class MBTSAdaptive(object):
 #         self.value_model.load_weight(new_value_state_dict)
 #         self.q_model.load_weight(torch.load(models_path + 'q_model_decom8_grid.pt', map_location = device))
 #         self.q_model.load_weight(torch.load(models_path + 'TugOfWar_eval.pupdate_300', map_location = device))
-        self.q_model.load_weight(torch.load(models_path + 'q_model_decom8_grid.pt', map_location = device))
+        if use_cuda:
+            self.q_model.load_weight(torch.load(models_path + 'q_model_decom8_grid.pt', map_location = device))
+        else:
+            self.q_model.load_weight(torch.load(models_path + 'q_model_decom8_grid.pt', map_location = torch.device('cpu')))
             
     def reward_func_win_prob(self, state, next_states):
         

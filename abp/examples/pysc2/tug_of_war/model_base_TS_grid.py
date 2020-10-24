@@ -88,7 +88,10 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 for file in f:
                     if '.p' in file:
                         print(file)
-                        new_weights = torch.load(path + "/" +file, map_location = device)
+                        if use_cuda:
+                            new_weights = torch.load(path + "/" +file, map_location = device)
+                        else:
+                            new_weights = torch.load(path + "/" +file, map_location = torch.device('cpu'))
                         new_agent_2 = SADQAdaptive(name = file,
                         state_length = len(state_2),
                         network_config = network_config,

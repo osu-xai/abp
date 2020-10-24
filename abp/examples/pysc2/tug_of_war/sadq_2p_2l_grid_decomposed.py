@@ -126,8 +126,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
             weights_1 = torch.load(path + "/" + agent_1_model)
             weights_2 = torch.load(path + "/" + agent_2_model)
         else:
-            weights_1 = torch.load(path + "/" + agent_1_model, map_location=lambda storage, loc:storage)
-            weights_2 = torch.load(path + "/" + agent_2_model, map_location=lambda storage, loc:storage)
+            weights_1 = torch.load(path + "/" + agent_1_model, map_location=torch.device('cpu'))
+            weights_2 = torch.load(path + "/" + agent_2_model, map_location=torch.device('cpu'))
         
         new_agent_2 = SADQAdaptive(name = "record",
                     state_length = len(state_1),
