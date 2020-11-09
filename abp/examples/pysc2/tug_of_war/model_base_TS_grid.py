@@ -105,18 +105,23 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
     clear_summary_path(test_summaries_path)
     test_summary_writer = SummaryWriter(test_summaries_path)
     random_enemy = False
+    count_num = 0
     while True:
         # Test Episodes
         print("======================================================================")
         print("===============================Now testing============================")
         print("======================================================================")
         print("There are {} enemies".format(len(agents_2)))
-        
+        if count_num > 7:
+            break
         for agent_2 in agents_2:
             print(agent_2.name)
             average_state = np.zeros(len(state_1))
             total_rewwards_list = []  
-            evaluation_config.test_episodes = 10
+            evaluation_config.test_episodes = 1
+            count_num += 1
+            if count_num > 7:
+                break
             for episode in tqdm(range(evaluation_config.test_episodes)):
                 state = env.reset()
                 total_reward_1 = 0

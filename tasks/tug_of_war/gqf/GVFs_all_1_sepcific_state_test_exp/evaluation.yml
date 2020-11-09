@@ -1,0 +1,13 @@
+name: "tug of war gqf"
+env: "tug_of_war_gqf-GVFs_all_1_sepcific_state_test_exp"
+summaries_path: "./tensorflow_summaries/tug_of_war/gqf/GVFs_all_1_sepcific_state_test_exp/evaluation_summary"
+test_episodes: 10
+training_episodes: 40
+render: False
+sleep: 5
+generate_xai_replay: False
+xai_replay_dimension: 1024
+result_path: "result_gqf_GVFs_all_1_sepcific_state_test_exp.txt"
+explanation: True
+explanation_path: "./explanations/tug_of_war/gqf/GVFs_all_1_sepcific_state_test_exp"
+is_state_pair_test_exp : True

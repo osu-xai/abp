@@ -5,6 +5,7 @@ from absl import flags
 import sys, os
 import torch
 
+from abp.configs import NetworkConfig, ReinforceConfig, EvaluationConfig
 from abp.adaptives.sadq.adaptive_decom import SADQAdaptive
 from abp.utils import clear_summary_path
 from tensorboardX import SummaryWriter
@@ -49,6 +50,11 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         reward_num = 8
         combine_decomposed_func = combine_decomposed_func_8
         player_1_end_vector = player_1_end_vector_8
+
+    if network_config.output_shape == 1:
+        reward_num = 1
+        combine_decomposed_func = combine_decomposed_func_1
+        player_1_end_vector = player_1_end_vector_1
     
     if not reinforce_config.is_random_agent_1:
         agent_1 = SADQAdaptive(name = "TugOfWar",
@@ -138,12 +144,27 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         new_agent_2.load_weight(weights_2)
         new_agent_2.disable_learning(is_save = False)
         agents_2.append(new_agent_2)
-#     w = 0
+        
+    if reinforce_config.is_use_sepcific_enemy:
+        sepcific_SADQ_enemy_weights = torch.load(reinforce_config.enemy_path)
+
+        sepcific_network_config = NetworkConfig.load_from_yaml("./tasks/tug_of_war/sadq_2p_2l_decom/v2_8/network.yml")
+        sepcific_network_config.restore_network = False
+        sepcific_SADQ_enemy = SADQAdaptive(name = "sepcific enemy",
+        state_length = len(state_1),
+        network_config = sepcific_network_config,
+        reinforce_config = reinforce_config,  memory_resotre = False,
+        reward_num = sepcific_network_config.output_shape, combine_decomposed_func = combine_decomposed_func_8)
+
+        sepcific_SADQ_enemy.load_weight(sepcific_SADQ_enemy_weights)
+        sepcific_SADQ_enemy.disable_learning(is_save = False)
+        agents_2 = [sepcific_SADQ_enemy]
+        
     while True:
         print(sum(np.array(privous_result) >= 0.9))
         if len(privous_result) >= update_wins_waves and \
         sum(np.array(privous_result) >= 0.9) >= update_wins_waves and \
-        not reinforce_config.is_random_agent_2:
+        not reinforce_config.is_random_agent_2 and not reinforce_config.is_use_sepcific_enemy:
             privous_result = []
             print("replace enemy agent's weight with self agent")
 #             random_enemy = False
@@ -453,7 +474,8 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         current_reward_1 = sum(reward[2:])
                     elif reward_num == 8:
                         current_reward_1 = reward[2] + reward[3] + reward[6] + reward[7]
-                        
+                    elif reward_num == 1:
+                        current_reward_1 = sum(reward)
     #                 print(current_reward_1)
 
 
@@ -650,3 +672,18 @@ def player_1_end_vector_8(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp
 #     input("reward_vector")
 
     return reward_vector
+
+def combine_decomposed_func_1(q_values):
+#     print(q_values)
+#     print(torch.sum(q_values, dim = 1))
+#     print(torch.sum(q_values))
+    return torch.sum(q_values, dim = 1)
+
+def player_1_end_vector_1(state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp, is_done = False):
+    hp_vector = np.array([state_1_T_hp, state_1_B_hp, state_2_T_hp, state_2_B_hp])
+    min_idx = np.argmin(hp_vector)
+    if min_idx == 0 or min_idx == 1:
+        return [0]
+    else:
+        return [1]
+        
