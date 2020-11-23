@@ -10,14 +10,11 @@ from abp.adaptives.sadq.adaptive_decom import SADQAdaptive
 from abp.utils import clear_summary_path
 from tensorboardX import SummaryWriter
 from gym.envs.registration import register
-from sc2env.environments.tug_of_war_2L_self_play_4grid import TugOfWar
-from sc2env.environments.tug_of_war_2L_self_play_4grid import action_component_names
-#from sc2env.xai_replay.recorder.recorder_2lane_nexus import XaiReplayRecorder2LaneNexus
+from sc2env.environments.tug_of_war_2L_self_play_4grid import TugOfWar, action_component_names
 from tqdm import tqdm
 from copy import deepcopy
 from random import randint, random
 
-# np.set_printoptions(precision = 2)
 use_cuda = torch.cuda.is_available()
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 

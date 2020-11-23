@@ -9,4 +9,4 @@ generate_xai_replay: False
 xai_replay_dimension: 1024
 result_path: "result_gqf_v10_sepcific_2_2.txt"
 explanation: True
-explanation_path: "./explanations/tug_of_war/gqf/v10_sepcific_2_2"
+explanation_path: "./explanations/tug_of_war/gqf/-v10_sepcific_2_2"

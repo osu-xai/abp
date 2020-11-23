@@ -61,3 +61,16 @@ class Model(object):
     
     def train_mode(self):
         self.model.train()
+        
+    def replace_soft(self, dest, tau = 5e-4):
+        """Soft update model parameters.
+        θ_target = τ*θ_local + (1 - τ)*θ_target
+
+        Params
+        ======
+            local_model (PyTorch model): weights will be copied from
+            target_model (PyTorch model): weights will be copied to
+            tau (float): interpolation parameter 
+        """
+        for target_param, eval_param in zip(self.model.parameters(), dest.model.parameters()):
+            target_param.data.copy_(tau*eval_param.data + (1.0-tau)*target_param.data)

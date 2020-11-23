@@ -21,7 +21,11 @@ default_reinforce_config = {
     "is_random_agent_2" : False,
     "collecting_experience": False,
     "is_use_sepcific_enemy": False,
-    "enemy_path": None
+    "enemy_path": None,
+    "is_collecting_GVF_seq": False,
+    "soft_tau": 5e-4,
+    "exp_save_path": None,
+    "features_list": []
 }
 
 
@@ -96,3 +100,15 @@ class ReinforceConfig(BaseConfig):
 
     enemy_path = property(BaseConfig.get_property("enemy_path"),
                         BaseConfig.set_property("enemy_path"))
+    
+    is_collecting_GVF_seq = property(BaseConfig.get_property("is_collecting_GVF_seq"),
+                        BaseConfig.set_property("is_collecting_GVF_seq"))
+    
+    soft_tau = property(BaseConfig.get_property("soft_tau"),
+                        BaseConfig.set_property("soft_tau"))
+    
+    exp_save_path = property(BaseConfig.get_property("exp_save_path"),
+                        BaseConfig.set_property("exp_save_path"))
+    
+    features_list = property(BaseConfig.get_property("features_list"),
+                        BaseConfig.set_property("features_list"))

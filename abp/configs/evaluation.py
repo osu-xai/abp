@@ -15,6 +15,7 @@ default_evaluation_config = {
     "explanation" : False,
     "explanation_path": None,
     "is_state_pair_test_exp": False,
+    "is_collect_gvf_data": False
 }
 
 
@@ -66,3 +67,6 @@ class EvaluationConfig(BaseConfig):
 
     is_state_pair_test_exp = property(BaseConfig.get_property("is_state_pair_test_exp"),
                      BaseConfig.set_property("is_state_pair_test_exp"))
+
+    is_collect_gvf_data = property(BaseConfig.get_property("is_collect_gvf_data"),
+                     BaseConfig.set_property("is_collect_gvf_data"))

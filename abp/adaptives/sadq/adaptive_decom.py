@@ -112,7 +112,11 @@ class SADQAdaptive(object):
             
         if self.learning and self.steps % self.reinforce_config.replace_frequency == 0:
             logger.debug("Replacing target model for %s" % self.name)
-            self.target_model.replace(self.eval_model)
+            if self.reinforce_config.replace_frequency != 1:
+                self.target_model.replace(self.eval_model)
+            else:
+                self.target_model.replace_soft(self.eval_model)
+#             self.target_model.eval_mode()
 
         if (self.learning and
             self.steps > self.reinforce_config.update_start and
