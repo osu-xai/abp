@@ -78,8 +78,10 @@ def select_game(event):
     path = combo_version.get()
     for d in os.scandir(path):
 #         if "game" in d.path or "state_pair" in d.path:
-        games.append(d.path.split("/")[-1])
+        if ".ipynb_checkpoints" not in d.path:
+            games.append(d.path.split("/")[-1])
 #     print(games)
+#     print(path)
     games = sorted(games)
     combo_game['values']= (games)
     combo_game.current(0)
@@ -103,6 +105,8 @@ def select_dp(event):
             dps_sorted.append(dp_vs)
 #     print(dps_sorted)
     combo_dp['values']= (dps_sorted)
+#     print(dps_sorted)
+#     print(path)
     combo_dp.current(0)
     select_action(None)
     
@@ -111,10 +115,17 @@ def select_action(event):
     path = "{}/{}/{}".format(combo_version.get(), combo_game.get(), combo_dp.get())
     for d in os.scandir(path):
         if "subaction_#" in d.path:
-            actions.add(d.path.split("/")[-1][:12])
-    actions = sorted(list(actions))
-    combo_action['values']= (actions)
-    combo_action.current(len(actions) - 1)
+            for i, word in enumerate(d.path.split("/")[-1]):
+                if word == "(":
+                    break
+            actions.add(d.path.split("/")[-1][:i])
+#     actions = sorted(list(actions))
+    action_sort = []
+    for i in range(len(list(actions))):
+        action_sort.append("subaction_#{}".format(i + 1))
+        
+    combo_action['values']= (action_sort)
+    combo_action.current(len(action_sort) - 1)
     show_exp(None)
     
 def show_exp(event):
@@ -188,8 +199,11 @@ def prev_dp(event):
     
 def next_action(event):
     curr_value = combo_action.get()
-    action_num = int(curr_value[-2]) * 10 + int(curr_value[-1]) if len(curr_value) > 12 else int(curr_value[-1])
-    
+#     action_num = int(curr_value[-2]) * 10 + int(curr_value[-1]) if len(curr_value) > 12 else int(curr_value[-1])
+    action_num = 0
+    for num in curr_value[11:]:
+        action_num *= 10
+        action_num += int(num)
     if action_num == len(combo_action['values']):
         return
     action_num += 1
@@ -198,7 +212,11 @@ def next_action(event):
 
 def prev_action(event):
     curr_value = combo_action.get()
-    action_num = int(curr_value[-2]) * 10 + int(curr_value[-1]) if len(curr_value) > 12 else int(curr_value[-1])
+    action_num = 0
+    for num in curr_value[11:]:
+        action_num *= 10
+        action_num += int(num)
+#     action_num = int(curr_value[-2]) * 10 + int(curr_value[-1]) if len(curr_value) > 12 else int(curr_value[-1])
     
     if action_num == 1:
         return
@@ -221,7 +239,7 @@ def show_detail_bl_weights(event):
 
 def show_detail_bl_ig(event):
     path = "{}/{}/{}".format(combo_version.get(), combo_game.get(), combo_dp.get())
-    show_detail(path, "_IG", combo_action.get())
+    show_detail(path, "IG_and_MSX+", combo_action.get())
 
 def show_detail_bl_MSX(event):
     path = "{}/{}/{}".format(combo_version.get(), combo_game.get(), combo_dp.get())
@@ -274,6 +292,8 @@ def show_detail(path, name, action_name):
     for a_img in action_img_list:
         if name in a_img and action_name in a_img and "detail" in a_img:
             im = Image.open(a_img)
+            width, height = im.size
+            im = im.resize((int(width * 0.7), int(height * 0.7)), Image.ANTIALIAS)
             render = ImageTk.PhotoImage(im)
 #     image_path = "{}/{}_detail.jpg".format(path, name)
 #     im = Image.open(image_path)

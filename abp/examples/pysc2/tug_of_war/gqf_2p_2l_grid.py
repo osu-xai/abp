@@ -487,6 +487,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         game_count = 0
 #     agent_1.steps = reinforce_config.epsilon_timesteps / 2
     count_epo = 0
+    GVF_seq_dataset = []
     while True:
         count_epo += 1
 #         print(sum(np.array(privous_result) >= 0.9))
@@ -688,7 +689,18 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         break
                 while not done and steps < max_episode_steps:
                     steps += 1
-#                     state_1 = np.array([1500.0, 1.0, 11.0, 0.0, 5.0, 14.0, 1.0, 3.0, 3.0, 2.0, 1.0, 49.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 3.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 49.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1750.0, 2000.0, 1280.0, 2000.0, 32.0] )
+                    if "v10_sepcific_test_exp_2" in evaluation_config.explanation_path:
+
+                        state_1 = np.array([1500.0, 1.0, 11.0, 0.0, 5.0, 14.0, 1.0, 3.0, 3.0, 2.0, 1.0, 49.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 3.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 49.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1750.0, 2000.0, 1280.0, 2000.0, 32.0])
+                        best_n, rand_n, worst_m = 200, 1, 1
+                        print(1)
+                    elif "v10_sepcific_test_exp" in evaluation_config.explanation_path:
+                        state_1 = np.array([575.0, 0.0, 2.0, 0.0, 5.0, 11.0, 0.0, 2.0, 4.0, 0.0, 2.0, 11.0, 5.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2000.0, 2000.0, 2000.0, 1240.0, 17.0])
+                        best_n, rand_n, worst_m = 1000, 1000, 1000
+                        print(2)
+                    elif "GVFs_all_1_sepcific_test_exp" in evaluation_config.explanation_path:
+                        state_1 = np.array([400.0, 0.0, 2.0, 0.0, 1.0, 2.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2000.0, 2000.0, 2000.0, 1840.0, 7.0])
+                        best_n, rand_n, worst_m = 1000, 1000, 1000
     #                 # Decision point
                     if not reinforce_config.is_random_agent_1:
                         actions_1 = env.get_big_A(state_1[env.miner_index], state_1[env.pylon_index])
@@ -701,14 +713,19 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                     if evaluation_config.explanation:
                         
                         frame = get_frame(env.sc2_env)
-                        esf_action_pair(agent_1.eval_model, state_1, frame, env.normalization(combine_states_1), 
-                                        actions_1, save_exp_path,
-                                        decision_point = "dp_{}".format(steps), version = network_config.version)
-#                         esf_action_pair(agent_1.eval_model, state_1, frame, env.normalization(combine_states_1), 
-#                                         actions_1, "./{}/sepcific_example".format(exp_path),
-#                                         decision_point = "dp_{}".format(steps), version = network_config.version)
-#                         input()
-                    
+
+                        if "test_exp" in evaluation_config.explanation_path:
+                            print(3)
+                            esf_action_pair(agent_1.eval_model, state_1, frame, env.normalization(combine_states_1), 
+                                            actions_1, "./{}/sepcific_example".format(exp_path),
+                                            decision_point = "dp_{}".format(steps), version = network_config.version, pick_actions = [best_n, rand_n, worst_m])
+                            print("done")
+                            input()
+                        else:
+                            print(4)
+                            esf_action_pair(agent_1.eval_model, state_1, frame, env.normalization(combine_states_1), 
+                                            actions_1, save_exp_path,
+                                            decision_point = "dp_{}".format(steps), version = network_config.version, pick_actions = [30, 30, 30])
                     if not reinforce_config.is_random_agent_2 and type(enemy_agent) != type("random"):
                         actions_2 = env.get_big_A(state_2[env.miner_index], state_2[env.pylon_index])
                         combine_states_2 = combine_sa(state_2, actions_2)
@@ -744,6 +761,9 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                         previous_action_1 = deepcopy(actions_1[choice_1])
                         previous_action_2 = deepcopy(actions_2[choice_2])
                     
+                    if reinforce_config.is_collecting_GVF_seq:
+                        GVF_seq_dataset.append(fv_1.tolist())
+    
 #                     input(f"step p1 with {list(actions_1[choice_1])}")
                     env.step(list(actions_1[choice_1]), 1)
 #                     input(f"step p2 with {list(actions_2[choice_2])}")
@@ -898,6 +918,12 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
         if count_epo % 50 == 0 and reinforce_config.is_use_sepcific_enemy:
             agent_1.save(force = True, appendix = "_{}".format(count_epo))
         
+        if reinforce_config.is_collecting_GVF_seq:
+            torch.save(GVF_seq_dataset, "GVF_seq_dataset.pt")
+            print("len of GVF seq: {}".format(len(GVF_seq_dataset)))
+            if len(GVF_seq_dataset) > 100000:
+                break
+            
         if not reinforce_config.is_random_agent_1:
             agent_1.enable_learning()
             

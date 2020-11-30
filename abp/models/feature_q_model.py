@@ -258,6 +258,11 @@ class feature_q_model():
                 self.network_config.network_path):
 #             print(self.model_path)
             if os.path.exists(self.model_path):
+                print()
+                print()
+                print(self.model_path)
+                print()
+                print()
                 model = torch.load(self.model_path)
                 print("restore: {}".format(self.name))
 #                 print(model)
