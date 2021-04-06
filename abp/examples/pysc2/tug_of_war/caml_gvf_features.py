@@ -91,7 +91,25 @@ def self_get_damage_nexus(env):
 def self_create_building(action):
     return action
 
-def get_features(features_list, state, previous_action, env, done):
+def end_hp(state, done, env):
+    if "large_hp" in env.map_name:
+        norm_scale = 10000
+    else:
+        norm_scale = 2000
+    if done:
+        return np.array(state[63:67]) / norm_scale
+    return np.zeros(4)
+
+def end_waves(state, done):
+    if done:
+        return np.array([state[-1]]) / 40
+    return np.zeros(1)
+
+def obs(state, done, action):
+    observation = np.concatenate((state, np.array([done]), np.array(action)))
+    
+    return observation
+def get_features(features_list, state, previous_action, env, done, next_state = None):
     features = []
     for f in features_list:
         if f == "reward_vector":
@@ -104,4 +122,11 @@ def get_features(features_list, state, previous_action, env, done):
             features.append(self_get_damage_nexus(env))
         if f == "self_create_building":
             features.append(self_create_building(previous_action))
+        if f == "end_hp":
+            features.append(end_hp(state, done, env))
+        if f == "end_waves":
+            features.append(end_waves(state, done))
+        if f == "obs":
+            features.append(obs(state, done, previous_action))
+#             print(features)
     return np.concatenate(features)

@@ -25,7 +25,8 @@ default_reinforce_config = {
     "is_collecting_GVF_seq": False,
     "soft_tau": 5e-4,
     "exp_save_path": None,
-    "features_list": []
+    "features_list": [],
+    "agents_name": [],
 }
 
 
@@ -112,3 +113,6 @@ class ReinforceConfig(BaseConfig):
     
     features_list = property(BaseConfig.get_property("features_list"),
                         BaseConfig.set_property("features_list"))
+    
+    agents_name = property(BaseConfig.get_property("agents_name"),
+                        BaseConfig.set_property("agents_name"))

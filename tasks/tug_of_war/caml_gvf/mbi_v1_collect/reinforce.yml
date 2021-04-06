@@ -15,10 +15,16 @@ collecting_experience: False
 use_prior_memory: False
 # 0 is no collecting, other number will be the number of collected episodes
 is_collecting_GVF_seq: 1000
-exp_save_path: 'abp/examples/pysc2/tug_of_war/caml_gvf_dataset.pt' 
+exp_save_path: 'abp/examples/pysc2/tug_of_war/caml_collected_datasets/caml_gvf_dataset.pt' 
+agents_name: 
+    - "marine"
+    - "baneling"
+    - "immortal"
+    
 features_list: 
     - "self_create_building" # 7 len
 #     - "self_unit_spawn" # 6 len
     - "reward_vector" # 4 len
     - "self_damage_to_nexus" # 6 len
     - "self_get_damage_nexus" # 6 len
+    
