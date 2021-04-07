@@ -1,0 +1,26 @@
+decay_steps: 300
+starting_epsilon: 1
+discount_factor: 0.9999
+batch_size: 64
+memory_size: 50000
+summaries_path: "./tensorflow_summaries/tug_of_war/caml_gvf/smbi_v1/reinforce_summary"
+update_frequency: 10
+replace_frequency: 1
+epsilon_timesteps: 20000
+starting_epsilon: 1
+final_epsilon: 0.02
+is_random_agent_1: False
+is_random_agent_2: False
+collecting_experience: False
+use_prior_memory: False
+agents_name: 
+    - "smart_marine"
+    - "smart_baneling"
+    - "smart_immortal"
+is_collecting_GVF_seq: 1000
+exp_save_path: 'abp/examples/pysc2/tug_of_war/caml_collected_datasets/caml_gvf_dataset_smbi.pt' 
+    
+features_list: 
+    - "self_create_building" # 7 len
+#     - "self_unit_spawn" # 6 len
+    - "reward_vector" # 4 len

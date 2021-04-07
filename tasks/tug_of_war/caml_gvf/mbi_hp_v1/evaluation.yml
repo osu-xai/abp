@@ -1,0 +1,10 @@
+name: "tug of war caml_gvf mbi_hp_v1"
+env: "tug_of_war_caml_gvf_mbi_hp_v1"
+summaries_path: "./tensorflow_summaries/tug_of_war/caml_gvf/mbi_hp_v1/evaluation_summary"
+test_episodes: 5
+training_episodes: 40
+render: False
+sleep: 5
+generate_xai_replay: False
+xai_replay_dimension: 1024
+result_path: "result_self_play_2l_grid_caml_gvf_mbi_hp_v1.txt"
