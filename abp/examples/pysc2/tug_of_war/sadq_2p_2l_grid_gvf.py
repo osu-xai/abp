@@ -398,7 +398,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                             print(features)
 #                             input()
                             experience = [
-                                previous_state_1,
+                                last_features,
                                 previous_action_1,
                                 reward[0],
 #                                 combine_states_1[choice_1],
@@ -412,6 +412,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
 #                         previous_state_1 = deepcopy(combine_states_1[choice_1])
 #                         previous_state_2 = deepcopy(combine_states_2[choice_2])
                         previous_state_1 = deepcopy(state_1)
+                        last_features = deepcopy(features)
                         previous_state_2 = deepcopy(state_2)
                         
                         previous_action_1 = deepcopy(actions_1[choice_1])
@@ -440,7 +441,7 @@ def run_task(evaluation_config, network_config, reinforce_config, map_name = Non
                 if reinforce_config.is_collecting_GVF_seq:
                     features = get_features(reinforce_config.features_list, state_1, previous_action_1, env, done or steps >= max_episode_steps)
                     experience = [
-                        previous_state_1,
+                        last_features,
                         previous_action_1,
                         reward[0],
 #                         combine_states_1[choice_1],
